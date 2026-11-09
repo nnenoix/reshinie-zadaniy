@@ -87,6 +87,26 @@ def test_page_is_drawn_with_the_three_design_fonts(page):
     assert set(loaded) == {"Unbounded", "Manrope", "Onest"}
 
 
+def test_phone_header_of_a_guest_keeps_the_brand_on_one_line(browser, base_url):
+    context = browser.new_context(viewport={"width": 375, "height": 812})
+    tab = context.new_page()
+    tab.goto(base_url + "/login")
+    tab.click("[data-guest]")
+    tab.wait_for_url("**/app")
+    lines, overflow, fonts = tab.evaluate("""async () => {
+        await document.fonts.ready;
+        const text = document.createRange();
+        text.selectNodeContents(document.querySelector('.brand'));
+        return [text.getClientRects().length, document.documentElement.scrollWidth - innerWidth,
+                document.fonts.check('800 16px Manrope')];
+    }""")
+    context.close()
+    if not fonts:
+        pytest.skip("Manrope не загрузился: нет интернета, ширина шапки другая")
+
+    assert (lines, overflow) == (1, 0)  # «Решись Авиа» рядом с «Зарегистрироваться» и «Выйти»
+
+
 def test_negative_price_is_kept_and_explained(page):
     page.fill("#price", "−500")
     page.locator("#price").blur()

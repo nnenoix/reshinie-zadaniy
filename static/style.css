@@ -181,8 +181,11 @@ select.field__control { cursor: pointer; }
 /* мобильный */
 @media (max-width: 960px) {
   :root { --pad: 16px; }
-  .topbar { padding: 18px var(--pad); }
-  .brand { font-size: 16px; }
+  .topbar { padding: 18px var(--pad); gap: 12px; }
+  .brand { font-size: 15px; }
+  /* бренд, «Зарегистрироваться» и «Выйти» гостя в одну строку на 375 px */
+  .topbar__right { gap: 8px; }
+  .topbar .btn--ghost { padding: 8px 10px; font-size: 13px; }
   .topbar__user { display: none; }
   .hero { flex-direction: column; align-items: flex-start; padding: 28px var(--pad) 20px; gap: 14px; }
   .hero__title { font-size: 28px; }
