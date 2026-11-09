@@ -151,6 +151,30 @@ def test_ticket_stub_route_is_one_line_under_its_label(browser, base_url, width)
     assert (lines, round(shift)) == (1, 0)  # «MOW → LED» без сдвига вправо и без переноса
 
 
+LABEL_ON_CURVE = """() => {
+    const svg = document.querySelector('#profit-chart svg');
+    const mine = svg.querySelector('.pc-label--cur').getBBox(), best = svg.querySelector('.pc-label--best').getBBox();
+    const points = svg.querySelector('.pc-line').getAttribute('points').trim().split(' ').map((p) => p.split(',').map(Number));
+    const inside = ([x, y]) => x >= mine.x && x <= mine.x + mine.width && y >= mine.y && y <= mine.y + mine.height;
+    const apart = mine.x + mine.width < best.x || best.x + best.width < mine.x ||
+        mine.y + mine.height < best.y || best.y + best.height < mine.y;
+    return { curve: points.filter(inside).length, best: !apart };
+}"""
+
+
+@pytest.mark.parametrize("price", ["5 500", "3 400", "9 500"])
+def test_your_price_label_stays_off_the_profit_curve(page, price):
+    if price != "5 500":
+        page.fill("#price", price)
+        page.click("#submit")
+    page.wait_for_function("""(price) => {
+        const label = document.querySelector('#profit-chart .pc-label--cur');
+        return label && label.textContent.replace(/\\s/g, ' ').endsWith(price);
+    }""", arg=price)
+
+    assert page.evaluate(LABEL_ON_CURVE) == {"curve": 0, "best": False}
+
+
 def test_negative_price_is_kept_and_explained(page):
     page.fill("#price", "−500")
     page.locator("#price").blur()
