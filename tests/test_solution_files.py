@@ -54,6 +54,15 @@ def test_external_link_opens_in_a_new_tab_and_text_is_escaped():
     assert "Открыть →" in html
 
 
+def test_check_scripts_come_as_one_archive():
+    checks = next(f for f in FILES if f.key == "checks")
+
+    assert (checks.name, checks.tag, checks.env) == \
+        ("Титаренко_Егор_Константинович_Проверка.zip", "ZIP", "LINK_CHECK_SCRIPTS")
+    assert checks.description == ("proverka_bia.py и proverka_forecast.py с нужными файлами: "
+                                  "пересчёт чисел аналитики и проверка файла прогноза")
+
+
 def test_files_keep_their_order_and_numbers():
     html = files_html({})
 
