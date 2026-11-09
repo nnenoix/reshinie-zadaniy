@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Макет A — Табло вылетов</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    /*
+      Макет A. Табло вылетов в аэропорту: тёмная панель, буквы на перекидных
+      плашках, цветная лампа статуса. Результат расчёта — строка табло.
+    */
+    :root {
+      --board: #121a23;
+      --panel: #1a2531;
+      --tile: #0b1016;
+      --tile-top: #151d26;
+      --ink: #f2eee3;
+      --muted: #8a99a8;
+      --line: #2a3644;
+      --amber: #f4b63f;
+      --green: #59c98b;
+      --red: #f0644b;
+
+      --chart-bg: var(--panel);
+      --chart-text: var(--ink);
+      --chart-muted: var(--muted);
+      --chart-grid: #26323f;
+      --chart-sold: #cfc8b8;
+      --chart-median: var(--amber);
+      --chart-excess: var(--red);
+      --chart-seats: var(--red);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--board);
+      color: var(--ink);
+      font: 16px/1.45 "IBM Plex Sans Condensed", system-ui, sans-serif;
+    }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 0 32px 48px; }
+
+    .bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 0; border-bottom: 1px solid var(--line);
+      font-family: Oswald, sans-serif; text-transform: uppercase; letter-spacing: .08em;
+    }
+    .brand { font-size: 20px; font-weight: 600; }
+    .brand span { color: var(--muted); font-weight: 500; margin-left: 12px; }
+    .user { font-size: 14px; color: var(--muted); }
+    .user b { color: var(--ink); font-weight: 500; }
+    .user a { color: var(--amber); margin-left: 10px; text-decoration: none; }
+
+    h1 {
+      font: 600 40px/1 Oswald, sans-serif; text-transform: uppercase; letter-spacing: .06em;
+      margin: 26px 0 4px;
+    }
+    h1 + p { margin: 0 0 16px; color: var(--muted); }
+
+    /* Форма — ячейки табло */
+    .query {
+      display: grid; grid-template-columns: 1fr 1.4fr 1fr 1fr auto; gap: 2px;
+      background: var(--line); border: 2px solid var(--line); border-radius: 6px; overflow: hidden;
+    }
+    .query label {
+      display: flex; flex-direction: column; gap: 6px; padding: 12px 16px; background: var(--panel);
+      font: 500 12px Oswald, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+    }
+    .query input, .query select {
+      appearance: none; border: 0; background: transparent; color: var(--ink); padding: 0;
+      font: 600 22px "IBM Plex Mono", monospace; letter-spacing: .02em; text-transform: uppercase;
+    }
+    .query input:focus-visible, .query select:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; }
+    .query button {
+      border: 0; padding: 0 32px; background: var(--amber); color: #1b1404; cursor: pointer;
+      font: 600 18px Oswald, sans-serif; letter-spacing: .1em; text-transform: uppercase;
+    }
+    .query button:focus-visible { outline: 3px solid var(--ink); outline-offset: -6px; }
+    .hint { color: var(--muted); font-size: 14px; margin: 10px 2px 0; }
+
+    /* Строка табло с перекидными плашками */
+    .board { margin-top: 22px; background: var(--panel); border-radius: 6px; padding: 18px 20px 22px; }
+    .board-grid {
+      display: grid; grid-template-columns: repeat(7, auto) 1fr; column-gap: 30px; row-gap: 12px; align-items: end;
+    }
+    .board-grid .col {
+      font: 500 12px Oswald, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+    }
+    .board-grid .rule { grid-column: 1 / -1; height: 1px; background: var(--line); }
+    .flaps { display: flex; gap: 3px; }
+    .flap {
+      position: relative; width: 23px; height: 36px; border-radius: 3px;
+      display: grid; place-items: center;
+      background: linear-gradient(var(--tile-top) 0 50%, var(--tile) 50% 100%);
+      font: 600 23px/1 "IBM Plex Mono", monospace; color: var(--ink);
+      box-shadow: inset 0 -1px 0 #000, 0 1px 0 #26313d;
+    }
+    .flap::after {
+      content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #05080b;
+    }
+    .flap.space { background: var(--tile); }
+    .big .flap { width: 30px; height: 46px; font-size: 31px; }
+    .amber .flap { color: var(--amber); }
+
+    .status {
+      display: flex; align-items: center; gap: 10px;
+      font: 600 22px Oswald, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--amber);
+    }
+    .lamp { width: 14px; height: 14px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 12px var(--amber); }
+
+    .verdict { margin: 18px 0 0; font-size: 18px; }
+    .verdict b { color: var(--amber); font-weight: 600; }
+    .formula { margin: 6px 0 0; font: 500 13px "IBM Plex Mono", monospace; color: var(--muted); }
+
+    /* График */
+    .chart-panel { margin-top: 18px; background: var(--panel); border-radius: 6px; padding: 18px 24px 14px; }
+    .chart-panel h2 {
+      margin: 0 0 4px; font: 600 20px Oswald, sans-serif; letter-spacing: .08em; text-transform: uppercase;
+    }
+    .chart-panel h2 + p { margin: 0 0 2px; color: var(--muted); }
+    #chart { font-family: "IBM Plex Mono", monospace; }
+    .legend li { display: flex; align-items: center; }
+    .legend { display: flex; flex-wrap: wrap; gap: 22px; margin: 8px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 14px; }
+    .sw { display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px; border-radius: 2px; }
+    .sw.sold { background: var(--chart-sold); }
+    .sw.median { background: var(--chart-median); }
+    .sw.excess { background: repeating-linear-gradient(45deg, var(--red) 0 3px, transparent 3px 6px); }
+    .sw.seats { height: 0; border-top: 2px dashed var(--red); border-radius: 0; vertical-align: middle; }
+
+    @media (max-width: 1100px) {
+      .board { overflow-x: auto; }
+      .board-grid { min-width: 1000px; }
+    }
+    @media (max-width: 760px) {
+      .wrap { padding: 0 16px 32px; }
+      .query { grid-template-columns: 1fr 1fr; }
+      .query button { grid-column: 1 / -1; padding: 16px; }
+      h1 { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="bar">
+      <div class="brand">Решись Авиа <span>прогноз продаж</span></div>
+      <div class="user">Вы вошли как <b>anna</b><a href="#">Выйти</a></div>
+    </header>
+
+    <h1>Табло продаж</h1>
+    <p>Выберите рейс и цену — табло покажет, сколько билетов купят и хватит ли мест.</p>
+
+    <form class="query" onsubmit="return false">
+      <label>Откуда<select><option>Москва</option></select></label>
+      <label>Куда<select><option>Сочи</option><option>Санкт-Петербург</option></select></label>
+      <label>Дата вылета<input value="01.06.2026"></label>
+      <label>Цена, ₽<input value="8 000"></label>
+      <button type="submit">Посчитать</button>
+    </form>
+    <p class="hint">Базовая цена маршрута — 9 000 ₽, обычно от 5 400 до 18 000 ₽. Даты: с 01.06.2026 по 01.07.2026.</p>
+
+    <section class="board" aria-label="Результат расчёта">
+      <div class="board-grid">
+        <span class="col">Рейс</span><span class="col">Направление</span><span class="col">Дата</span>
+        <span class="col">Цена, ₽</span><span class="col">Мест</span><span class="col">Купят</span>
+        <span class="col">Желают</span><span class="col">Статус</span>
+        <span class="rule"></span>
+        <span class="flaps" data-flap="MOW-AER"></span>
+        <span class="flaps" data-flap="СОЧИ"></span>
+        <span class="flaps" data-flap="01.06"></span>
+        <span class="flaps" data-flap="8000"></span>
+        <span class="flaps" data-flap="900"></span>
+        <span class="flaps big amber" data-flap="900"></span>
+        <span class="flaps" data-flap="916"></span>
+        <span class="status"><span class="lamp"></span>Мест нет</span>
+      </div>
+      <p class="verdict"><b>Самолёт заполнится.</b> Желающих на 16 больше, чем мест.</p>
+      <p class="formula">желают = 775 − 0,141 × (8 000 − 9 000) = 916 · купят = min(900, max(0, 916)) = 900</p>
+    </section>
+
+    <section class="chart-panel">
+      <h2>Спрос по сценариям</h2>
+      <p>Столбик 30% значит: с вероятностью 30% желающих окажется меньше. Медиана — та же цифра, что «желают» на табло.</p>
+      <div id="chart"></div>
+      <ul class="legend">
+        <li><span class="sw sold"></span>купят</li>
+        <li><span class="sw median"></span>медиана</li>
+        <li><span class="sw excess"></span>не хватит мест</li>
+        <li><span class="sw seats"></span>мест в самолёте</li>
+      </ul>
+    </section>
+  </div>
+
+  <script src="demand-chart.js"></script>
+  <script src="sample.js"></script>
+  <script>
+    document.querySelectorAll("[data-flap]").forEach((node) => {
+      for (const ch of node.dataset.flap) {
+        const tile = document.createElement("span");
+        tile.className = ch === " " ? "flap space" : "flap";
+        tile.textContent = ch;
+        node.append(tile);
+      }
+    });
+    DemandChart.render(document.getElementById("chart"), SAMPLE, { width: 1100, height: 300 });
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+.venv
+var
+tests
+mocks
+docs
+compare
+.pytest_cache
+**/__pycache__
+*.db
+.git
+.env

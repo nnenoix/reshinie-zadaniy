@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Прогноз продаж · Решись Авиа</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&amp;family=Golos+Text:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+<script type="module" src="/static/js/app.js"></script>
+</head>
+<body data-page="forecast">
+<header class="topbar">
+  <a class="brand" href="/">[ РЕШИСЬ АВИА <span class="accent">/ ПРОГНОЗ</span> ]</a>
+  <div class="topbar__right">
+    <span class="topbar__user" id="user-login"></span>
+    <a class="btn btn--ghost" href="/login" id="logout">Выйти</a>
+  </div>
+</header>
+
+<section class="hero hero--compact">
+  <div class="hero__text">
+    <p class="label">[ Внутренний инструмент / Июнь 2026 ]</p>
+    <h1 class="hero__title">Сколько билетов <span class="accent">купят</span> на ваш рейс</h1>
+  </div>
+  <ol class="steps">
+    <li><span class="steps__n">01 →</span>Выберите рейс и дату</li>
+    <li><span class="steps__n">02 →</span>Двигайте цену</li>
+    <li><span class="steps__n">03 →</span>Смотрите салон и календарь</li>
+  </ol>
+</section>
+
+<main class="layout">
+  <div class="side">
+    <form class="card" id="forecast-form" novalidate>
+      <p class="label">[ <span class="label__num">01</span> / Параметры рейса ]</p>
+      <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">ОШИБКА</span><span data-error-text></span></div>
+
+      <div class="field" data-field="source">
+        <label class="field__label" for="source">Прогноз спроса</label>
+        <div class="field__box">
+          <select class="field__control" id="source" name="source">
+            <option value="ml">Наша ML-модель</option>
+            <option value="organizers">Прогноз организаторов</option>
+          </select>
+          <span class="field__suffix">▾</span>
+        </div>
+        <p class="field__hint" id="source-hint"></p>
+        <p class="field__error" data-error-for="source" hidden></p>
+      </div>
+      <div class="field" data-field="origin">
+        <label class="field__label" for="origin">Откуда</label>
+        <div class="field__box"><input class="field__control" id="origin" name="origin" value="Москва" readonly><span class="field__suffix">[ ФИКС ]</span></div>
+        <p class="field__error" data-error-for="origin" hidden></p>
+      </div>
+      <div class="field" data-field="destination">
+        <label class="field__label" for="destination">Куда</label>
+        <div class="field__box">
+          <select class="field__control" id="destination" name="destination"></select>
+          <span class="field__suffix">▾</span>
+        </div>
+        <p class="field__error" data-error-for="destination" hidden></p>
+      </div>
+      <div class="field" data-field="date">
+        <label class="field__label" for="date">Дата вылета</label>
+        <div class="field__box"><input class="field__control field__control--mono" type="date" id="date" name="date" required></div>
+        <p class="field__hint" id="date-hint"></p>
+        <p class="field__error" data-error-for="date" hidden></p>
+      </div>
+      <div class="field" data-field="price">
+        <label class="field__label" for="price">Цена билета</label>
+        <div class="field__box"><input class="field__control field__control--mono" type="text" inputmode="decimal" id="price" name="price" autocomplete="off" required><span class="field__suffix">₽</span></div>
+        <p class="field__error" data-error-for="price" hidden></p>
+      </div>
+      <div class="range-wrap">
+        <div class="range-box">
+          <input class="range" type="range" id="price-range" min="0" max="1" step="10" value="0" aria-label="Цена билета">
+          <div class="range-best" id="range-best" hidden><span id="range-best-label"></span></div>
+        </div>
+        <div class="range-scale"><span id="range-min"></span><span>ЦЕНЫ МАРШРУТА</span><span id="range-max"></span></div>
+      </div>
+      <button class="btn" type="submit" id="submit"><span data-btn-text>Рассчитать</span><span>→</span></button>
+      <p class="form-note">Ползунок пересчитывает прогноз сразу. «Рассчитать» сохраняет расчёт в историю.</p>
+    </form>
+
+    <section class="card best" id="best" hidden>
+      <p class="label">[ <span class="label__num">★</span> / Лучшая цена ]</p>
+      <div class="best__head">
+        <p class="best__price"><span id="best-price"></span><small>₽</small></p>
+        <p class="best__text" id="best-text"></p>
+      </div>
+      <div class="profit-chart" id="profit-chart" role="img" aria-label="Ожидаемая прибыль в зависимости от цены"></div>
+      <ul class="legend">
+        <li><span class="legend__sw legend__sw--line"></span>ОЖИДАЕМАЯ ПРИБЫЛЬ</li>
+        <li><span class="legend__sw legend__sw--dot"></span>ВАША ЦЕНА</li>
+      </ul>
+      <button class="btn btn--outline" type="button" id="apply-best"><span>Поставить лучшую цену</span><span class="mono" id="apply-best-price"></span></button>
+      <p class="small-note" id="best-note">Ожидаемая прибыль — среднее по 9 сценариям от (цена − расходы на пассажира) × купят. Кривую и максимум считает сервер.</p>
+    </section>
+  </div>
+
+  <div class="main-col" id="result">
+    <div class="tabbar">
+      <div class="tabs tabs--main" role="tablist" aria-label="Результат">
+        <button class="tabs__btn" type="button" role="tab" data-tab="calc" aria-selected="true"><span class="tabs__n">01</span>Расчёт</button>
+        <button class="tabs__btn" type="button" role="tab" data-tab="salon" aria-selected="false"><span class="tabs__n">02</span>Салон</button>
+        <button class="tabs__btn" type="button" role="tab" data-tab="calendar" aria-selected="false"><span class="tabs__n">03</span>Календарь</button>
+        <button class="tabs__btn" type="button" role="tab" data-tab="ticket" aria-selected="false"><span class="tabs__n">04</span>Талон</button>
+      </div>
+      <p class="result__route" id="result-route"></p>
+    </div>
+
+    <!-- 01 Расчёт -->
+    <section class="card tabpanel" data-tabpanel="calc" role="tabpanel" aria-live="polite">
+      <p class="label">[ <span class="label__num">02</span> / Результат ]</p>
+
+      <div class="empty" data-panel="empty">
+        <h2 class="state__title">Здесь появится прогноз</h2>
+        <p class="state__text">Выберите город, дату и цену билета — и нажмите «Рассчитать».</p>
+      </div>
+
+      <div class="state" data-panel="loading" hidden>
+        <div class="progress"></div>
+        <div class="skel-row"><span class="skel"></span><span class="skel"></span><span class="skel"></span><span class="skel"></span></div>
+        <div class="skel-bars"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <p class="state__text">Сервер считает 9 сценариев спроса. Обычно это меньше секунды.</p>
+      </div>
+
+      <div class="state" data-panel="error" hidden>
+        <span class="state__code" id="error-code"></span>
+        <h2 class="state__title" id="error-title"></h2>
+        <p class="state__text" id="error-text"></p>
+        <div class="state__actions"><button class="btn btn--small" type="button" id="retry">Повторить расчёт</button></div>
+      </div>
+
+      <div class="result__ready" data-panel="ready" hidden>
+        <dl class="metrics">
+          <div class="metric"><dt class="metric__label">Мест в самолёте</dt><dd class="metric__value" data-out="seats"></dd></div>
+          <div class="metric"><dt class="metric__label">Желают купить</dt><dd class="metric__value" data-out="want"></dd><span class="metric__sub" data-out="wantRaw" hidden></span></div>
+          <div class="metric"><dt class="metric__label">Купят</dt><dd class="metric__value metric__value--acc" data-out="buy"></dd></div>
+          <div class="metric"><dt class="metric__label">Загрузка</dt><dd class="metric__value"><span data-out="load"></span><span class="metric__unit">%</span></dd><div class="meter"><div class="meter__fill" id="load-meter"></div></div></div>
+        </dl>
+        <div class="note" id="note"><span class="tag" id="note-tag"></span><span class="note__text" id="note-text"></span></div>
+        <p class="formula" id="formula"></p>
+        <div class="chart-block">
+          <div class="chart-block__head">
+            <h3 class="chart-block__title" id="chart-title"></h3>
+            <ul class="legend">
+              <li><span class="legend__sw legend__sw--median"></span>МЕДИАНА = ЖЕЛАЮТ</li>
+              <li><span class="legend__sw legend__sw--other"></span>СЦЕНАРИИ</li>
+              <li id="legend-hatch" hidden><span class="legend__sw legend__sw--hatch"></span>СВЕРХ МЕСТ</li>
+              <li><span class="legend__sw legend__sw--seats"></span>МЕСТ</li>
+            </ul>
+          </div>
+          <div class="chart" id="chart" role="img" aria-label="Распределение спроса по 9 сценариям"></div>
+          <p class="how" id="chart-how"></p>
+        </div>
+        <div class="chart-block" id="compare">
+          <div class="chart-block__head">
+            <h3 class="chart-block__title">Два прогноза на этот рейс</h3>
+            <span class="card__meta" id="compare-meta"></span>
+          </div>
+          <div class="table-scroll" id="compare-table" hidden>
+            <table class="history">
+              <thead><tr><th class="l">ПРОГНОЗ</th><th>ЖЕЛАЮТ</th><th>КУПЯТ</th><th>ЗАГРУЗКА</th><th>ЛУЧШАЯ ЦЕНА, ₽</th></tr></thead>
+              <tbody id="compare-body"></tbody>
+            </table>
+          </div>
+          <p class="how" id="compare-note"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 Салон -->
+    <section class="card tabpanel" data-tabpanel="salon" role="tabpanel" hidden>
+      <div class="panel-head">
+        <p class="label">[ <span class="label__num">02</span> / Схема салона ]</p>
+        <div class="scen" id="scen" role="group" aria-label="Сценарий спроса"><span class="scen__label">Сценарий</span></div>
+      </div>
+      <p class="panel-empty" data-needs-empty>Сначала рассчитайте прогноз.</p>
+      <div class="tabpanel" data-needs-result hidden>
+        <dl class="metrics metrics--3">
+          <div class="metric"><dt class="metric__label">Мест</dt><dd class="metric__value" data-salon="seats"></dd></div>
+          <div class="metric"><dt class="metric__label">Продано</dt><dd class="metric__value metric__value--acc" data-salon="sold"></dd></div>
+          <div class="metric"><dt class="metric__label">Не хватило мест</dt><dd class="metric__value" data-salon="over"></dd></div>
+        </dl>
+        <div class="plane-box">
+          <div class="plane">
+            <div class="plane__craft">
+              <span class="plane__wing plane__wing--a"></span><span class="plane__wing plane__wing--b"></span>
+              <span class="plane__fin plane__fin--a"></span><span class="plane__fin plane__fin--b"></span>
+              <div class="plane__body"><div class="plane__seats" id="seats"></div><span class="plane__door"></span></div>
+            </div>
+            <div class="plane__gate">
+              <span class="plane__stairs"></span>
+              <span class="gate__label">ТРАП</span>
+              <p class="queue__title" id="queue-title" hidden></p>
+              <div class="queue" id="queue"></div>
+            </div>
+          </div>
+        </div>
+        <ul class="legend">
+          <li><span class="legend__sw legend__sw--sold"></span>ПРОДАНО</li>
+          <li><span class="legend__sw legend__sw--free"></span>СВОБОДНО</li>
+          <li><span class="legend__sw legend__sw--part"></span>ЧАСТИЧНО</li>
+          <li><span class="legend__sw legend__sw--person"></span>НЕ ХВАТИЛО МЕСТ</li>
+        </ul>
+        <p class="how" id="salon-how"></p>
+      </div>
+    </section>
+
+    <!-- 03 Календарь -->
+    <section class="card tabpanel" data-tabpanel="calendar" role="tabpanel" hidden>
+      <div class="panel-head">
+        <p class="label">[ <span class="label__num">02</span> / Календарь загрузки ]</p>
+        <p class="result__route" id="cal-title"></p>
+      </div>
+      <p class="panel-empty" data-needs-empty>Сначала рассчитайте прогноз.</p>
+      <div class="tabpanel" data-needs-result hidden>
+        <div class="cal" id="cal"></div>
+        <ul class="legend">
+          <li><span id="cal-min"></span><span class="legend__sw legend__sw--scale"></span><span id="cal-max"></span></li>
+          <li><span class="legend__sw legend__sw--fri"></span>ПЯТНИЦА</li>
+          <li><span class="legend__sw legend__sw--sel"></span>ВЫБРАННЫЙ ДЕНЬ</li>
+          <li><span class="tag">УПОР</span>В МЕСТА</li>
+        </ul>
+        <p class="how" id="cal-how">Нажмите на день — откроется расчёт на эту дату.</p>
+      </div>
+    </section>
+
+    <!-- 04 Талон -->
+    <section class="card tabpanel" data-tabpanel="ticket" role="tabpanel" hidden>
+      <p class="label">[ <span class="label__num">02</span> / Посадочный талон ]</p>
+      <p class="panel-empty" data-needs-empty>Сначала рассчитайте прогноз.</p>
+      <div class="tabpanel" data-needs-result hidden>
+        <article class="ticket" id="ticket">
+          <div class="ticket__main">
+            <div class="ticket__band"><span>[ РЕШИСЬ АВИА / ПРОГНОЗ ]</span><span>ПОСАДОЧНЫЙ ТАЛОН</span></div>
+            <div class="ticket__body">
+              <div class="ticket__route">
+                <div class="ticket__port"><span class="ticket__code" data-t="fromCode"></span><span class="ticket__city" data-t="fromCity"></span></div>
+                <span class="ticket__path">→</span>
+                <div class="ticket__port ticket__port--to"><span class="ticket__code" data-t="code"></span><span class="ticket__city" data-t="city"></span></div>
+              </div>
+              <dl class="ticket__grid">
+                <div class="tf"><dt>ДАТА</dt><dd data-t="date"></dd></div>
+                <div class="tf"><dt>ДЕНЬ</dt><dd data-t="day"></dd></div>
+                <div class="tf"><dt>ЦЕНА</dt><dd data-t="price"></dd></div>
+                <div class="tf"><dt>МЕСТ</dt><dd data-t="seats"></dd></div>
+                <div class="tf"><dt>ЖЕЛАЮТ</dt><dd data-t="want"></dd></div>
+                <div class="tf tf--acc"><dt>КУПЯТ</dt><dd data-t="buy"></dd></div>
+                <div class="tf"><dt>ЗАГРУЗКА</dt><dd data-t="load"></dd></div>
+                <div class="tf tf--acc"><dt>ЛУЧШАЯ ЦЕНА</dt><dd data-t="best"></dd></div>
+              </dl>
+              <div class="ticket__status"><span class="tag" data-t="tag"></span><span data-t="status"></span></div>
+            </div>
+          </div>
+          <div class="ticket__stub">
+            <dl class="stub__col">
+              <dt class="label">[ Корешок ]</dt>
+              <dd class="stub__route" data-t="stubRoute"></dd>
+              <div class="tf"><dt>ДАТА</dt><dd data-t="date"></dd></div>
+              <div class="tf"><dt>КУПЯТ / МЕСТ</dt><dd data-t="buySeats"></dd></div>
+              <div class="tf tf--acc stub__best"><dt>ЛУЧШАЯ ЦЕНА</dt><dd data-t="best"></dd></div>
+            </dl>
+            <div class="stub__code"><span class="barcode"></span><span class="stub__id" data-t="id"></span></div>
+          </div>
+        </article>
+        <div class="actions">
+          <button class="btn btn--small" type="button" id="dl-png">Скачать PNG ↓</button>
+          <button class="btn btn--ghost btn--small" type="button" id="dl-pdf">Скачать PDF ↓</button>
+        </div>
+        <p class="field__error" id="ticket-error" role="alert" hidden></p>
+        <p class="small-note">Талон собирается из текущего расчёта. PNG и PDF делаются прямо в браузере, на сервер ничего не уходит.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="history-wrap">
+  <section class="card">
+    <div class="card__head">
+      <p class="label">[ <span class="label__num">03</span> / История расчётов ]</p>
+      <div class="card__tools">
+        <span class="card__meta">Последние 5</span>
+        <a class="btn btn--ghost btn--small" href="/api/history.csv" download id="history-csv">Вся история в CSV ↓</a>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="history">
+        <thead><tr>
+          <th class="l">ВРЕМЯ</th><th class="l">МАРШРУТ</th><th class="l">ДАТА ВЫЛЕТА</th><th>ЦЕНА, ₽</th><th>МЕСТ</th><th>ЖЕЛАЮТ</th><th>КУПЯТ</th><th>ЗАГРУЗКА</th><th></th>
+        </tr></thead>
+        <tbody id="history-body">
+          <tr class="history__empty"><td colspan="9">Расчётов пока нет. Нажмите «Рассчитать» — расчёт появится здесь.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+</body>
+</html>

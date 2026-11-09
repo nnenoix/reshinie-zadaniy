@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Макет C — Схема салона</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;600;700&family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /*
+      Макет C. Схема салона: форма — в боковой панели, главный экран — самолёт
+      сверху, где закрашены проданные кресла, а лишние желающие стоят у трапа.
+    */
+    :root {
+      --bg: #eef2f3;
+      --surface: #ffffff;
+      --ink: #1d2327;
+      --muted: #66727b;
+      --line: #dfe5e8;
+      --petrol: #0e5a64;
+      --petrol-soft: #9cc3c7;
+      --seat-free: #e3eaec;
+      --coral: #e0663a;
+
+      --chart-bg: var(--surface);
+      --chart-text: var(--ink);
+      --chart-muted: var(--muted);
+      --chart-grid: #edf1f2;
+      --chart-sold: var(--petrol-soft);
+      --chart-median: var(--petrol);
+      --chart-excess: var(--coral);
+      --chart-seats: var(--coral);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font: 15px/1.45 Onest, system-ui, sans-serif;
+      display: grid; grid-template-columns: 330px minmax(0, 1fr); min-height: 100vh;
+    }
+
+    /* Боковая панель с формой */
+    .side {
+      background: var(--surface); border-right: 1px solid var(--line);
+      padding: 26px 26px 22px; display: flex; flex-direction: column; gap: 18px;
+    }
+    .brand { font: 700 19px Geologica, sans-serif; }
+    .brand small { display: block; font: 400 14px Onest, sans-serif; color: var(--muted); margin-top: 2px; }
+    form { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+    label { display: flex; flex-direction: column; gap: 6px; font-weight: 500; font-size: 13px; color: var(--muted); }
+    input, select {
+      height: 46px; border: 1px solid #cdd6da; border-radius: 10px; padding: 0 14px;
+      font: 500 16px Onest, sans-serif; color: var(--ink); background: var(--surface);
+    }
+    input:focus-visible, select:focus-visible { outline: 2px solid var(--petrol); outline-offset: 1px; }
+    .price { position: relative; }
+    .price input { width: 100%; padding-right: 36px; }
+    .price span { position: absolute; right: 14px; top: 12px; color: var(--muted); }
+    button {
+      height: 48px; border: 0; border-radius: 10px; background: var(--petrol); color: #fff; cursor: pointer;
+      font: 600 16px Onest, sans-serif; margin-top: 4px;
+    }
+    button:focus-visible { outline: 3px solid var(--petrol-soft); outline-offset: 2px; }
+    .hint { margin: 0; color: var(--muted); font-size: 13px; }
+    .who { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+    .who b { color: var(--ink); font-weight: 500; }
+    .who a { color: var(--petrol); margin-left: 8px; }
+
+    /* Основная часть */
+    main { padding: 26px 34px 30px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+    .title h1 { margin: 0; font: 700 32px/1.1 Geologica, sans-serif; }
+    .title p { margin: 6px 0 0; color: var(--muted); }
+
+    .card { background: var(--surface); border-radius: 16px; padding: 18px 24px; }
+
+    .cabin-head { display: flex; align-items: flex-end; gap: 36px; flex-wrap: wrap; }
+    .metric span { display: block; font-size: 13px; color: var(--muted); }
+    .metric b { font: 700 44px/1.05 Geologica, sans-serif; }
+    .metric.main b { color: var(--petrol); }
+    .metric.over b { color: var(--coral); }
+    .metric small { font-size: 15px; color: var(--muted); margin-left: 4px; }
+    .cabin-note { margin-left: auto; text-align: right; color: var(--muted); font-size: 13px; }
+    .cabin-note strong { display: block; color: var(--ink); font-size: 15px; font-weight: 600; }
+    #cabin { margin-top: 6px; }
+    #cabin svg { width: 100%; height: auto; display: block; }
+
+    .chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; flex-wrap: wrap; }
+    .chart-head h2 { margin: 0; font: 600 18px Geologica, sans-serif; }
+    .chart-head p { margin: 0; color: var(--muted); font-size: 14px; }
+    #chart { font-family: Onest, sans-serif; }
+    .foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+    .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
+    .legend li { display: flex; align-items: center; }
+    .sw { display: inline-block; width: 13px; height: 13px; border-radius: 3px; margin-right: 7px; }
+    .sw.sold { background: var(--petrol-soft); }
+    .sw.median { background: var(--petrol); }
+    .sw.excess { background: repeating-linear-gradient(45deg, var(--coral) 0 3px, transparent 3px 6px); }
+    .sw.seats { height: 0; border-top: 2px dashed var(--coral); border-radius: 0; }
+    .formula { margin: 0; font-variant-numeric: tabular-nums; }
+
+    @media (max-width: 900px) {
+      body { grid-template-columns: 1fr; }
+      .side { border-right: 0; border-bottom: 1px solid var(--line); }
+      main { padding: 20px 16px; }
+      .cabin-note { margin-left: 0; text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="side">
+    <div class="brand">Решись Авиа<small>Прогноз продаж билетов</small></div>
+    <form onsubmit="return false">
+      <label>Откуда<select><option>Москва</option></select></label>
+      <label>Куда<select><option>Сочи</option><option>Санкт-Петербург</option></select></label>
+      <label>Дата вылета<input value="01.06.2026"></label>
+      <label>Цена билета<span class="price"><input value="8 000"><span>₽</span></span></label>
+      <button type="submit">Посчитать</button>
+    </form>
+    <p class="hint">Базовая цена маршрута — 9 000 ₽, обычно от 5 400 до 18 000 ₽. Даты: с 01.06.2026 по 01.07.2026.</p>
+    <div class="who">Вы вошли как <b>anna</b><a href="#">Выйти</a></div>
+  </aside>
+
+  <main>
+    <div class="title">
+      <h1>Москва → Сочи</h1>
+      <p>Вылет 1 июня 2026 · цена билета 8 000 ₽ · рейс MOW-AER</p>
+    </div>
+
+    <section class="card" aria-label="Результат расчёта">
+      <div class="cabin-head">
+        <div class="metric main"><span>Купят билетов</span><b>900</b><small>из 900 мест</small></div>
+        <div class="metric"><span>Желают купить</span><b>916</b></div>
+        <div class="metric over"><span>Не хватит мест</span><b>16</b></div>
+        <p class="cabin-note"><strong>Самолёт заполнится</strong>Одно кресло на схеме — 10 мест</p>
+      </div>
+      <div id="cabin"></div>
+    </section>
+
+    <section class="card">
+      <div class="chart-head">
+        <h2>Как может сложиться спрос</h2>
+        <p>Столбик 30% значит: с вероятностью 30% желающих окажется меньше.</p>
+      </div>
+      <div id="chart"></div>
+      <div class="foot">
+        <ul class="legend">
+          <li><span class="sw sold"></span>купят</li>
+          <li><span class="sw median"></span>медиана = «желают»</li>
+          <li><span class="sw excess"></span>не хватит мест</li>
+          <li><span class="sw seats"></span>мест в самолёте</li>
+        </ul>
+        <p class="formula">желают = 775 − 0,141 × (8 000 − 9 000) = 916 · купят = min(900, 916) = 900</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="demand-chart.js"></script>
+  <script src="sample.js"></script>
+  <script>
+    // Самолёт сверху: нос слева, 15 рядов по 6 кресел. Каждое кресло — десятая часть мест.
+    function renderCabin(target, data) {
+      const NS = "http://www.w3.org/2000/svg";
+      const rows = 15, perRow = 6, seatsShown = rows * perRow;
+      const perSeat = data.seats / seatsShown;
+      const filled = Math.round(Math.max(0, data.sold) / perSeat);
+      const overflow = Math.max(0, Math.ceil((data.wanted - data.seats) / perSeat));
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("viewBox", "0 -46 1200 312");
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", `Схема салона: занято ${filled} из ${seatsShown} кресел, без места ${overflow}`);
+      const add = (name, attrs) => {
+        const node = document.createElementNS(NS, name);
+        for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+        svg.append(node);
+        return node;
+      };
+      // крылья и хвост
+      add("path", { d: "M470 20 L560 20 L520 -40 L488 -40 Z M470 200 L560 200 L520 260 L488 260 Z", fill: "#dbe3e6" });
+      add("path", { d: "M930 40 L985 40 L1000 -6 L975 -6 Z M930 180 L985 180 L1000 226 L975 226 Z", fill: "#dbe3e6" });
+      // фюзеляж
+      add("path", {
+        d: "M150 10 H930 C990 10 1010 60 1012 110 C1010 160 990 210 930 210 H150 C70 210 22 160 18 110 C22 60 70 10 150 10 Z",
+        fill: "#f6f9f9", stroke: "#c9d4d8", "stroke-width": 2,
+      });
+      // кабина пилотов
+      add("path", { d: "M58 82 C70 62 92 54 112 54 V166 C92 166 70 158 58 138 Z", fill: "#e3eaec" });
+      for (let r = 0; r < rows; r++) {
+        for (let s = 0; s < perRow; s++) {
+          const index = r * perRow + s;
+          const x = 170 + r * 50;
+          const y = 32 + s * 26 + (s >= 3 ? 26 : 0);
+          add("rect", {
+            x, y, width: 32, height: 20, rx: 5,
+            fill: index < filled ? "var(--petrol)" : "var(--seat-free)",
+          });
+        }
+      }
+      // лишние желающие у трапа
+      for (let i = 0; i < overflow; i++) {
+        add("circle", { cx: 1080 + i * 28, cy: 92, r: 10, fill: "var(--coral)" });
+        add("path", { d: `M${1067 + i * 28} 128 a13 13 0 0 1 26 0 Z`, fill: "var(--coral)" });
+      }
+      if (overflow) {
+        const label = add("text", { x: 1060, y: 158, "font-size": 16, fill: "var(--coral)", "font-weight": 600 });
+        label.textContent = `+${Math.round(data.wanted - data.seats)} без места`;
+      }
+      target.replaceChildren(svg);
+    }
+
+    renderCabin(document.getElementById("cabin"), SAMPLE);
+    DemandChart.render(document.getElementById("chart"), SAMPLE, { width: 1060, height: 300 });
+  </script>
+</body>
+</html>

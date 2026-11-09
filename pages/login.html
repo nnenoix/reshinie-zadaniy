@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вход · Решись Авиа</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&amp;family=Golos+Text:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/style.css">
+<script type="module" src="/static/js/login.js"></script>
+</head>
+<body data-page="auth">
+<div class="auth">
+  <aside class="auth__side">
+    <a class="brand" href="/">[ РЕШИСЬ АВИА <span class="accent">/ ПРОГНОЗ</span> ]</a>
+    <div class="auth__body">
+      <h1 class="auth__title">Прогноз <span class="accent">продаж</span> для каждого рейса</h1>
+      <ul class="facts">
+        <li><span class="facts__n">01 →</span>5 маршрутов из Москвы</li>
+        <li><span class="facts__n">02 →</span><span data-dates>Вылеты с 01.06 по 01.07.2026</span></li>
+        <li><span class="facts__n">03 →</span>9 сценариев спроса на рейс</li>
+      </ul>
+    </div>
+    <p class="label">[ Гостю — своя история расчётов ]</p>
+  </aside>
+
+  <main class="auth__main">
+    <div class="card auth__card">
+      <p class="label" id="auth-label">[ <span class="label__num">01</span> / Вход ]</p>
+      <div class="tabs" role="tablist">
+        <button class="tabs__btn" type="button" role="tab" aria-selected="true" data-tab="login">Вход</button>
+        <button class="tabs__btn" type="button" role="tab" aria-selected="false" data-tab="register">Регистрация</button>
+      </div>
+
+      <form class="auth__form" id="login-form" data-form="login" action="/api/login" method="post" novalidate>
+        <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">ОШИБКА</span><span data-error-text></span></div>
+        <div class="field" data-field="login">
+          <label class="field__label" for="login-login">Логин или email</label>
+          <div class="field__box"><input class="field__control field__control--mono" type="text" id="login-login" name="login" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+          <p class="field__error" data-error-for="login" hidden></p>
+        </div>
+        <div class="field" data-field="password">
+          <label class="field__label" for="login-password">Пароль</label>
+          <div class="field__box"><input class="field__control" type="password" id="login-password" name="password" autocomplete="current-password" required><button class="field__toggle" type="button" data-toggle-password>ПОКАЗАТЬ</button></div>
+          <p class="field__error" data-error-for="password" hidden></p>
+        </div>
+        <button class="btn" type="submit"><span>Войти</span><span>→</span></button>
+        <p class="auth__switch">Нет аккаунта? <button class="link-btn" type="button" data-tab="register">Зарегистрироваться →</button></p>
+      </form>
+
+      <form class="auth__form" id="register-form" data-form="register" action="/api/register" method="post" novalidate hidden>
+        <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">ОШИБКА</span><span data-error-text></span></div>
+        <div class="field" data-field="login">
+          <label class="field__label" for="reg-login">Логин или email</label>
+          <div class="field__box"><input class="field__control field__control--mono" type="text" id="reg-login" name="login" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+          <p class="field__hint">3–64 СИМВОЛА: БУКВЫ, ЦИФРЫ, . - _ @ +</p>
+          <p class="field__error" data-error-for="login" hidden></p>
+        </div>
+        <div class="field" data-field="password">
+          <label class="field__label" for="reg-password">Пароль</label>
+          <div class="field__box"><input class="field__control" type="password" id="reg-password" name="password" autocomplete="new-password" required><button class="field__toggle" type="button" data-toggle-password>ПОКАЗАТЬ</button></div>
+          <p class="field__hint">НЕ КОРОЧЕ 8 СИМВОЛОВ</p>
+          <p class="field__error" data-error-for="password" hidden></p>
+        </div>
+        <div class="field" data-field="password2">
+          <label class="field__label" for="reg-password2">Повторите пароль</label>
+          <div class="field__box"><input class="field__control" type="password" id="reg-password2" name="password2" autocomplete="new-password" required></div>
+          <p class="field__error" data-error-for="password2" hidden></p>
+        </div>
+        <button class="btn" type="submit"><span>Создать аккаунт</span><span>→</span></button>
+        <p class="auth__switch">Уже есть аккаунт? <button class="link-btn" type="button" data-tab="login">Войти →</button></p>
+      </form>
+
+      <div class="auth__guest">
+        <span class="auth__or">или</span>
+        <button class="btn btn--ghost-lg btn--wide" type="button" data-guest>Войти как гость</button>
+        <p class="field__hint">БЕЗ РЕГИСТРАЦИИ, У КАЖДОГО ГОСТЯ СВОЯ ИСТОРИЯ</p>
+        <p class="field__error" data-guest-error role="alert" hidden></p>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

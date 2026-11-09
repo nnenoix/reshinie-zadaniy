@@ -1,0 +1,17 @@
+# окружение и кэши
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# базы и данные запуска
+var/
+*.db
+*.db-journal
+
+# скриншоты сравнения с макетом и временное
+compare/
+.playwright-mcp/
+*.log
+*.tmp
+.env

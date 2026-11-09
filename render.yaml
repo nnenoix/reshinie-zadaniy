@@ -1,0 +1,16 @@
+# Render Blueprint: веб-сервис из Dockerfile на бесплатном тарифе.
+# Render → New → Blueprint → выбрать репозиторий. Порт сервис берёт из $PORT.
+# На бесплатном тарифе диска нет: база в /app/var пустеет при каждом перезапуске,
+# демо-аккаунт создаётся заново при старте, гость — по кнопке.
+services:
+  - type: web
+    name: reshinie-zadaniy
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: COOKIE_SECURE   # Render отдаёт сайт по HTTPS: cookie только по HTTPS и заголовок HSTS
+        value: "1"
