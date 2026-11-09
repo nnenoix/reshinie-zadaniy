@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.catalog import load_catalog
-from app.config import DEMO_LOGIN, DEMO_PASSWORD
+from app.config import DEMO_LOGIN, Settings, from_environment
 from app.main import create_app
 from app.pricing import best_price, expected, make_forecast
 
@@ -220,11 +220,26 @@ def test_guest_login_works_without_registration(client):
     assert client.post("/api/forecast", json={**STORY, "price": 5500}).status_code == 200
 
 
-def test_demo_account_from_readme_logs_in(client):
-    response = client.post("/api/login", json={"login": DEMO_LOGIN, "password": DEMO_PASSWORD})
+def test_demo_account_needs_a_password_from_the_environment(client):
+    # В репозитории пароля нет: без DEMO_PASSWORD демо-аккаунт не создаётся.
+    response = client.post("/api/login", json={"login": DEMO_LOGIN, "password": "anything-1"})
+
+    assert response.status_code == 401
+
+
+def test_demo_account_logs_in_with_the_password_from_settings(settings):
+    with_demo = Settings(**{**settings.__dict__, "demo_password": "demo-pass-for-tests"})
+    with TestClient(create_app(with_demo)) as client:
+        client.headers["X-CSRF-Token"] = client.get("/api/csrf").json()["token"]
+        response = client.post("/api/login", json={"login": DEMO_LOGIN, "password": "demo-pass-for-tests"})
 
     assert response.status_code == 200
     assert response.json() == {"login": DEMO_LOGIN}
+
+
+def test_settings_read_demo_password_only_from_the_environment():
+    assert from_environment({}).demo_password == ""
+    assert from_environment({"DEMO_PASSWORD": "x-from-panel"}).demo_password == "x-from-panel"
 
 
 def test_health(client, settings):

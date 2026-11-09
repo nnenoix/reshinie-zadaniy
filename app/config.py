@@ -9,7 +9,7 @@ DB_PATH          база SQLite (пользователи, сессии, ист
 COOKIE_SECURE    1 — cookie только по HTTPS (включить на хостинге)
 SESSION_DAYS     сколько дней действует вход; по умолчанию 7
 DEMO_LOGIN       демо-аккаунт для жюри; по умолчанию jury
-DEMO_PASSWORD    пароль демо-аккаунта; пустая строка — демо-аккаунт не создаётся
+DEMO_PASSWORD    пароль демо-аккаунта; не задан — демо-аккаунта нет (в репозитории пароля нет)
 LOGIN_LIMIT      сколько неудачных входов подряд разрешено с одного адреса; по умолчанию 5
 LOGIN_WINDOW_MINUTES  за какое окно они считаются; по умолчанию 5
 ACCOUNT_LOGIN_LIMIT   сколько неудачных входов в один аккаунт с любых адресов; по умолчанию 10
@@ -23,10 +23,10 @@ SIGNUP_LIMIT     сколько новых аккаунтов и гостей в
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Mapping
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 DEMO_LOGIN = "jury"
-DEMO_PASSWORD = "XePqLeeZozQu"  # сгенерирован случайно, записан в README
 
 
 @dataclass(frozen=True)
@@ -39,7 +39,7 @@ class Settings:
     cookie_secure: bool = False
     session_days: int = 7
     demo_login: str = DEMO_LOGIN
-    demo_password: str = DEMO_PASSWORD
+    demo_password: str = ""  # пароль только из окружения: в репозитории его нет
     login_limit: int = 5
     login_window_minutes: int = 5
     account_login_limit: int = 10  # неудачных входов в один аккаунт с любых адресов
@@ -49,30 +49,39 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
-        defaults = cls()
-        return cls(
-            routes_csv=_path("ROUTES_CSV", defaults.routes_csv),
-            forecast_csv=_path("FORECAST_CSV", defaults.forecast_csv),
-            ml_forecast_csv=_path("ML_FORECAST_CSV", defaults.ml_forecast_csv),
-            db_path=_path("DB_PATH", defaults.db_path),
-            database_url=os.environ.get("DATABASE_URL", "").strip() or None,
-            cookie_secure=os.environ.get("COOKIE_SECURE", "").strip().lower() in {"1", "true", "yes"},
-            session_days=int(os.environ.get("SESSION_DAYS", defaults.session_days)),
-            demo_login=os.environ.get("DEMO_LOGIN", defaults.demo_login).strip(),
-            demo_password=os.environ.get("DEMO_PASSWORD", defaults.demo_password),
-            login_limit=int(os.environ.get("LOGIN_LIMIT", defaults.login_limit)),
-            login_window_minutes=int(os.environ.get("LOGIN_WINDOW_MINUTES", defaults.login_window_minutes)),
-            account_login_limit=int(os.environ.get("ACCOUNT_LOGIN_LIMIT", defaults.account_login_limit)),
-            account_login_window_minutes=int(os.environ.get("ACCOUNT_LOGIN_WINDOW_MINUTES",
-                                                            defaults.account_login_window_minutes)),
-            client_ip_header=os.environ.get("CLIENT_IP_HEADER", "").strip().lower() or None,
-            signup_limit=int(os.environ.get("SIGNUP_LIMIT", defaults.signup_limit)),
-        )
+        return from_environment(os.environ)
 
 
-def _path(name: str, default: Path) -> Path:
-    raw = os.environ.get(name, "").strip()
-    if not raw:
-        return default
-    path = Path(raw)
-    return path if path.is_absolute() else PROJECT_DIR / path
+def from_environment(env: Mapping[str, str]) -> Settings:
+    defaults = Settings()
+
+    def text(name: str, default: str = "") -> str:
+        return env.get(name, default).strip()
+
+    def number(name: str, default: int) -> int:
+        return int(text(name) or default)
+
+    def path(name: str, default: Path) -> Path:
+        raw = text(name)
+        if not raw:
+            return default
+        given = Path(raw)
+        return given if given.is_absolute() else PROJECT_DIR / given
+
+    return Settings(
+        routes_csv=path("ROUTES_CSV", defaults.routes_csv),
+        forecast_csv=path("FORECAST_CSV", defaults.forecast_csv),
+        ml_forecast_csv=path("ML_FORECAST_CSV", defaults.ml_forecast_csv),
+        db_path=path("DB_PATH", defaults.db_path),
+        database_url=text("DATABASE_URL") or None,
+        cookie_secure=text("COOKIE_SECURE").lower() in {"1", "true", "yes"},
+        session_days=number("SESSION_DAYS", defaults.session_days),
+        demo_login=text("DEMO_LOGIN", defaults.demo_login),
+        demo_password=env.get("DEMO_PASSWORD", ""),
+        login_limit=number("LOGIN_LIMIT", defaults.login_limit),
+        login_window_minutes=number("LOGIN_WINDOW_MINUTES", defaults.login_window_minutes),
+        account_login_limit=number("ACCOUNT_LOGIN_LIMIT", defaults.account_login_limit),
+        account_login_window_minutes=number("ACCOUNT_LOGIN_WINDOW_MINUTES", defaults.account_login_window_minutes),
+        client_ip_header=text("CLIENT_IP_HEADER").lower() or None,
+        signup_limit=number("SIGNUP_LIMIT", defaults.signup_limit),
+    )

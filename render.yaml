@@ -27,3 +27,5 @@ services:
         value: "1"
       - key: CLIENT_IP_HEADER   # адрес клиента для лимитов ставит Cloudflare перед Render; X-Forwarded-For подделывается
         value: cf-connecting-ip
+      - key: DEMO_PASSWORD   # пароль демо-аккаунта jury: значение задаётся в панели Render, в репозитории его нет
+        sync: false
