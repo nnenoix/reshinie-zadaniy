@@ -6,7 +6,7 @@
 <title>Прогноз продаж · Решись Авиа</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&amp;family=Golos+Text:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700&amp;family=Manrope:wght@700;800&amp;family=Onest:wght@400;500;600&amp;display=swap" rel="stylesheet">
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
@@ -67,13 +67,13 @@
       </div>
       <div class="field" data-field="date">
         <label class="field__label" for="date">Дата вылета</label>
-        <div class="field__box"><input class="field__control field__control--mono" type="date" id="date" name="date" required></div>
+        <div class="field__box"><input class="field__control" type="date" id="date" name="date" required></div>
         <p class="field__hint" id="date-hint"></p>
         <p class="field__error" data-error-for="date" hidden></p>
       </div>
       <div class="field" data-field="price">
         <label class="field__label" for="price">Цена билета</label>
-        <div class="field__box"><input class="field__control field__control--mono" type="text" inputmode="decimal" id="price" name="price" autocomplete="off" required><span class="field__suffix">₽</span></div>
+        <div class="field__box"><input class="field__control" type="text" inputmode="decimal" id="price" name="price" autocomplete="off" required><span class="field__suffix">₽</span></div>
         <p class="field__error" data-error-for="price" hidden></p>
       </div>
       <div class="range-wrap">
@@ -98,7 +98,7 @@
         <li><span class="legend__sw legend__sw--line"></span>ОЖИДАЕМАЯ ПРИБЫЛЬ</li>
         <li><span class="legend__sw legend__sw--dot"></span>ВАША ЦЕНА</li>
       </ul>
-      <button class="btn btn--outline" type="button" id="apply-best"><span>Поставить лучшую цену</span><span class="mono" id="apply-best-price"></span></button>
+      <button class="btn btn--outline" type="button" id="apply-best"><span>Поставить лучшую цену</span><span class="btn__small" id="apply-best-price"></span></button>
       <p class="small-note" id="best-note">Ожидаемая прибыль — среднее по 9 сценариям от (цена − расходы на пассажира) × купят. Кривую и максимум считает сервер.</p>
     </section>
   </div>

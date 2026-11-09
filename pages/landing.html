@@ -7,7 +7,7 @@
 <meta name="description" content="Динамическое ценообразование авиабилетов: модель одного дня самолёта, прогноз спроса на июнь 2026 года и сервис, который считает продажи и цену на лету.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&amp;family=Golos+Text:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700&amp;family=Manrope:wght@700;800&amp;family=Onest:wght@400;500;600&amp;display=swap" rel="stylesheet">
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/style.css">
 <script type="module" src="/static/js/landing.js"></script>
@@ -44,7 +44,7 @@
   </div>
   <aside class="card flight">
     <p class="label">[ Рейс дня / <span data-story="source">прогноз спроса</span> ]</p>
-    <div class="flight__route"><span class="flight__code">MOW</span><span class="flight__path"></span><span class="accent mono">→</span><span class="flight__code">LED</span></div>
+    <div class="flight__route"><span class="flight__code">MOW</span><span class="flight__path"></span><span class="accent">→</span><span class="flight__code">LED</span></div>
     <p class="flight__meta">12.06.2026 · ПЯТНИЦА · ДЕНЬ РОССИИ</p>
     <div class="fri" id="story-fridays" aria-label="Медиана спроса по пятницам июня">
       <p class="fri__empty">Загружаем прогноз по пятницам июня…</p>
@@ -61,7 +61,7 @@
     <div class="lp-num"><dt>теневая цена кресла в пиковую пятницу</dt><dd>4<small>тыс. ₽</small></dd></div>
     <div class="lp-num"><dt>прибыли больше, чем при базовой цене, на бэктесте мая</dt><dd>+6,7<small>млн ₽</small></dd></div>
     <div class="lp-num"><dt>случаев мая, где факт попал в коридор прогноза 10–90%</dt><dd>83<small>%</small></dd></div>
-    <div class="lp-num"><dt>автотестов проверяют сервис</dt><dd><span data-tests>370</span></dd></div>
+    <div class="lp-num"><dt>автотестов проверяют сервис</dt><dd><span data-tests>372</span></dd></div>
   </dl>
 </section>
 
@@ -115,7 +115,7 @@
     </div>
     <div class="card case__card">
       <dl class="metrics metrics--2">
-        <div class="metric"><dt class="metric__label">автотестов</dt><dd class="metric__value"><span data-tests>370</span></dd></div>
+        <div class="metric"><dt class="metric__label">автотестов</dt><dd class="metric__value"><span data-tests>372</span></dd></div>
         <div class="metric"><dt class="metric__label">лучшая цена 12 июня по нашей модели</dt><dd class="metric__value metric__value--acc">5&nbsp;605<span class="metric__unit">₽</span></dd></div>
       </dl>
       <ol class="feat">
@@ -163,7 +163,7 @@
 <section class="lp-section" id="checked">
   <div class="lp-note">
     <p class="label">[ КАК ПРОВЕРЕНО ]</p>
-    <p class="lp-note__text">Отдельный скрипт пересчитал 287 чисел аналитики. Прогноз проверен на мае 2026 года: факт попадает в коридор 10–90% в 83% случаев. Сервис проверяют <span data-tests>370</span> автотестов.</p>
+    <p class="lp-note__text">Отдельный скрипт пересчитал 287 чисел аналитики. Прогноз проверен на мае 2026 года: факт попадает в коридор 10–90% в 83% случаев. Сервис проверяют <span data-tests>372</span> автотестов.</p>
   </div>
 </section>
 

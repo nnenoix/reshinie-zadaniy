@@ -210,14 +210,27 @@ def test_pages_keep_markup_apart_from_logic(client, path):
     assert "demo=" not in html
 
 
+DESIGN_FONTS = ("https://fonts.googleapis.com/css2?family=Unbounded:wght@700&amp;family=Manrope:wght@700;800"
+                "&amp;family=Onest:wght@400;500;600&amp;display=swap")
+STYLE = PROJECT / "static" / "style.css"
+
+
 @pytest.mark.parametrize("path", ["/", "/login", "/app"])
 def test_pages_load_design_fonts_allowed_by_csp(client, path):
+    # вариант А: Unbounded — главный заголовок, Manrope — подзаголовки, числа и кнопки, Onest — текст
     response = open_page(client, path)
     policy = response.headers["content-security-policy"]
 
-    assert "fonts.googleapis.com/css2?family=Unbounded" in response.text
+    assert re.findall(r'href="(https://fonts\.googleapis\.com/css2[^"]*)"', response.text) == [DESIGN_FONTS]
     assert "style-src 'self' https://fonts.googleapis.com" in policy
     assert "font-src 'self' https://fonts.gstatic.com" in policy
+
+
+def test_style_uses_only_the_three_design_fonts():
+    css = STYLE.read_text(encoding="utf-8")
+
+    assert "JetBrains Mono" not in css and "Golos Text" not in css
+    assert set(re.findall(r"'([A-Za-z][^']*)'", css)) == {"Unbounded", "Manrope", "Onest"}
 
 
 def test_old_static_page_is_gone(client):

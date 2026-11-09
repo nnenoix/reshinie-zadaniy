@@ -76,6 +76,17 @@ def test_story_calculation_shows_numbers_and_odds(page):
     assert page.locator("#chart svg rect.ch-bar").count() == 9
 
 
+def test_page_is_drawn_with_the_three_design_fonts(page):
+    loaded = page.evaluate("""async () => {
+        await document.fonts.ready;
+        return [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family.replace(/["']/g, ''));
+    }""")
+    if not loaded:
+        pytest.skip("шрифты Google Fonts не загрузились: нет интернета")
+
+    assert set(loaded) == {"Unbounded", "Manrope", "Onest"}
+
+
 def test_negative_price_is_kept_and_explained(page):
     page.fill("#price", "−500")
     page.locator("#price").blur()
