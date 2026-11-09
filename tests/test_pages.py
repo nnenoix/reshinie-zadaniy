@@ -362,3 +362,12 @@ def test_percent_sign_is_set_off_by_a_non_breaking_space(client, path):
     text = re.sub(r"<[^>]*>", "\n", html)  # без тегов: в адресах ссылок «%D0» — не проценты
 
     assert PERCENT_WITHOUT_NBSP.findall(text) == []
+
+
+def test_june_12_is_compared_with_the_other_fridays_of_june(client):
+    # 12 июня сравнивается со всеми остальными пятницами июня (5, 19, 26), а не с «соседними».
+    html = page(client, "/")
+
+    assert "спрос на 13&nbsp;% ниже других пятниц июня: медиана 917 против 1 049" in html
+    assert "12 июня бледнее других пятниц июня" in html
+    assert "соседн" not in html
