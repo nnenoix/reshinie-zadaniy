@@ -258,3 +258,18 @@ def test_percents_written_by_scripts_keep_a_non_breaking_space(browser, base_url
     context.close()
 
     assert (in_tool, on_landing) == ([], [])
+
+
+@pytest.mark.parametrize("sold_out, chance", [
+    (0, "меньше 10 %"), (1, "от 10 до 20 %"), (3, "от 30 до 40 %"),
+    (8, "от 80 до 90 %"), (9, "больше 90 %"),
+])
+def test_chance_to_run_out_of_seats_is_an_honest_range(page, sold_out, chance):
+    # k сценариев из 9 упираются в места: места лежат между квантилями 0.(9−k) и 0.(10−k),
+    # значит, вероятность упора — от k×10 до (k+1)×10 %, а не «≈ k×10 %».
+    text = page.evaluate("""async (k) => {
+        const { oddsText } = await import('/static/js/format.js');
+        return oddsText({ low: 782, high: 1039, sold_out_scenarios: k });
+    }""", sold_out)
+
+    assert text == f"С вероятностью 80 % желающих от 782 до 1 039; в места упрёмся с вероятностью {chance}."

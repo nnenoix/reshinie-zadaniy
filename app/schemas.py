@@ -51,7 +51,9 @@ class SessionOut(BaseModel):
 class OddsOut(BaseModel):
     low: float = Field(description="Желают в сценарии 0.1: нижняя граница коридора 80 %")
     high: float = Field(description="Желают в сценарии 0.9: верхняя граница коридора 80 %")
-    sold_out_scenarios: int = Field(description="Сколько сценариев из 9 упираются в места; вероятность ≈ × 10 %")
+    sold_out_scenarios: int = Field(description="Сколько сценариев из 9 упираются в места (k); вероятность упора — "
+                                                 "от k×10 до (k+1)×10 %, при k = 0 меньше 10 %, "
+                                                 "при k = 9 больше 90 %")
 
 
 class CsrfOut(BaseModel):
