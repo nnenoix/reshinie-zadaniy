@@ -51,15 +51,20 @@ def browser():
         chrome.close()
 
 
-@pytest.fixture
-def page(browser, base_url):
-    """Новый гость в чистом браузере, расчёт 12 июня уже на экране."""
-    context = browser.new_context(accept_downloads=True, viewport={"width": 1440, "height": 900})
+def open_tool(browser, base_url, width=1440):
+    """Новый гость в чистом браузере шириной width, расчёт 12 июня уже на экране."""
+    context = browser.new_context(accept_downloads=True, viewport={"width": width, "height": 900})
     tab = context.new_page()
     tab.goto(base_url + "/login")
     tab.click("[data-guest]")
     tab.wait_for_url("**/app")
     wait_for_result(tab)
+    return context, tab
+
+
+@pytest.fixture
+def page(browser, base_url):
+    context, tab = open_tool(browser, base_url)
     yield tab
     context.close()
 
@@ -105,6 +110,17 @@ def test_phone_header_of_a_guest_keeps_the_brand_on_one_line(browser, base_url):
         pytest.skip("Manrope не загрузился: нет интернета, ширина шапки другая")
 
     assert (lines, overflow) == (1, 0)  # «Решись Авиа» рядом с «Зарегистрироваться» и «Выйти»
+
+
+def test_landing_chart_note_spells_the_source_as_it_is(browser, base_url):
+    context = browser.new_context(viewport={"width": 1440, "height": 900})
+    tab = context.new_page()
+    tab.goto(base_url + "/")
+    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
+    note = tab.inner_text('[data-story="chart-how"]')
+    context.close()
+
+    assert "источник: наша ML-модель." in note  # не «наша ml-модель»
 
 
 def test_negative_price_is_kept_and_explained(page):
