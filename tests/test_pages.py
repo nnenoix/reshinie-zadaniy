@@ -87,7 +87,8 @@ def test_best_price_on_landing_is_the_one_the_service_computes(client):
 def test_landing_texts_from_the_submission(client):
     html = page(client, "/")
 
-    assert "уступают лучшей не больше чем на 2%" in html
+    assert "Ансамбль точнее лишь на 1,8%" in html
+    assert "пересчитал 287 чисел аналитики" in html
     assert "Защита: лимит попыток входа, CSRF-токен, CSP." in html
     assert "Цену берём из прогноза. Правило «пятница — значит дороже» здесь не работает." in html
     # оборот «X, а не Y» — только в заголовке
