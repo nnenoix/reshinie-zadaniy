@@ -77,7 +77,7 @@ def test_story_calculation_shows_numbers_and_odds(page):
     assert page.inner_text("#result-route").startswith("Москва → Санкт-Петербург · 12.06.2026")
     assert page.inner_text('[data-out="seats"]') == "1 440"
     assert page.inner_text('[data-out="want"]') == "917"  # медиана нашей модели при 5 500 ₽
-    assert page.inner_text("#chart-odds").startswith("С вероятностью 80% желающих от 782 до 1 039")
+    assert page.inner_text("#chart-odds").startswith("С вероятностью 80 % желающих от 782 до 1 039")
     assert page.locator("#chart svg rect.ch-bar").count() == 9
 
 
@@ -233,3 +233,28 @@ def test_opening_the_story_without_login_leaves_no_errors_in_the_console(browser
     context.close()
 
     assert errors == []
+
+
+TEXT_PERCENTS = r"""() => {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const bad = [];
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (/\d[ \t]?%/.test(node.textContent)) bad.push(node.textContent.trim());
+    }
+    return bad;
+}"""
+
+
+def test_percents_written_by_scripts_keep_a_non_breaking_space(browser, base_url):
+    # «−13 %», «64 %», «С вероятностью 80 %…» пишет JavaScript: везде «число&nbsp;%», как в вёрстке.
+    context, tab = open_tool(browser, base_url)
+    for name in ("salon", "calendar", "ticket"):
+        tab.click(f'.tabs--main [data-tab="{name}"]')
+    tab.wait_for_function("() => document.querySelector(\"#cal-min\").textContent !== \"\"")
+    in_tool = tab.evaluate(TEXT_PERCENTS)
+    tab.goto(base_url + "/")
+    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
+    on_landing = tab.evaluate(TEXT_PERCENTS)
+    context.close()
+
+    assert (in_tool, on_landing) == ([], [])

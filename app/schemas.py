@@ -49,8 +49,8 @@ class SessionOut(BaseModel):
 
 
 class OddsOut(BaseModel):
-    low: float = Field(description="Желают в сценарии 0.1: нижняя граница коридора 80 %")
-    high: float = Field(description="Желают в сценарии 0.9: верхняя граница коридора 80 %")
+    low: float = Field(description="Желают в сценарии 0.1: нижняя граница коридора 80 %")
+    high: float = Field(description="Желают в сценарии 0.9: верхняя граница коридора 80 %")
     sold_out_scenarios: int = Field(description="Сколько сценариев из 9 упираются в места; вероятность ≈ × 10 %")
 
 
@@ -265,7 +265,7 @@ class StoryOut(BaseModel):
     high: float = Field(description="Верхняя граница коридора: 0.9_base_demand")
     fridays: list[FridayOut] = Field(description="Все пятницы месяца, включая день истории")
     others_mean: float = Field(description="Средняя медиана других пятниц")
-    drop: float = Field(description="На какую долю спрос дня истории ниже других пятниц, 0.13 = 13%")
+    drop: float = Field(description="На какую долю спрос дня истории ниже других пятниц, 0.13 = 13 %")
     price: float = Field(description="Цена, для которой посчитаны сценарии (базовая цена маршрута)")
     scenarios: list[ScenarioOut]
     best: BestOut

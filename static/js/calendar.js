@@ -1,7 +1,7 @@
 // Календарь загрузки на месяц (вёрстка из макета Claude Design).
 // Цвет клетки — загрузка при выбранной цене. Шкала идёт от самого слабого дня месяца
 // до самого сильного: так на рейсе в Петербург видно, что 12 июня бледнее соседних пятниц.
-import { dateOf, fmt, node, shortDate } from "./format.js";
+import { dateOf, fmt, node, shortDate, withPercent } from "./format.js";
 
 const WEEK = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const PALEST = 8, DARK_FROM = 78; // доля акцентного цвета, %: у самого слабого дня и с которой текст белый
@@ -32,7 +32,7 @@ export function drawCalendar(box, days, { selected, onPick }) {
     cell.type = "button";
     cell.dataset.date = day.date;
     cell.style.setProperty("--mix", `${mix}%`);
-    cell.setAttribute("aria-label", `${shortDate(day.date)}, загрузка ${pct} %` +
+    cell.setAttribute("aria-label", `${shortDate(day.date)}, загрузка ${withPercent(pct)}` +
       (day.sold_out ? ", упор в места" : "") + (day.holiday ? `, ${day.holiday}` : ""));
 
     const topRow = node("span", "cal__top");

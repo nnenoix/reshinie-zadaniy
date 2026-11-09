@@ -4,7 +4,7 @@ import { get, latestOnly, post } from "./api.js";
 import { downloadPdf, downloadPng, fillTicket, ticketData } from "./boarding-pass.js";
 import { drawCalendar } from "./calendar.js";
 import { drawQuantiles } from "./demand-chart.js";
-import { dayMonth, dow, fmt, node, oddsText, parsePrice, plural, rub, seatsText, shortDate, whole } from "./format.js";
+import { dayMonth, dow, fmt, node, oddsText, parsePrice, percent, plural, rub, seatsText, shortDate, whole, withPercent } from "./format.js";
 import { drawProfit } from "./profit-chart.js";
 import { drawQueue, drawSeats, salonText } from "./seat-map.js";
 
@@ -396,7 +396,7 @@ async function refreshCompare(d) {
     if (s.source === d.source) row.className = "is-current";
     const f = s.forecast;
     const cells = f
-      ? [[s.name, "l"], [whole(Math.max(0, f.wanted))], [whole(f.sold)], [`${whole(f.load * 100)} %`], [whole(f.best_price)]]
+      ? [[s.name, "l"], [whole(Math.max(0, f.wanted))], [whole(f.sold)], [percent(f.load)], [whole(f.best_price)]]
       : [[s.name, "l"], [s.detail], [""], [""], [""]];
     row.replaceChildren(...cells.map(([text, cls]) => node("td", cls, text)));
     return row;
@@ -463,10 +463,10 @@ async function loadCalendar(d) {
   }
   S.calendarKey = key;
   const loads = drawCalendar($("#cal"), response.data.days, { selected: d.date, onPick: pickDay });
-  $("#cal-min").textContent = `${loads.min} %`;
-  $("#cal-max").textContent = `${loads.max} %`;
-  $("#cal-how").textContent = `Цвет — загрузка при цене ${rub(d.price)}: от самого слабого дня месяца (${loads.min} %) ` +
-    `до самого сильного (${loads.max} %). Нажмите на день — откроется расчёт на эту дату.`;
+  $("#cal-min").textContent = withPercent(loads.min);
+  $("#cal-max").textContent = withPercent(loads.max);
+  $("#cal-how").textContent = `Цвет — загрузка при цене ${rub(d.price)}: от самого слабого дня месяца (${withPercent(loads.min)}) ` +
+    `до самого сильного (${withPercent(loads.max)}). Нажмите на день — откроется расчёт на эту дату.`;
 }
 
 function pickDay(day) {
@@ -527,7 +527,7 @@ function historyRow(entry) {
   flag.append(again);
   row.append(node("td", "l time", timeOf(entry.created_at)), route, node("td", "l", shortDate(entry.date)),
     node("td", "", fmt(entry.price, 2)), node("td", "", whole(entry.seats)), node("td", "", whole(want)),
-    node("td", "buy", whole(entry.sold)), node("td", "", `${whole(entry.load * 100)} %`), flag);
+    node("td", "buy", whole(entry.sold)), node("td", "", percent(entry.load)), flag);
   return row;
 }
 

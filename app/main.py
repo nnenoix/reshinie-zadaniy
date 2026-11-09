@@ -449,7 +449,7 @@ def compare(origin: str | None = Q_ORIGIN, destination: str | None = Q_DESTINATI
 
 @router.get("/api/story", tags=["Прогноз"], response_model=schemas.StoryOut, responses=ERRORS,
             summary="Сквозная история: пятница 12 июня на рейсе Москва → Санкт-Петербург",
-            description="Публичный адрес для витрины. Медиана спроса 12 июня, коридор 10–90 %, все пятницы "
+            description="Публичный адрес для витрины. Медиана спроса 12 июня, коридор 10–90 %, все пятницы "
                         "июня и на сколько 12 июня ниже остальных; 9 сценариев и лучшая цена при базовой цене.")
 def story(source: str | None = Q_SOURCE, sources: ForecastSources = Depends(get_sources)) -> dict:
     source_id = parse_source({"source": source}, sources.default_source())

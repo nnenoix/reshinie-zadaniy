@@ -15,7 +15,9 @@ export function fmt(value, digits = 1) {
 export const whole = (value) => fmt(value, 0);
 export const rub = (value) => `${whole(value)} ₽`;
 export const signedRub = (value) => `${value > 0 ? "+" : ""}${rub(value)}`;
-export const percent = (share) => `${whole(share * 100)} %`;
+// Проценты по-русски: «64 %» с неразрывным пробелом, чтобы «%» не уезжал на другую строку.
+export const withPercent = (number) => `${number} %`;
+export const percent = (share) => withPercent(whole(share * 100));
 
 // «5 500 ₽», «5500,5» → «5500.5»: так цену понимает сервер. Типографский минус и тире — обычный минус.
 export function parsePrice(text) {
@@ -64,8 +66,8 @@ export function seatsText(n) {
 // Сценарии 0.1 и 0.9 ограничивают 80% вероятности, каждый из 9 сценариев — примерно 10%.
 export function oddsText(odds) {
   const n = odds.sold_out_scenarios;
-  const chance = n === 0 ? "меньше 10%" : n === 9 ? "больше 90%" : `≈ ${n * 10}%`;
-  return `С вероятностью 80% желающих от ${whole(odds.low)} до ${whole(odds.high)}; ` +
+  const chance = n === 0 ? `меньше ${withPercent(10)}` : n === 9 ? `больше ${withPercent(90)}` : `≈ ${withPercent(n * 10)}`;
+  return `С вероятностью ${withPercent(80)} желающих от ${whole(odds.low)} до ${whole(odds.high)}; ` +
     `в места упрёмся с вероятностью ${chance}.`;
 }
 

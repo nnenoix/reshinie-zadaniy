@@ -115,7 +115,7 @@ def test_best_price_on_landing_is_the_one_the_service_computes(client):
 def test_landing_texts_from_the_submission(client):
     html = page(client, "/")
 
-    assert "Ансамбль точнее лишь на 1,8%" in html
+    assert "Ансамбль точнее лишь на 1,8&nbsp;%" in html
     assert "(WQL 0,068 против 0,076), и не требует переобучения." in html
     assert "её не надо переобучать" not in html
     assert "пересчитал 287 чисел аналитики" in html
@@ -349,3 +349,16 @@ def test_guest_gets_a_link_to_register(client):
     html = open_page(client, "/app").text
 
     assert re.search(r'<a [^>]*href="/login#register"[^>]*id="register-link"', html)
+
+
+# Проценты по правилам русской типографики: «13 %» с неразрывным пробелом, чтобы «%» не уезжал
+# на другую строку. Крупные числа с отдельным «%» (83<small>%</small>) отбиты отступом в CSS.
+PERCENT_WITHOUT_NBSP = re.compile(r"\d[ \t]?%")
+
+
+@pytest.mark.parametrize("path", ["/", "/login", "/app"])
+def test_percent_sign_is_set_off_by_a_non_breaking_space(client, path):
+    html = open_page(client, path).text.replace("&nbsp;", " ")
+    text = re.sub(r"<[^>]*>", "\n", html)  # без тегов: в адресах ссылок «%D0» — не проценты
+
+    assert PERCENT_WITHOUT_NBSP.findall(text) == []

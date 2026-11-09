@@ -1,7 +1,7 @@
 // Витрина /: пятницы июня и 9 сценариев 12 июня — с сервера (/api/story), кнопки входа в инструмент.
 import { get } from "./api.js";
 import { drawQuantiles } from "./demand-chart.js";
-import { dayMonth, dow, fmt, node, rub, whole } from "./format.js";
+import { dayMonth, dow, fmt, node, percent, rub, whole, withPercent } from "./format.js";
 import { ensureSession, enterAsGuest } from "./guest.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -45,13 +45,13 @@ async function loadStory() {
   }
   story = response.data;
   setStory("source", story.source_name);
-  setStory("drop", `−${whole(story.drop * 100)} %`);
+  setStory("drop", `−${percent(story.drop)}`);
   setStory("summary", `медиана ${whole(story.median)} против ${whole(story.others_mean)} в другие пятницы`);
   setStory("chart-title", `${story.route.origin} → ${story.route.destination} · ${dayMonth(story.date)} · ${rub(story.price)}`);
   // в середине фразы строчная только первая буква: «наша ML-модель», а не «наша ml-модель»
   const source = story.source_name[0].toLowerCase() + story.source_name.slice(1);
   setStory("chart-how", `Девять сценариев спроса при базовой цене ${rub(story.price)}, источник: ` +
-    `${source}. Коридор 10–90 %: от ${fmt(story.low)} до ${fmt(story.high)} желающих ` +
+    `${source}. Коридор ${withPercent("10–90")}: от ${fmt(story.low)} до ${fmt(story.high)} желающих ` +
     `при ${whole(story.seats)} местах. Лучшая цена по ожидаемой прибыли — ${rub(story.best.price)}.`);
   drawFridays($("#story-fridays"), story);
   drawStoryChart();

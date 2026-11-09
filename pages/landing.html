@@ -49,7 +49,7 @@
     <div class="fri" id="story-fridays" aria-label="Медиана спроса по пятницам июня">
       <p class="fri__empty">Загружаем прогноз по пятницам июня…</p>
     </div>
-    <div class="flight__foot"><span class="tag" data-story="drop">−13 %</span><span data-story="summary">спрос 12 июня ниже соседних пятниц</span></div>
+    <div class="flight__foot"><span class="tag" data-story="drop">−13&nbsp;%</span><span data-story="summary">спрос 12 июня ниже соседних пятниц</span></div>
   </aside>
 </section>
 
@@ -60,7 +60,7 @@
     <div class="lp-num"><dt>прибыль пиковой пятницы</dt><dd>1&nbsp;625<small>тыс. ₽</small></dd></div>
     <div class="lp-num"><dt>теневая цена кресла в пиковую пятницу</dt><dd>4<small>тыс. ₽</small></dd></div>
     <div class="lp-num"><dt>прибыли больше, чем при базовой цене, на бэктесте мая</dt><dd>+6,7<small>млн ₽</small></dd></div>
-    <div class="lp-num"><dt>случаев мая, где факт попал в коридор прогноза 10–90%</dt><dd>83<small>%</small></dd></div>
+    <div class="lp-num"><dt>случаев мая, где факт попал в коридор прогноза 10–90&nbsp;%</dt><dd>83<small>%</small></dd></div>
     <div class="lp-num"><dt><!-- tests-label --></dt><dd><!-- tests-count --></dd></div>
   </dl>
 </section>
@@ -90,12 +90,12 @@
     <div class="case__aside">
       <p class="label">Прогноз</p>
       <h2 class="case__title">Спрос на июнь</h2>
-      <p class="case__text">Модель Chronos-2 в AutoGluon. Ансамбль точнее лишь на 1,8%, а Chronos-2 лучше предсказывает коридор сценариев, из которого считается цена (WQL 0,068 против 0,076), и не требует переобучения. Признаки праздников и маршрута снизили ошибку ансамбля с 42,31 до 40,88. Календарь РФ с переносами не помог, и это показано в ноутбуке.</p>
+      <p class="case__text">Модель Chronos-2 в AutoGluon. Ансамбль точнее лишь на 1,8&nbsp;%, а Chronos-2 лучше предсказывает коридор сценариев, из которого считается цена (WQL 0,068 против 0,076), и не требует переобучения. Признаки праздников и маршрута снизили ошибку ансамбля с 42,31 до 40,88. Календарь РФ с переносами не помог, и это показано в ноутбуке.</p>
     </div>
     <div class="card case__card">
       <dl class="metrics metrics--2">
         <div class="metric"><dt class="metric__label">ошибка на мае 2026 года (MAE 47,85)</dt><dd class="metric__value">9,3<span class="metric__unit">%</span></dd></div>
-        <div class="metric"><dt class="metric__label">прибыли больше, чем при базовой цене, на бэктесте мая. Это 68% от потолка идеального прогноза</dt><dd class="metric__value metric__value--acc">+6,7<span class="metric__unit">млн ₽</span></dd></div>
+        <div class="metric"><dt class="metric__label">прибыли больше, чем при базовой цене, на бэктесте мая. Это 68&nbsp;% от потолка идеального прогноза</dt><dd class="metric__value metric__value--acc">+6,7<span class="metric__unit">млн ₽</span></dd></div>
       </dl>
       <ul class="chips">
         <li class="chip">Chronos-2</li><li class="chip">AutoGluon</li><li class="chip">9 квантилей · 0.1–0.9</li>
@@ -137,7 +137,7 @@
       <h2 class="case__title">Пятница, которая не стала пиком</h2>
       <ol class="steps-list">
         <li><span class="steps-list__n">1</span><p><b>Ждали.</b> Пятница 12 июня, День России. Казалось, будет пик спроса, как в пятницу из модели аналитики.</p></li>
-        <li><span class="steps-list__n">2</span><p><b>Прогноз.</b> На рейсе Москва → Санкт-Петербург спрос на 13% ниже соседних пятниц: медиана 917 против 1 049, коридор 782–1 039.</p></li>
+        <li><span class="steps-list__n">2</span><p><b>Прогноз.</b> На рейсе Москва → Санкт-Петербург спрос на 13&nbsp;% ниже соседних пятниц: медиана 917 против 1 049, коридор 782–1 039.</p></li>
         <li><span class="steps-list__n">3</span><p><b>Почему.</b> Праздничная пятница не деловой день.</p></li>
         <li><span class="steps-list__n">4</span><p><b>Вывод.</b> Цену берём из прогноза. Правило «пятница — значит дороже» здесь не работает. По нашей модели лучшая цена 5 605 ₽: +3 217 ₽ ожидаемой прибыли к базовой цене 5 500 ₽.</p></li>
         <li><span class="steps-list__n">5</span><p><b>На сайте.</b> Расчёт 12 июня, лучшая цена и календарь, где 12 июня бледнее соседних пятниц. По прогнозу организаторов сервис советует 5 614 ₽: это +3 812 ₽ ожидаемой прибыли к цене 5 500 ₽.</p></li>
@@ -160,7 +160,7 @@
 <section class="lp-section" id="checked">
   <div class="lp-note">
     <p class="label">Как проверено</p>
-    <p class="lp-note__text">Отдельный скрипт пересчитал 287 чисел аналитики. Прогноз проверен на мае 2026 года: факт попадает в коридор 10–90% в 83% случаев. <!-- tests-sentence --></p>
+    <p class="lp-note__text">Отдельный скрипт пересчитал 287 чисел аналитики. Прогноз проверен на мае 2026 года: факт попадает в коридор 10–90&nbsp;% в 83&nbsp;% случаев. <!-- tests-sentence --></p>
   </div>
 </section>
 
