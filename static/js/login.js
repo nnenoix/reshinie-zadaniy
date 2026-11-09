@@ -40,7 +40,7 @@ $$("[data-toggle-password]").forEach((toggle) => toggle.addEventListener("click"
   const input = $("input", toggle.parentNode);
   const show = input.type === "password";
   input.type = show ? "text" : "password";
-  toggle.textContent = show ? "СКРЫТЬ" : "ПОКАЗАТЬ";
+  toggle.textContent = show ? "Скрыть" : "Показать";
 }));
 
 $$("[data-form]").forEach((form) => form.addEventListener("submit", async (event) => {

@@ -101,7 +101,7 @@ function setRange(min, max, value, best) {
   marker.hidden = best === null || best === undefined;
   if (!marker.hidden) {
     marker.style.setProperty("--best", (best - min) / (max - min));
-    $("#range-best-label").textContent = `▲ ЛУЧШАЯ ${fmt(best)}`;
+    $("#range-best-label").textContent = `▲ Лучшая ${fmt(best)}`;
   }
 }
 
@@ -127,7 +127,7 @@ function updateDateHint() {
   const day = form.elements.date.value;
   if (!destination || !day) return;
   const holiday = S.holidays[day];
-  $("#date-hint").textContent = `${dow(day)}${holiday ? ` · ${holiday.toUpperCase()}` : ""} · ДОСТУПНО ` +
+  $("#date-hint").textContent = `${dow(day)}${holiday ? ` · ${holiday}` : ""} · доступно ` +
     `${dayMonth(destination.first_date)} — ${shortDate(destination.last_date)}`;
 }
 
@@ -160,12 +160,12 @@ async function loadSources() {
     option.disabled = !source || !source.available;
   }
   const ml = S.sources.ml;
-  $("#source-hint").textContent = ml && !ml.available ? ml.detail.toUpperCase() : sourceHint();
+  $("#source-hint").textContent = ml && !ml.available ? ml.detail : sourceHint();
 }
 
 function sourceHint() {
   const source = S.sources[form.elements.source.value];
-  return source ? `${source.file} · ${source.detail}`.toUpperCase() : "";
+  return source ? `${source.file} · ${source.detail}` : "";
 }
 
 async function loadRoutes(source, wanted) {
@@ -311,15 +311,15 @@ function renderNote(d, want) {
   const tag = $("#note-tag");
   tag.className = `tag${none ? " tag--err" : ""}`;
   if (capped) {
-    tag.textContent = "УПОР В МЕСТА";
+    tag.textContent = "Упор в места";
     $("#note-text").textContent = `Желают ${whole(want)}, а мест ${whole(d.seats)} — купят ${whole(d.sold)}. ` +
       `Не хватит мест для ${whole(d.wanted - d.seats)} желающих.`;
   } else if (none) {
-    tag.textContent = "НЕТ СПРОСА";
+    tag.textContent = "Нет спроса";
     $("#note-text").textContent = `При цене ${rub(d.price)} желающих нет: формула даёт ${whole(d.wanted)}. ` +
       "Попробуйте снизить цену.";
   } else {
-    tag.textContent = `ЗАПАС ${seatsText(d.seats - want).toUpperCase()}`;
+    tag.textContent = `Запас ${seatsText(d.seats - want)}`;
     $("#note-text").textContent = "Продажи не упираются в число мест: желающих меньше, чем кресел.";
   }
 }
@@ -433,7 +433,7 @@ function renderSalon(d) {
   drawSeats($("#seats"), cabin, sold);
   const queue = drawQueue($("#queue"), cabin, over);
   $("#queue-title").hidden = !queue.shown;
-  $("#queue-title").textContent = `НЕ ХВАТИЛО МЕСТ · ${whole(over)}`;
+  $("#queue-title").textContent = `Не хватило мест · ${whole(over)}`;
   $('[data-salon="seats"]').textContent = whole(d.seats);
   $('[data-salon="sold"]').textContent = whole(sold);
   $('[data-salon="over"]').textContent = whole(over);
@@ -515,10 +515,10 @@ function historyRow(entry) {
   const row = document.createElement("tr");
   const route = node("td", "l route", `${entry.origin} `);
   route.append(node("span", "accent", "→"), ` ${entry.destination}`,
-    node("span", "history__src", entry.source === "ml" ? "ML" : "ОРГ"));
+    node("span", "history__src", entry.source === "ml" ? "ML" : "орг."));
   const flag = node("td");
-  if (want > entry.seats) flag.append(node("span", "tag", "УПОР В МЕСТА"));
-  else if (entry.sold <= 0) flag.append(node("span", "tag tag--err", "НЕТ СПРОСА"));
+  if (want > entry.seats) flag.append(node("span", "tag", "Упор в места"));
+  else if (entry.sold <= 0) flag.append(node("span", "tag tag--err", "Нет спроса"));
   const again = node("button", "link-btn", "Повторить →");
   again.type = "button";
   again.addEventListener("click", () => repeat(entry));

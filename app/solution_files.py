@@ -30,12 +30,12 @@ FILES = (
     SolutionFile("forecast", "Титаренко_Егор_Константинович_my_forecast.csv",
                  "Прогноз спроса и цен на июнь, его читает сервис", "CSV", "LINK_MY_FORECAST"),
     SolutionFile("code", "Код сервиса", "FastAPI, SQLite и Postgres, страница на JavaScript, тесты и README",
-                 "GITHUB", "LINK_CODE", GITHUB),
+                 "GitHub", "LINK_CODE", GITHUB),
     SolutionFile("checks", "Титаренко_Егор_Константинович_Проверка.zip",
                  "proverka_bia.py и proverka_forecast.py с нужными файлами: "
                  "пересчёт чисел аналитики и проверка файла прогноза", "ZIP", "LINK_CHECK_SCRIPTS"),
-    SolutionFile("video", "Видео", "До 3 минут", "ВИДЕО", "LINK_VIDEO"),
-    SolutionFile("site", "Сайт", "Этот сервис", "САЙТ", "LINK_SITE", "/"),
+    SolutionFile("video", "Видео", "До 3 минут", "Видео", "LINK_VIDEO"),
+    SolutionFile("site", "Сайт", "Этот сервис", "Сайт", "LINK_SITE", "/"),
 )
 
 

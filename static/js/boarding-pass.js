@@ -13,10 +13,10 @@ export function ticketData(d) {
   const compact = d.date.slice(8, 10) + d.date.slice(5, 7) + d.date.slice(2, 4);
   return {
     fromCode: codes.from, fromCity: d.route.origin, code: codes.to, city: d.route.destination,
-    date: shortDate(d.date), day: dow(d.date) + (d.holiday ? " · ПРАЗДНИК" : ""),
+    date: shortDate(d.date), day: dow(d.date) + (d.holiday ? " · праздник" : ""),
     price: rub(d.price), seats: whole(d.seats), want: whole(want), buy: whole(d.sold),
     load: `${whole(d.load * 100)} %`, best: rub(d.best.price),
-    tag: capped ? "УПОР В МЕСТА" : none ? "НЕТ СПРОСА" : `ЗАПАС ${seatsText(d.seats - want).toUpperCase()}`,
+    tag: capped ? "Упор в места" : none ? "Нет спроса" : `Запас ${seatsText(d.seats - want)}`,
     status: capped ? `Не хватит мест для ${whole(d.wanted - d.seats)} желающих`
       : none ? `Формула даёт ${whole(d.wanted)}` : "Мест хватает всем желающим",
     stubRoute: `${codes.from} → ${codes.to}`, buySeats: `${whole(d.sold)} / ${whole(d.seats)}`,

@@ -10,7 +10,7 @@ export function drawQuantiles(box, { seats, quantiles }) {
   const W = box.clientWidth || 800;
   const H = box.clientHeight || 300;
   const compact = W < 500;
-  // справа поле под подпись «МЕСТ»: так она не налезает на столбик 0.9
+  // справа поле под подпись «Мест»: так она не налезает на столбик 0.9
   const L = compact ? 32 : 48, R = compact ? 38 : 64, T = 24, B = compact ? 42 : 46;
   const iw = W - L - R, ih = H - T - B;
   const top = Math.max(seats, ...quantiles.map((q) => Math.max(0, q))) * 1.08;
@@ -44,7 +44,7 @@ export function drawQuantiles(box, { seats, quantiles }) {
     root.append(group);
   });
   const label = el("text", { class: "ch-seats-label ch-seats-label--side", x: W - R + 6, y: y(seats) - 2 });
-  label.append(el("tspan", { x: W - R + 6 }, "МЕСТ"), el("tspan", { x: W - R + 6, dy: 13 }, whole(seats)));
+  label.append(el("tspan", { x: W - R + 6 }, "Мест"), el("tspan", { x: W - R + 6, dy: 13 }, whole(seats)));
   root.append(label);
   box.replaceChildren(root);
 }

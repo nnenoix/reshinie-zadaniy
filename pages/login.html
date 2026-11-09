@@ -34,7 +34,7 @@
       </div>
 
       <form class="auth__form" id="login-form" data-form="login" action="/api/login" method="post" novalidate>
-        <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">ОШИБКА</span><span data-error-text></span></div>
+        <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">Ошибка</span><span data-error-text></span></div>
         <div class="field" data-field="login">
           <label class="field__label" for="login-login">Логин или email</label>
           <div class="field__box"><input class="field__control" type="text" id="login-login" name="login" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
@@ -42,7 +42,7 @@
         </div>
         <div class="field" data-field="password">
           <label class="field__label" for="login-password">Пароль</label>
-          <div class="field__box"><input class="field__control" type="password" id="login-password" name="password" autocomplete="current-password" required><button class="field__toggle" type="button" data-toggle-password>ПОКАЗАТЬ</button></div>
+          <div class="field__box"><input class="field__control" type="password" id="login-password" name="password" autocomplete="current-password" required><button class="field__toggle" type="button" data-toggle-password>Показать</button></div>
           <p class="field__error" data-error-for="password" hidden></p>
         </div>
         <button class="btn" type="submit"><span>Войти</span><span>→</span></button>
@@ -50,17 +50,17 @@
       </form>
 
       <form class="auth__form" id="register-form" data-form="register" action="/api/register" method="post" novalidate hidden>
-        <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">ОШИБКА</span><span data-error-text></span></div>
+        <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">Ошибка</span><span data-error-text></span></div>
         <div class="field" data-field="login">
           <label class="field__label" for="reg-login">Логин или email</label>
           <div class="field__box"><input class="field__control" type="text" id="reg-login" name="login" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
-          <p class="field__hint">3–64 СИМВОЛА: БУКВЫ, ЦИФРЫ, . - _ @ +</p>
+          <p class="field__hint">3–64 символа: буквы, цифры, . - _ @ +</p>
           <p class="field__error" data-error-for="login" hidden></p>
         </div>
         <div class="field" data-field="password">
           <label class="field__label" for="reg-password">Пароль</label>
-          <div class="field__box"><input class="field__control" type="password" id="reg-password" name="password" autocomplete="new-password" required><button class="field__toggle" type="button" data-toggle-password>ПОКАЗАТЬ</button></div>
-          <p class="field__hint">НЕ КОРОЧЕ 8 СИМВОЛОВ</p>
+          <div class="field__box"><input class="field__control" type="password" id="reg-password" name="password" autocomplete="new-password" required><button class="field__toggle" type="button" data-toggle-password>Показать</button></div>
+          <p class="field__hint">Не короче 8 символов</p>
           <p class="field__error" data-error-for="password" hidden></p>
         </div>
         <div class="field" data-field="password2">
@@ -75,7 +75,7 @@
       <div class="auth__guest">
         <span class="auth__or">или</span>
         <button class="btn btn--ghost-lg btn--wide" type="button" data-guest>Войти как гость</button>
-        <p class="field__hint">БЕЗ РЕГИСТРАЦИИ, У КАЖДОГО ГОСТЯ СВОЯ ИСТОРИЯ</p>
+        <p class="field__hint">Без регистрации, у каждого гостя своя история</p>
         <p class="field__error" data-guest-error role="alert" hidden></p>
       </div>
     </div>

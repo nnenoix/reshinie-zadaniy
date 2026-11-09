@@ -28,7 +28,7 @@ function drawFridays(box, data) {
     return row;
   });
   const legend = node("p", "fri__legend",
-    `МЕДИАНА СПРОСА ПО БАЗОВОЙ ЦЕНЕ · ПУНКТИР — СРЕДНЕЕ ДРУГИХ ПЯТНИЦ, ${whole(data.others_mean)}`);
+    `Медиана спроса по базовой цене · пунктир — среднее других пятниц, ${whole(data.others_mean)}`);
   box.replaceChildren(...rows, legend);
 }
 

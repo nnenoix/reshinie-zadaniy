@@ -38,7 +38,7 @@
   <div class="side">
     <form class="card" id="forecast-form" novalidate>
       <p class="label">Параметры рейса</p>
-      <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">ОШИБКА</span><span data-error-text></span></div>
+      <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">Ошибка</span><span data-error-text></span></div>
 
       <div class="field" data-field="source">
         <label class="field__label" for="source">Прогноз спроса</label>
@@ -81,7 +81,7 @@
           <input class="range" type="range" id="price-range" min="0" max="1" step="10" value="0" aria-label="Цена билета">
           <div class="range-best" id="range-best" hidden><span id="range-best-label"></span></div>
         </div>
-        <div class="range-scale"><span id="range-min"></span><span>ЦЕНЫ МАРШРУТА</span><span id="range-max"></span></div>
+        <div class="range-scale"><span id="range-min"></span><span>Цены маршрута</span><span id="range-max"></span></div>
       </div>
       <button class="btn" type="submit" id="submit"><span data-btn-text>Рассчитать</span><span>→</span></button>
       <p class="form-note">Ползунок пересчитывает прогноз сразу. «Рассчитать» сохраняет расчёт в историю.</p>
@@ -95,8 +95,8 @@
       </div>
       <div class="profit-chart" id="profit-chart" role="img" aria-label="Ожидаемая прибыль в зависимости от цены"></div>
       <ul class="legend">
-        <li><span class="legend__sw legend__sw--line"></span>ОЖИДАЕМАЯ ПРИБЫЛЬ</li>
-        <li><span class="legend__sw legend__sw--dot"></span>ВАША ЦЕНА</li>
+        <li><span class="legend__sw legend__sw--line"></span>Ожидаемая прибыль</li>
+        <li><span class="legend__sw legend__sw--dot"></span>Ваша цена</li>
       </ul>
       <button class="btn btn--outline" type="button" id="apply-best"><span>Поставить лучшую цену</span><span class="btn__small" id="apply-best-price"></span></button>
       <p class="small-note" id="best-note">Ожидаемая прибыль — среднее по 9 сценариям от (цена − расходы на пассажира) × купят. Кривую и максимум считает сервер.</p>
@@ -148,10 +148,10 @@
           <div class="chart-block__head">
             <h3 class="chart-block__title" id="chart-title"></h3>
             <ul class="legend">
-              <li><span class="legend__sw legend__sw--median"></span>МЕДИАНА = ЖЕЛАЮТ</li>
-              <li><span class="legend__sw legend__sw--other"></span>СЦЕНАРИИ</li>
-              <li id="legend-hatch" hidden><span class="legend__sw legend__sw--hatch"></span>СВЕРХ МЕСТ</li>
-              <li><span class="legend__sw legend__sw--seats"></span>МЕСТ</li>
+              <li><span class="legend__sw legend__sw--median"></span>Медиана = желают</li>
+              <li><span class="legend__sw legend__sw--other"></span>Сценарии</li>
+              <li id="legend-hatch" hidden><span class="legend__sw legend__sw--hatch"></span>Сверх мест</li>
+              <li><span class="legend__sw legend__sw--seats"></span>Мест</li>
             </ul>
           </div>
           <div class="chart" id="chart" role="img" aria-label="Распределение спроса по 9 сценариям"></div>
@@ -165,7 +165,7 @@
           </div>
           <div class="table-scroll" id="compare-table" hidden>
             <table class="history">
-              <thead><tr><th class="l">ПРОГНОЗ</th><th>ЖЕЛАЮТ</th><th>КУПЯТ</th><th>ЗАГРУЗКА</th><th>ЛУЧШАЯ ЦЕНА, ₽</th></tr></thead>
+              <thead><tr><th class="l">Прогноз</th><th>Желают</th><th>Купят</th><th>Загрузка</th><th>Лучшая цена, ₽</th></tr></thead>
               <tbody id="compare-body"></tbody>
             </table>
           </div>
@@ -195,17 +195,17 @@
             </div>
             <div class="plane__gate">
               <span class="plane__stairs"></span>
-              <span class="gate__label">ТРАП</span>
+              <span class="gate__label">Трап</span>
               <p class="queue__title" id="queue-title" hidden></p>
               <div class="queue" id="queue"></div>
             </div>
           </div>
         </div>
         <ul class="legend">
-          <li><span class="legend__sw legend__sw--sold"></span>ПРОДАНО</li>
-          <li><span class="legend__sw legend__sw--free"></span>СВОБОДНО</li>
-          <li><span class="legend__sw legend__sw--part"></span>ЧАСТИЧНО</li>
-          <li><span class="legend__sw legend__sw--person"></span>НЕ ХВАТИЛО МЕСТ</li>
+          <li><span class="legend__sw legend__sw--sold"></span>Продано</li>
+          <li><span class="legend__sw legend__sw--free"></span>Свободно</li>
+          <li><span class="legend__sw legend__sw--part"></span>Частично</li>
+          <li><span class="legend__sw legend__sw--person"></span>Не хватило мест</li>
         </ul>
         <p class="how" id="salon-how"></p>
         <p class="how how--odds" id="salon-odds"></p>
@@ -222,9 +222,9 @@
         <div class="cal" id="cal"></div>
         <ul class="legend">
           <li><span id="cal-min"></span><span class="legend__sw legend__sw--scale"></span><span id="cal-max"></span></li>
-          <li><span class="legend__sw legend__sw--fri"></span>ПЯТНИЦА</li>
-          <li><span class="legend__sw legend__sw--sel"></span>ВЫБРАННЫЙ ДЕНЬ</li>
-          <li><span class="tag">УПОР</span>В МЕСТА</li>
+          <li><span class="legend__sw legend__sw--fri"></span>Пятница</li>
+          <li><span class="legend__sw legend__sw--sel"></span>Выбранный день</li>
+          <li><span class="tag">Упор</span>в места</li>
         </ul>
         <p class="how" id="cal-how">Нажмите на день — откроется расчёт на эту дату.</p>
       </div>
@@ -236,7 +236,7 @@
       <div class="tabpanel" data-needs-result hidden>
         <article class="ticket" id="ticket">
           <div class="ticket__main">
-            <div class="ticket__band"><span>Решись Авиа</span><span>ПОСАДОЧНЫЙ ТАЛОН</span></div>
+            <div class="ticket__band"><span class="ticket__airline">Решись Авиа</span><span>Посадочный талон</span></div>
             <div class="ticket__body">
               <div class="ticket__route">
                 <div class="ticket__port"><span class="ticket__code" data-t="fromCode"></span><span class="ticket__city" data-t="fromCity"></span></div>
@@ -244,14 +244,14 @@
                 <div class="ticket__port ticket__port--to"><span class="ticket__code" data-t="code"></span><span class="ticket__city" data-t="city"></span></div>
               </div>
               <dl class="ticket__grid">
-                <div class="tf"><dt>ДАТА</dt><dd data-t="date"></dd></div>
-                <div class="tf"><dt>ДЕНЬ</dt><dd data-t="day"></dd></div>
-                <div class="tf"><dt>ЦЕНА</dt><dd data-t="price"></dd></div>
-                <div class="tf"><dt>МЕСТ</dt><dd data-t="seats"></dd></div>
-                <div class="tf"><dt>ЖЕЛАЮТ</dt><dd data-t="want"></dd></div>
-                <div class="tf tf--acc"><dt>КУПЯТ</dt><dd data-t="buy"></dd></div>
-                <div class="tf"><dt>ЗАГРУЗКА</dt><dd data-t="load"></dd></div>
-                <div class="tf tf--acc"><dt>ЛУЧШАЯ ЦЕНА</dt><dd data-t="best"></dd></div>
+                <div class="tf"><dt>Дата</dt><dd data-t="date"></dd></div>
+                <div class="tf"><dt>День</dt><dd data-t="day"></dd></div>
+                <div class="tf"><dt>Цена</dt><dd data-t="price"></dd></div>
+                <div class="tf"><dt>Мест</dt><dd data-t="seats"></dd></div>
+                <div class="tf"><dt>Желают</dt><dd data-t="want"></dd></div>
+                <div class="tf tf--acc"><dt>Купят</dt><dd data-t="buy"></dd></div>
+                <div class="tf"><dt>Загрузка</dt><dd data-t="load"></dd></div>
+                <div class="tf tf--acc"><dt>Лучшая цена</dt><dd data-t="best"></dd></div>
               </dl>
               <div class="ticket__status"><span class="tag" data-t="tag"></span><span data-t="status"></span></div>
             </div>
@@ -260,9 +260,9 @@
             <dl class="stub__col">
               <dt class="label">Корешок</dt>
               <dd class="stub__route" data-t="stubRoute"></dd>
-              <div class="tf"><dt>ДАТА</dt><dd data-t="date"></dd></div>
-              <div class="tf"><dt>КУПЯТ / МЕСТ</dt><dd data-t="buySeats"></dd></div>
-              <div class="tf tf--acc stub__best"><dt>ЛУЧШАЯ ЦЕНА</dt><dd data-t="best"></dd></div>
+              <div class="tf"><dt>Дата</dt><dd data-t="date"></dd></div>
+              <div class="tf"><dt>Купят / мест</dt><dd data-t="buySeats"></dd></div>
+              <div class="tf tf--acc stub__best"><dt>Лучшая цена</dt><dd data-t="best"></dd></div>
             </dl>
             <div class="stub__code"><span class="barcode" aria-hidden="true"><i class="b3"></i><i class="b2"></i><i class="b1"></i><i class="b3"></i><i class="b2"></i><i class="b1"></i><i class="b1"></i><i class="b3"></i><i class="b3"></i><i class="b1"></i><i class="b2"></i><i class="b2"></i><i class="b1"></i><i class="b3"></i><i class="b1"></i><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b1"></i><i class="b1"></i><i class="b2"></i><i class="b2"></i><i class="b3"></i><i class="b1"></i><i class="b2"></i><i class="b1"></i><i class="b3"></i></span><span class="stub__id" data-t="id"></span></div>
           </div>
@@ -290,7 +290,7 @@
     <div class="table-scroll">
       <table class="history">
         <thead><tr>
-          <th class="l">ВРЕМЯ</th><th class="l">МАРШРУТ</th><th class="l">ДАТА ВЫЛЕТА</th><th>ЦЕНА, ₽</th><th>МЕСТ</th><th>ЖЕЛАЮТ</th><th>КУПЯТ</th><th>ЗАГРУЗКА</th><th></th>
+          <th class="l">Время</th><th class="l">Маршрут</th><th class="l">Дата вылета</th><th>Цена, ₽</th><th>Мест</th><th>Желают</th><th>Купят</th><th>Загрузка</th><th></th>
         </tr></thead>
         <tbody id="history-body">
           <tr class="history__empty"><td colspan="9">Расчётов пока нет. Нажмите «Рассчитать» — расчёт появится здесь.</td></tr>

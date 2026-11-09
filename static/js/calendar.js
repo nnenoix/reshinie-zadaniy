@@ -3,7 +3,7 @@
 // до самого сильного: так на рейсе в Петербург видно, что 12 июня бледнее соседних пятниц.
 import { dateOf, fmt, node, shortDate } from "./format.js";
 
-const WEEK = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
+const WEEK = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const PALEST = 8, DARK_FROM = 78; // доля акцентного цвета, %: у самого слабого дня и с которой текст белый
 
 export function loadRange(days) {
@@ -18,7 +18,7 @@ export function shade(loadPercent, { min, max }) {
 
 export function drawCalendar(box, days, { selected, onPick }) {
   const range = loadRange(days);
-  const cells = WEEK.map((name) => node("span", `cal__dow${name === "ПТ" ? " is-fri" : ""}`, name));
+  const cells = WEEK.map((name) => node("span", `cal__dow${name === "Пт" ? " is-fri" : ""}`, name));
   const lead = (dateOf(days[0].date).getDay() + 6) % 7;
   for (let i = 0; i < lead; i++) cells.push(document.createElement("span"));
   const month = dateOf(days[0].date).getMonth();
@@ -50,7 +50,7 @@ export function drawCalendar(box, days, { selected, onPick }) {
     const load = node("span", "cal__load", fmt(pct, 0));
     load.append(node("small", "", "%"));
     bottomRow.append(load);
-    if (day.sold_out) bottomRow.append(node("span", "cal__cap", "УПОР"));
+    if (day.sold_out) bottomRow.append(node("span", "cal__cap", "Упор"));
     cell.append(topRow, bottomRow);
     cell.addEventListener("click", () => onPick(day.date));
     cells.push(cell);

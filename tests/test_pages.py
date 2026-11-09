@@ -256,6 +256,32 @@ def test_scripts_write_no_bracket_labels():
     assert [name for name, source in scripts.items() if "[ " in source or " ]" in source] == []
 
 
+# --- подписи обычным регистром, без моноширинного капса с разрядкой ---
+
+CAPS_WORD = re.compile(r"\b[А-ЯЁ]{3,}\b")  # «УПОР», «ПЯТНИЦА»; сокращения вроде «РФ» короче
+
+
+@pytest.mark.parametrize("path", ["/", "/login", "/app"])
+def test_pages_write_no_words_in_caps(client, path):
+    text = re.sub(r"<[^>]*>", " ", open_page(client, path).text)
+
+    assert CAPS_WORD.findall(text) == []
+
+
+def test_scripts_write_no_words_in_caps():
+    for script in (PROJECT / "static" / "js").glob("*.js"):
+        source = script.read_text(encoding="utf-8")
+        assert CAPS_WORD.findall(source) == [], script.name
+        assert "toUpperCase" not in source, script.name
+
+
+def test_style_has_no_caps_and_no_wide_letter_spacing():
+    css = STYLE.read_text(encoding="utf-8")
+
+    assert "text-transform" not in css
+    assert all(value.startswith("-") for value in re.findall(r"letter-spacing:\s*([^;}\s]+)", css))
+
+
 def test_old_static_page_is_gone(client):
     assert client.get("/static/index.html").status_code == 404
 

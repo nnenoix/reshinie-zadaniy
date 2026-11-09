@@ -69,7 +69,7 @@ def wait_for_result(tab):
 
 
 def test_story_calculation_shows_numbers_and_odds(page):
-    assert page.inner_text("#result-route").startswith("МОСКВА → САНКТ-ПЕТЕРБУРГ · 12.06.2026")
+    assert page.inner_text("#result-route").startswith("Москва → Санкт-Петербург · 12.06.2026")
     assert page.inner_text('[data-out="seats"]') == "1 440"
     assert page.inner_text('[data-out="want"]') == "917"  # медиана нашей модели при 5 500 ₽
     assert page.inner_text("#chart-odds").startswith("С вероятностью 80% желающих от 782 до 1 039")

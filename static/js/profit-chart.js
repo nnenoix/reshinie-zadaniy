@@ -21,7 +21,7 @@ export function drawProfit(box, d) {
     root.append(el("line", { class: "ch-grid", x1: L, x2: W - R, y1: y(g), y2: y(g) }));
     root.append(el("text", { class: "ch-tick", x: L - 6, y: y(g) + 3 }, fmt(g / 1e6, 2)));
   }
-  root.append(el("text", { class: "ch-tick", x: L - 6, y: T - 16 }, "МЛН ₽"));
+  root.append(el("text", { class: "ch-tick", x: L - 6, y: T - 16 }, "млн ₽"));
   const points = d.curve.map((c) => `${x(c.price).toFixed(1)},${y(c.profit).toFixed(1)}`).join(" ");
   root.append(el("polygon", { class: "pc-area", points: `${x(d.min)},${y(0)} ${points} ${x(d.max)},${y(0)}` }));
   root.append(el("polyline", { class: "pc-line", points }));
@@ -34,10 +34,10 @@ export function drawProfit(box, d) {
   root.append(el("circle", { class: "pc-cur", cx, cy, r: 4.5 }));
   const nearRight = bx > W - 110;
   root.append(el("text", { class: "pc-label pc-label--best", x: bx + (nearRight ? -4 : 4), y: by - 10,
-    "text-anchor": nearRight ? "end" : "start" }, `МАКС · ${fmt(d.best)}`));
+    "text-anchor": nearRight ? "end" : "start" }, `Макс · ${fmt(d.best)}`));
   const nearLeft = cx < 110;
   root.append(el("text", { class: "pc-label pc-label--cur", x: cx + (nearLeft ? 8 : -8), y: cy + 16,
-    "text-anchor": nearLeft ? "start" : "end" }, `ВАША · ${fmt(d.price)}`));
+    "text-anchor": nearLeft ? "start" : "end" }, `Ваша · ${fmt(d.price)}`));
   root.append(el("text", { class: "pc-label", x: L, y: H - 6 }, fmt(d.min)));
   root.append(el("text", { class: "pc-label", x: W - R, y: H - 6, "text-anchor": "end" }, `${fmt(d.max)} ₽`));
   box.replaceChildren(root);
