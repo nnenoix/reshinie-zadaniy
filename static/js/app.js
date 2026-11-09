@@ -438,7 +438,9 @@ function renderSalon(d) {
   $('[data-salon="sold"]').textContent = whole(sold);
   $('[data-salon="over"]').textContent = whole(over);
   const { scale, text } = salonText(cabin, `0.${S.scenario + 1}`, scenario.wanted, sold, over, queue);
-  $("#salon-how").replaceChildren(node("strong", "", scale), text);
+  const note = node("span"); // одним блоком: у .how display: flex, и <strong> иначе становился узкой колонкой
+  note.append(node("strong", "", scale), text);
+  $("#salon-how").replaceChildren(note);
   $("#salon-odds").textContent = oddsText(d.odds);
 }
 

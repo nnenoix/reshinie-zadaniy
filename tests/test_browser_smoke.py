@@ -123,6 +123,18 @@ def test_landing_chart_note_spells_the_source_as_it_is(browser, base_url):
     assert "источник: наша ML-модель." in note  # не «наша ml-модель»
 
 
+def test_salon_scale_note_reads_as_one_paragraph(page):
+    # «1 кресло = 10 мест, 1 человечек = 10 человек.» стояло узкой колонкой в четыре строки
+    page.click('.tabs--main [data-tab="salon"]')
+    lines = page.evaluate("""() => {
+        const scale = document.createRange();
+        scale.selectNodeContents(document.querySelector('#salon-how strong'));
+        return scale.getClientRects().length;
+    }""")
+
+    assert lines == 1
+
+
 def test_negative_price_is_kept_and_explained(page):
     page.fill("#price", "−500")
     page.locator("#price").blur()
