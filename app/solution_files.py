@@ -59,7 +59,7 @@ def file_links(env: Mapping[str, str]) -> dict[str, str]:
 def files_html(links: Mapping[str, str]) -> str:
     rows = []
     for number, file in enumerate(FILES, start=1):
-        cells = (f'<span class="file__n">{number:02d}</span>'
+        cells = (f'<span class="file__n">{number}</span>'
                  f'<span class="file__name">{escape(file.name)}</span>'
                  f'<span class="file__desc">{escape(file.description)}</span>'
                  f'<span class="tag">{escape(file.tag)}</span>')

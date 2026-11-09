@@ -14,19 +14,19 @@
 </head>
 <body data-page="landing">
 <header class="topbar">
-  <a class="brand" href="/">[ РЕШИСЬ АВИА <span class="accent">/ ПРОГНОЗ</span> ]</a>
+  <a class="brand" href="/">Решись Авиа</a>
   <nav class="lp-nav">
-    <a href="#numbers"><b>01</b> ЧИСЛА</a>
-    <a href="#case"><b>02</b> КЕЙС</a>
-    <a href="#story"><b>03</b> 12 ИЮНЯ</a>
-    <a href="#files"><b>04</b> ФАЙЛЫ</a>
+    <a href="#numbers">Числа</a>
+    <a href="#case">Кейс</a>
+    <a href="#story">12 июня</a>
+    <a href="#files">Файлы</a>
   </nav>
   <a class="btn btn--ghost" href="/login">Войти</a>
 </header>
 
 <section class="lp-hero">
   <div class="lp-hero__text">
-    <p class="label">[ ТУРНИР «РЕШИСЬ» / ТЕХНОЛОГИИ ]</p>
+    <p class="label">Турнир «Решись» · Технологии</p>
     <h1 class="lp-title">Цена из <span class="accent">прогноза</span>, а не из правила</h1>
     <p class="lp-lead">Динамическое ценообразование авиабилетов. Модель одного дня самолёта, прогноз спроса на июнь 2026 года и сервис, который считает продажи и цену на лету.</p>
     <p class="lp-author">Егор Титаренко · Центральный университет · направление «Технологии»</p>
@@ -43,7 +43,7 @@
     <p class="lp-error" data-guest-error role="alert" hidden></p>
   </div>
   <aside class="card flight">
-    <p class="label">[ Рейс дня / <span data-story="source">прогноз спроса</span> ]</p>
+    <p class="label">Рейс дня · <span data-story="source">прогноз спроса</span></p>
     <div class="flight__route"><span class="flight__code">MOW</span><span class="flight__path"></span><span class="accent">→</span><span class="flight__code">LED</span></div>
     <p class="flight__meta">12.06.2026 · ПЯТНИЦА · ДЕНЬ РОССИИ</p>
     <div class="fri" id="story-fridays" aria-label="Медиана спроса по пятницам июня">
@@ -54,27 +54,26 @@
 </section>
 
 <section class="lp-block" id="numbers">
-  <p class="label">[ Ключевые числа ]</p>
+  <p class="label">Ключевые числа</p>
   <dl class="lp-numbers lp-numbers--6">
     <div class="lp-num"><dt>прибыль обычного дня при лучших ценах</dt><dd>705<small>тыс. ₽</small></dd></div>
     <div class="lp-num"><dt>прибыль пиковой пятницы</dt><dd>1&nbsp;625<small>тыс. ₽</small></dd></div>
     <div class="lp-num"><dt>теневая цена кресла в пиковую пятницу</dt><dd>4<small>тыс. ₽</small></dd></div>
     <div class="lp-num"><dt>прибыли больше, чем при базовой цене, на бэктесте мая</dt><dd>+6,7<small>млн ₽</small></dd></div>
     <div class="lp-num"><dt>случаев мая, где факт попал в коридор прогноза 10–90%</dt><dd>83<small>%</small></dd></div>
-    <div class="lp-num"><dt>автотестов проверяют сервис</dt><dd><span data-tests>372</span></dd></div>
+    <div class="lp-num"><dt>автотестов проверяют сервис</dt><dd><span data-tests>377</span></dd></div>
   </dl>
 </section>
 
 <section class="lp-section" id="case">
   <article class="case">
     <div class="case__aside">
-      <span class="case__n">01 →</span>
-      <p class="label">[ <span class="label__num">01</span> / Аналитика ]</p>
+      <p class="label">Аналитика</p>
       <h2 class="case__title">Модель одного дня</h2>
       <p class="case__text">Один самолёт летает между Петербургом, Москвой и Сочи, у каждого из шести рынков свой спрос. В пиковую пятницу перелёт П→М заполнен: 150 из 150. Теневая цена кресла 4 тыс. ₽. Билет П→М в этот день продаём за 11,5 тыс. ₽ вместо 5,5.</p>
     </div>
     <div class="card case__card">
-      <p class="label">[ Пиковая пятница / П→М ]</p>
+      <p class="label">Пиковая пятница · П→М</p>
       <div class="cbar is-over" data-cbar data-want="150" data-seats="150" data-max="150">
         <div class="cbar__head"><span>ПЕТЕРБУРГ → МОСКВА</span><span>150 из 150 мест</span></div>
         <div class="cbar__track"><span class="cbar__fill"></span><span class="cbar__seats"></span></div>
@@ -89,8 +88,7 @@
 
   <article class="case">
     <div class="case__aside">
-      <span class="case__n">02 →</span>
-      <p class="label">[ <span class="label__num">02</span> / Прогноз ]</p>
+      <p class="label">Прогноз</p>
       <h2 class="case__title">Спрос на июнь</h2>
       <p class="case__text">Модель Chronos-2 в AutoGluon. Ансамбль точнее лишь на 1,8%, а Chronos-2 лучше предсказывает коридор сценариев, из которого считается цена (WQL 0,068 против 0,076), и не требует переобучения. Признаки праздников и маршрута снизили ошибку ансамбля с 42,31 до 40,88. Календарь РФ с переносами не помог, и это показано в ноутбуке.</p>
     </div>
@@ -108,22 +106,21 @@
 
   <article class="case">
     <div class="case__aside">
-      <span class="case__n">03 →</span>
-      <p class="label">[ <span class="label__num">03</span> / Продукт ]</p>
+      <p class="label">Продукт</p>
       <h2 class="case__title">Сервис для менеджера</h2>
       <p class="case__text">Ввёл рейс, дату и цену — сразу видишь продажи, 9 сценариев спроса и лучшую цену по ожидаемой прибыли. Ещё есть схема салона, календарь загрузки на июнь, посадочный талон в PNG и PDF, история с выгрузкой в CSV и выбор прогноза: организаторов или наш. Регистрация, вход и гостевой вход для жюри. Защита: лимит попыток входа, CSRF-токен, CSP.</p>
     </div>
     <div class="card case__card">
       <dl class="metrics metrics--2">
-        <div class="metric"><dt class="metric__label">автотестов</dt><dd class="metric__value"><span data-tests>372</span></dd></div>
+        <div class="metric"><dt class="metric__label">автотестов</dt><dd class="metric__value"><span data-tests>377</span></dd></div>
         <div class="metric"><dt class="metric__label">лучшая цена 12 июня по нашей модели</dt><dd class="metric__value metric__value--acc">5&nbsp;605<span class="metric__unit">₽</span></dd></div>
       </dl>
       <ol class="feat">
-        <li><span class="feat__n">01 →</span><span class="feat__t">Ползунок цены</span><span class="feat__d">числа и график меняются живьём</span></li>
-        <li><span class="feat__n">02 →</span><span class="feat__t">Лучшая цена</span><span class="feat__d">кривая прибыли и её максимум</span></li>
-        <li><span class="feat__n">03 →</span><span class="feat__t">Схема салона</span><span class="feat__d">проданные кресла и очередь у трапа</span></li>
-        <li><span class="feat__n">04 →</span><span class="feat__t">Календарь июня</span><span class="feat__d">тепловая карта загрузки по дням</span></li>
-        <li><span class="feat__n">05 →</span><span class="feat__t">Посадочный талон</span><span class="feat__d">итог расчёта в PNG и PDF</span></li>
+        <li><span class="feat__n">1</span><span class="feat__t">Ползунок цены</span><span class="feat__d">числа и график меняются живьём</span></li>
+        <li><span class="feat__n">2</span><span class="feat__t">Лучшая цена</span><span class="feat__d">кривая прибыли и её максимум</span></li>
+        <li><span class="feat__n">3</span><span class="feat__t">Схема салона</span><span class="feat__d">проданные кресла и очередь у трапа</span></li>
+        <li><span class="feat__n">4</span><span class="feat__t">Календарь июня</span><span class="feat__d">тепловая карта загрузки по дням</span></li>
+        <li><span class="feat__n">5</span><span class="feat__t">Посадочный талон</span><span class="feat__d">итог расчёта в PNG и PDF</span></li>
       </ol>
       <div class="lp-cta">
         <a class="btn btn--small" href="/app?destination=%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3&amp;date=2026-06-12" data-open-story>Открыть расчёт 12 июня →</a>
@@ -136,19 +133,19 @@
 <section class="lp-section" id="story">
   <div class="story">
     <div class="story__aside">
-      <p class="label">[ 12.06.2026 / СКВОЗНАЯ ИСТОРИЯ ]</p>
+      <p class="label">12.06.2026 · Сквозная история</p>
       <h2 class="case__title">Пятница, которая не стала пиком</h2>
       <ol class="steps-list">
-        <li><span class="steps-list__n">01 →</span><p><b>Ждали.</b> Пятница 12 июня, День России. Казалось, будет пик спроса, как в пятницу из модели аналитики.</p></li>
-        <li><span class="steps-list__n">02 →</span><p><b>Прогноз.</b> На рейсе Москва → Санкт-Петербург спрос на 13% ниже соседних пятниц: медиана 917 против 1 049, коридор 782–1 039.</p></li>
-        <li><span class="steps-list__n">03 →</span><p><b>Почему.</b> Праздничная пятница не деловой день.</p></li>
-        <li><span class="steps-list__n">04 →</span><p><b>Вывод.</b> Цену берём из прогноза. Правило «пятница — значит дороже» здесь не работает. По нашей модели лучшая цена 5 605 ₽: +3 217 ₽ ожидаемой прибыли к базовой цене 5 500 ₽.</p></li>
-        <li><span class="steps-list__n">05 →</span><p><b>На сайте.</b> Расчёт 12 июня, лучшая цена и календарь, где 12 июня бледнее соседних пятниц. По прогнозу организаторов сервис советует 5 614 ₽: это +3 812 ₽ ожидаемой прибыли к цене 5 500 ₽.</p></li>
+        <li><span class="steps-list__n">1</span><p><b>Ждали.</b> Пятница 12 июня, День России. Казалось, будет пик спроса, как в пятницу из модели аналитики.</p></li>
+        <li><span class="steps-list__n">2</span><p><b>Прогноз.</b> На рейсе Москва → Санкт-Петербург спрос на 13% ниже соседних пятниц: медиана 917 против 1 049, коридор 782–1 039.</p></li>
+        <li><span class="steps-list__n">3</span><p><b>Почему.</b> Праздничная пятница не деловой день.</p></li>
+        <li><span class="steps-list__n">4</span><p><b>Вывод.</b> Цену берём из прогноза. Правило «пятница — значит дороже» здесь не работает. По нашей модели лучшая цена 5 605 ₽: +3 217 ₽ ожидаемой прибыли к базовой цене 5 500 ₽.</p></li>
+        <li><span class="steps-list__n">5</span><p><b>На сайте.</b> Расчёт 12 июня, лучшая цена и календарь, где 12 июня бледнее соседних пятниц. По прогнозу организаторов сервис советует 5 614 ₽: это +3 812 ₽ ожидаемой прибыли к цене 5 500 ₽.</p></li>
       </ol>
     </div>
     <div class="card case__card">
       <div class="chart-block__head">
-        <p class="label" data-story="chart-title">[ Москва → Санкт-Петербург / 12.06 / 5 500 ₽ ]</p>
+        <p class="label" data-story="chart-title">Москва → Санкт-Петербург · 12.06 · 5 500 ₽</p>
         <ul class="legend">
           <li><span class="legend__sw legend__sw--median"></span>МЕДИАНА</li>
           <li><span class="legend__sw legend__sw--seats"></span>МЕСТ</li>
@@ -162,13 +159,13 @@
 
 <section class="lp-section" id="checked">
   <div class="lp-note">
-    <p class="label">[ КАК ПРОВЕРЕНО ]</p>
-    <p class="lp-note__text">Отдельный скрипт пересчитал 287 чисел аналитики. Прогноз проверен на мае 2026 года: факт попадает в коридор 10–90% в 83% случаев. Сервис проверяют <span data-tests>372</span> автотестов.</p>
+    <p class="label">Как проверено</p>
+    <p class="lp-note__text">Отдельный скрипт пересчитал 287 чисел аналитики. Прогноз проверен на мае 2026 года: факт попадает в коридор 10–90% в 83% случаев. Сервис проверяют <span data-tests>377</span> автотестов.</p>
   </div>
 </section>
 
 <section class="lp-section" id="files">
-  <p class="label">[ ФАЙЛЫ РЕШЕНИЯ ]</p>
+  <p class="label">Файлы решения</p>
   <div class="card files">
     <!-- solution-files -->
   </div>
@@ -176,13 +173,13 @@
 
 <section class="lp-section" id="tools">
   <div class="lp-note">
-    <p class="label">[ ИНСТРУМЕНТЫ ]</p>
+    <p class="label">Инструменты</p>
     <p class="lp-note__text">Claude Code на модели Claude Opus 5.5 с несколькими агентами, Claude Design для дизайна сайта, AutoGluon и Chronos-2 для прогноза, FastAPI и Postgres для сервиса. Задачи ставил, решения выбирал и результат проверял автор.</p>
   </div>
 </section>
 
 <footer class="lp-foot">
-  <span>[ РЕШИСЬ АВИА / ПРОГНОЗ / 2026 ]</span>
+  <span>Решись Авиа · 2026</span>
   <span>Егор Титаренко · Центральный университет</span>
 </footer>
 </body>

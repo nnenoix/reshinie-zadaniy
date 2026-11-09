@@ -4,7 +4,6 @@ import { enterAsGuest } from "./guest.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const LABELS = { login: ["01", "Вход"], register: ["02", "Регистрация"] };
 
 function clearErrors(form) {
   $$("[data-error-for]", form).forEach((slot) => { slot.hidden = true; slot.textContent = ""; });
@@ -32,12 +31,6 @@ function switchTo(tab) {
     form.hidden = form.dataset.form !== tab;
     clearErrors(form);
   });
-  const [number, title] = LABELS[tab];
-  const label = $("#auth-label");
-  const accent = document.createElement("span");
-  accent.className = "label__num";
-  accent.textContent = number;
-  label.replaceChildren("[ ", accent, ` / ${title} ]`);
   $(`[data-form="${tab}"] input`).focus();
 }
 

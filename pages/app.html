@@ -14,7 +14,7 @@
 </head>
 <body data-page="forecast">
 <header class="topbar">
-  <a class="brand" href="/">[ РЕШИСЬ АВИА <span class="accent">/ ПРОГНОЗ</span> ]</a>
+  <a class="brand" href="/">Решись Авиа</a>
   <div class="topbar__right">
     <span class="topbar__user" id="user-login"></span>
     <a class="btn btn--ghost" href="/login#register" id="register-link" hidden>Зарегистрироваться</a>
@@ -24,20 +24,20 @@
 
 <section class="hero hero--compact">
   <div class="hero__text">
-    <p class="label">[ Внутренний инструмент / Июнь 2026 ]</p>
+    <p class="label">Внутренний инструмент · июнь 2026</p>
     <h1 class="hero__title">Сколько билетов <span class="accent">купят</span> на ваш рейс</h1>
   </div>
   <ol class="steps">
-    <li><span class="steps__n">01 →</span>Выберите рейс и дату</li>
-    <li><span class="steps__n">02 →</span>Двигайте цену</li>
-    <li><span class="steps__n">03 →</span>Смотрите салон и календарь</li>
+    <li><span class="steps__n">1</span>Выберите рейс и дату</li>
+    <li><span class="steps__n">2</span>Двигайте цену</li>
+    <li><span class="steps__n">3</span>Смотрите салон и календарь</li>
   </ol>
 </section>
 
 <main class="layout">
   <div class="side">
     <form class="card" id="forecast-form" novalidate>
-      <p class="label">[ Параметры рейса ]</p>
+      <p class="label">Параметры рейса</p>
       <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">ОШИБКА</span><span data-error-text></span></div>
 
       <div class="field" data-field="source">
@@ -54,7 +54,7 @@
       </div>
       <div class="field" data-field="origin">
         <label class="field__label" for="origin">Откуда</label>
-        <div class="field__box"><input class="field__control" id="origin" name="origin" value="Москва" readonly><span class="field__suffix">[ ФИКС ]</span></div>
+        <div class="field__box"><input class="field__control" id="origin" name="origin" value="Москва" readonly><span class="field__suffix">MOW</span></div>
         <p class="field__error" data-error-for="origin" hidden></p>
       </div>
       <div class="field" data-field="destination">
@@ -88,7 +88,7 @@
     </form>
 
     <section class="card best" id="best" hidden>
-      <p class="label">[ <span class="label__num">★</span> / Лучшая цена ]</p>
+      <p class="label">Лучшая цена</p>
       <div class="best__head">
         <p class="best__price"><span id="best-price"></span><small>₽</small></p>
         <p class="best__text" id="best-text"></p>
@@ -106,18 +106,16 @@
   <div class="main-col" id="result">
     <div class="tabbar">
       <div class="tabs tabs--main" role="tablist" aria-label="Результат">
-        <button class="tabs__btn" type="button" role="tab" data-tab="calc" aria-selected="true"><span class="tabs__n">01</span>Расчёт</button>
-        <button class="tabs__btn" type="button" role="tab" data-tab="salon" aria-selected="false"><span class="tabs__n">02</span>Салон</button>
-        <button class="tabs__btn" type="button" role="tab" data-tab="calendar" aria-selected="false"><span class="tabs__n">03</span>Календарь</button>
-        <button class="tabs__btn" type="button" role="tab" data-tab="ticket" aria-selected="false"><span class="tabs__n">04</span>Талон</button>
+        <button class="tabs__btn" type="button" role="tab" data-tab="calc" aria-selected="true">Расчёт</button>
+        <button class="tabs__btn" type="button" role="tab" data-tab="salon" aria-selected="false">Салон</button>
+        <button class="tabs__btn" type="button" role="tab" data-tab="calendar" aria-selected="false">Календарь</button>
+        <button class="tabs__btn" type="button" role="tab" data-tab="ticket" aria-selected="false">Талон</button>
       </div>
       <p class="result__route" id="result-route"></p>
     </div>
 
-    <!-- 01 Расчёт -->
+    <!-- Расчёт -->
     <section class="card tabpanel" data-tabpanel="calc" role="tabpanel" aria-live="polite">
-      <p class="label">[ <span class="label__num">01</span> / Результат ]</p>
-
       <div class="empty" data-panel="empty">
         <h2 class="state__title">Здесь появится прогноз</h2>
         <p class="state__text">Выберите город, дату и цену билета — и нажмите «Рассчитать».</p>
@@ -176,10 +174,9 @@
       </div>
     </section>
 
-    <!-- 02 Салон -->
+    <!-- Салон -->
     <section class="card tabpanel" data-tabpanel="salon" role="tabpanel" hidden>
       <div class="panel-head">
-        <p class="label">[ <span class="label__num">02</span> / Схема салона ]</p>
         <div class="scen" id="scen" role="group" aria-label="Сценарий спроса"><span class="scen__label">Сценарий</span></div>
       </div>
       <p class="panel-empty" data-needs-empty>Сначала рассчитайте прогноз.</p>
@@ -215,10 +212,9 @@
       </div>
     </section>
 
-    <!-- 03 Календарь -->
+    <!-- Календарь -->
     <section class="card tabpanel" data-tabpanel="calendar" role="tabpanel" hidden>
       <div class="panel-head">
-        <p class="label">[ <span class="label__num">03</span> / Календарь загрузки ]</p>
         <p class="result__route" id="cal-title"></p>
       </div>
       <p class="panel-empty" data-needs-empty>Сначала рассчитайте прогноз.</p>
@@ -234,14 +230,13 @@
       </div>
     </section>
 
-    <!-- 04 Талон -->
+    <!-- Талон -->
     <section class="card tabpanel" data-tabpanel="ticket" role="tabpanel" hidden>
-      <p class="label">[ <span class="label__num">04</span> / Посадочный талон ]</p>
       <p class="panel-empty" data-needs-empty>Сначала рассчитайте прогноз.</p>
       <div class="tabpanel" data-needs-result hidden>
         <article class="ticket" id="ticket">
           <div class="ticket__main">
-            <div class="ticket__band"><span>[ РЕШИСЬ АВИА / ПРОГНОЗ ]</span><span>ПОСАДОЧНЫЙ ТАЛОН</span></div>
+            <div class="ticket__band"><span>Решись Авиа</span><span>ПОСАДОЧНЫЙ ТАЛОН</span></div>
             <div class="ticket__body">
               <div class="ticket__route">
                 <div class="ticket__port"><span class="ticket__code" data-t="fromCode"></span><span class="ticket__city" data-t="fromCity"></span></div>
@@ -263,7 +258,7 @@
           </div>
           <div class="ticket__stub">
             <dl class="stub__col">
-              <dt class="label">[ Корешок ]</dt>
+              <dt class="label">Корешок</dt>
               <dd class="stub__route" data-t="stubRoute"></dd>
               <div class="tf"><dt>ДАТА</dt><dd data-t="date"></dd></div>
               <div class="tf"><dt>КУПЯТ / МЕСТ</dt><dd data-t="buySeats"></dd></div>
@@ -286,7 +281,7 @@
 <div class="history-wrap">
   <section class="card">
     <div class="card__head">
-      <p class="label">[ История расчётов ]</p>
+      <p class="label">История расчётов</p>
       <div class="card__tools">
         <span class="card__meta">Последние 5</span>
         <a class="btn btn--ghost btn--small" href="/api/history.csv" download id="history-csv">Вся история в CSV ↓</a>

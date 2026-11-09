@@ -47,7 +47,7 @@ async function loadStory() {
   setStory("source", story.source_name);
   setStory("drop", `−${whole(story.drop * 100)} %`);
   setStory("summary", `медиана ${whole(story.median)} против ${whole(story.others_mean)} в другие пятницы`);
-  setStory("chart-title", `[ ${story.route.origin} → ${story.route.destination} / ${dayMonth(story.date)} / ${rub(story.price)} ]`);
+  setStory("chart-title", `${story.route.origin} → ${story.route.destination} · ${dayMonth(story.date)} · ${rub(story.price)}`);
   setStory("chart-how", `Девять сценариев спроса при базовой цене ${rub(story.price)}, источник: ` +
     `${story.source_name.toLowerCase()}. Коридор 10–90 %: от ${fmt(story.low)} до ${fmt(story.high)} желающих ` +
     `при ${whole(story.seats)} местах. Лучшая цена по ожидаемой прибыли — ${rub(story.best.price)}.`);

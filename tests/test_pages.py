@@ -43,7 +43,7 @@ def test_landing_is_public(client):
     html = page(client, "/")
 
     assert "Цена из <span class=\"accent\">прогноза</span>, а не из правила" in html
-    assert "[ ТУРНИР «РЕШИСЬ» / ТЕХНОЛОГИИ ]" in html
+    assert '<p class="label">Турнир «Решись» · Технологии</p>' in html
 
 
 @pytest.mark.parametrize("number", ["705<small>", "1&nbsp;625<small>", "4<small>", "+6,7<small>", "83<small>"])
@@ -112,6 +112,12 @@ def test_landing_buttons_lead_into_the_tool(client):
     assert re.search(r'<button[^>]*data-guest', html)
     assert 'href="/app?destination=' in html
     assert 'href="/login"' in html
+
+
+def test_story_steps_are_numbered_plainly(client):
+    steps = re.findall(r'<span class="steps-list__n">([^<]*)</span>', page(client, "/"))
+
+    assert steps == ["1", "2", "3", "4", "5"]
 
 
 def test_no_link_on_the_landing_leads_nowhere(client):
@@ -233,6 +239,23 @@ def test_style_uses_only_the_three_design_fonts():
     assert set(re.findall(r"'([A-Za-z][^']*)'", css)) == {"Unbounded", "Manrope", "Onest"}
 
 
+# --- подписи без тегов в квадратных скобках ---
+
+@pytest.mark.parametrize("path", ["/", "/login", "/app"])
+def test_pages_have_no_bracket_labels(client, path):
+    html = open_page(client, path).text
+
+    assert "[ " not in html and " ]" not in html
+    assert '<a class="brand" href="/">Решись Авиа</a>' in html
+
+
+def test_scripts_write_no_bracket_labels():
+    scripts = {path.name: path.read_text(encoding="utf-8") for path in (PROJECT / "static" / "js").glob("*.js")}
+
+    assert scripts
+    assert [name for name, source in scripts.items() if "[ " in source or " ]" in source] == []
+
+
 def test_old_static_page_is_gone(client):
     assert client.get("/static/index.html").status_code == 404
 
@@ -249,12 +272,11 @@ def test_ticket_barcode_is_solid_bars_that_html2canvas_can_draw(client):
     assert rules and not any("gradient" in line for line in rules)
 
 
-def test_tool_panels_are_numbered_like_their_tabs(client):
+def test_tool_tabs_are_named_without_numbers(client):
     html = open_page(client, "/app").text
+    tabs = html.split('<div class="tabs tabs--main"', 1)[1].split("</div>", 1)[0]
 
-    for number, tab in (("01", "calc"), ("02", "salon"), ("03", "calendar"), ("04", "ticket")):
-        panel = html.split(f'data-tabpanel="{tab}"', 1)[1][:400]
-        assert f'<span class="label__num">{number}</span>' in panel
+    assert re.findall(r'data-tab="[a-z]+"[^>]*>([^<]*)</button>', tabs) == ["Расчёт", "Салон", "Календарь", "Талон"]
 
 
 def test_seats_are_the_seats_of_all_flights_of_the_day(client):

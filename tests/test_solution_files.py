@@ -66,5 +66,5 @@ def test_check_scripts_come_as_one_archive():
 def test_files_keep_their_order_and_numbers():
     html = files_html({})
 
-    numbers = [html.index(f'<span class="file__n">{i:02d}</span>') for i in range(1, len(FILES) + 1)]
+    numbers = [html.index(f'<span class="file__n">{i}</span>') for i in range(1, len(FILES) + 1)]
     assert numbers == sorted(numbers)

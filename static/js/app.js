@@ -61,7 +61,7 @@ function setPanel(name) {
 }
 
 function showError(code, title, text) {
-  $("#error-code").textContent = `[ ${code} ]`;
+  $("#error-code").textContent = `Ошибка ${code}`;
   $("#error-title").textContent = title;
   $("#error-text").textContent = text;
   setPanel("error");
