@@ -44,6 +44,10 @@ class MeOut(BaseModel):
     guest: bool = Field(description="Временный гостевой аккаунт: ему показывается ссылка на регистрацию")
 
 
+class SessionOut(BaseModel):
+    user: MeOut | None = Field(description="Кто вошёл; null — вход не выполнен")
+
+
 class OddsOut(BaseModel):
     low: float = Field(description="Желают в сценарии 0.1: нижняя граница коридора 80 %")
     high: float = Field(description="Желают в сценарии 0.9: верхняя граница коридора 80 %")

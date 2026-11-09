@@ -9,7 +9,8 @@ export async function enterAsGuest() {
 }
 
 // Для «Открыть расчёт 12 июня»: если вход уже есть, остаёмся собой, иначе входим гостем.
+// /api/session без входа отвечает 200 и user: null — в консоли нет ошибки 401, как было с /api/me.
 export async function ensureSession() {
-  const me = await get("/api/me");
-  return me.ok ? me : enterAsGuest();
+  const session = await get("/api/session");
+  return session.ok && session.data.user ? { ...session, data: session.data.user } : enterAsGuest();
 }

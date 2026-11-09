@@ -340,6 +340,26 @@ def test_me_tells_a_guest_from_a_user(client):
     assert client.get("/api/me").json() == {"login": "anna", "guest": False}
 
 
+# --- проверка сессии без ошибки 401 в консоли браузера ---
+
+def test_session_without_login_is_an_empty_answer_not_an_error(client):
+    response = client.get("/api/session")
+
+    assert response.status_code == 200
+    assert response.json() == {"user": None}
+    assert client.get("/api/me").status_code == 401  # контракт /api/me прежний
+
+
+def test_session_names_who_is_signed_in(client):
+    client.post("/api/guest")
+    guest = client.get("/api/session").json()["user"]
+    assert guest["guest"] is True and guest == client.get("/api/me").json()
+
+    client.post("/api/logout")
+    client.post("/api/register", json={"login": "anna", "password": "password1"})
+    assert client.get("/api/session").json() == {"user": {"login": "anna", "guest": False}}
+
+
 def test_guest_logins_are_reserved(client):
     response = client.post("/api/register", json={"login": "гость-abc123", "password": "password1"})
 

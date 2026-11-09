@@ -19,7 +19,7 @@ from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import schemas, views
-from app.auth import AuthStore, LoginTaken, User, is_guest, parse_credentials
+from app.auth import AuthStore, LoginTaken, User, parse_credentials
 from app.calendar import month_calendar
 from app.catalog import CatalogError
 from app.config import PROJECT_DIR, Settings
@@ -352,7 +352,15 @@ def logout(request: Request, auth: AuthStore = Depends(get_auth)) -> Response:
 
 @router.get("/api/me", tags=["Вход"], response_model=schemas.MeOut, responses=ERRORS, summary="Кто вошёл")
 def me(user: User = Depends(current_user)) -> dict:
-    return {"login": user.login, "guest": is_guest(user.login)}
+    return views.me_json(user)
+
+
+@router.get("/api/session", tags=["Вход"], response_model=schemas.SessionOut, summary="Есть ли вход",
+            description="Как GET /api/me, но без входа отвечает 200 и user: null, а не 401. "
+                        "Так страница узнаёт, нужен ли гостевой вход, без ошибки в консоли браузера.")
+def session(request: Request, auth: AuthStore = Depends(get_auth)) -> dict:
+    user = auth.user_for_session(request.cookies.get(SESSION_COOKIE))
+    return {"user": None if user is None else views.me_json(user)}
 
 
 # --- прогноз ---

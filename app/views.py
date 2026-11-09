@@ -1,4 +1,5 @@
 """Перевод объектов предметной области в JSON-ответы. Округление — только здесь."""
+from app.auth import User, is_guest
 from app.calendar import CalendarDay
 from app.catalog import Catalog
 from app.domain import HOLIDAYS, Flight, Route, weekday_name
@@ -171,3 +172,7 @@ def story_json(source: str, source_name: str, story: FridayStory, result: Foreca
         "others_mean": money(story.others_mean), "drop": share(story.drop),
         "price": result.price, "scenarios": scenarios_json(result), "best": best_json(advice),
     }
+
+
+def me_json(user: User) -> dict:
+    return {"login": user.login, "guest": is_guest(user.login)}

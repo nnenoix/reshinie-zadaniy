@@ -163,7 +163,8 @@ py -3.11 -m venv .venv
 | `GET /api/story?source=` | сквозная история 12 июня для витрины (без входа) |
 | `POST /api/register`, `POST /api/login` | регистрация и вход `{"login", "password"}`; при регистрации можно передать `password2` |
 | `POST /api/guest` | войти как гость |
-| `POST /api/logout`, `GET /api/me` | выход; кто вошёл и гость ли это |
+| `POST /api/logout`, `GET /api/me` | выход; кто вошёл и гость ли это (без входа — 401) |
+| `GET /api/session` | то же без ошибки: без входа `{"user": null}`; так кнопка «Открыть расчёт 12 июня» решает, входить ли гостем |
 | `POST /api/forecast` | прогноз рейса `{"origin", "destination", "date", "price", "source", "save"}` |
 | `GET /api/best-price?origin=&destination=&date=&price=&source=` | лучшая цена и кривая прибыли |
 | `GET /api/calendar?origin=&destination=&price=&source=` | загрузка по всем дням маршрута одним запросом |

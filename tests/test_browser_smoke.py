@@ -218,3 +218,18 @@ def test_ticket_png_contains_the_barcode(page, tmp_path):
         return [dark, pixels.length / 4];
     }""")
     assert dark > total * 0.2  # полосы штрихкода есть на снимке талона
+
+
+def test_opening_the_story_without_login_leaves_no_errors_in_the_console(browser, base_url):
+    # Раньше кнопка спрашивала GET /api/me, и в консоли гостя краснело «401 (Unauthorized)».
+    context = browser.new_context(viewport={"width": 1440, "height": 900})
+    tab = context.new_page()
+    errors = []
+    tab.on("console", lambda message: errors.append(message.text) if message.type == "error" else None)
+    tab.goto(base_url + "/")
+    tab.click(".lp-cta [data-open-story]")
+    tab.wait_for_url("**/app**")
+    wait_for_result(tab)
+    context.close()
+
+    assert errors == []
