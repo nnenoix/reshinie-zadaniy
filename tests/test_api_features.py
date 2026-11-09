@@ -296,7 +296,8 @@ def test_story_is_public_and_matches_the_landing_text(client, settings):
     assert [f["date"] for f in body["fridays"] if f["is_story_day"]] == ["2026-06-12"]
     assert len(body["scenarios"]) == 9
     assert body["price"] == 5500
-    assert abs(body["best"]["price"] - 5610) <= 5  # «лучшая цена около 5 610 ₽»: по нашему прогнозу 5 605
+    assert body["best"]["price"] == 5605
+    assert round(body["best"]["gain"]) == 3217
 
 
 def test_story_by_organizers_forecast_gives_5614(client):

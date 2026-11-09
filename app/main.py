@@ -12,7 +12,7 @@ from typing import Any, Callable
 
 from fastapi import APIRouter, Body, Depends, FastAPI, Query, Request, Response, Security
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.security import APIKeyCookie, APIKeyHeader
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -30,6 +30,7 @@ from app.pricing import CURVE_STEP, advise, make_forecast, profit_curve
 from app.queries import parse_flight_query, parse_forecast_query, parse_route_price_query, parse_source
 from app.ratelimit import RateLimiter
 from app.seatmap import seat_map
+from app.solution_files import files_html
 from app.story import STORY_DAY, STORY_ROUTE, friday_story
 from app.security import (CSRF_COOKIE, CSRF_HEADER, client_address, csrf_problem, new_csrf_token,
                           security_headers)
@@ -107,6 +108,7 @@ def create_app(settings: Settings | None = None, now: Callable[[], datetime] | N
                                         {ORGANIZERS: settings.forecast_csv, ML: settings.ml_forecast_csv})
     _require_organizers_forecast(app.state.sources)
     app.state.database = database
+    app.state.landing_html = render_landing(settings)
     app.state.auth = AuthStore(database, session_ttl=timedelta(days=settings.session_days), now=clock)
     app.state.history = HistoryStore(database)
     app.state.login_limiter = RateLimiter(settings.login_limit, timedelta(minutes=settings.login_window_minutes), clock)
@@ -126,6 +128,12 @@ def create_app(settings: Settings | None = None, now: Callable[[], datetime] | N
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     app.include_router(router)
     return app
+
+
+def render_landing(settings: Settings) -> str:
+    """Витрина с блоком «Файлы решения» по адресам из настроек."""
+    template = (PAGES_DIR / "landing.html").read_text(encoding="utf-8")
+    return template.replace("<!-- solution-files -->", files_html(settings.file_links))
 
 
 def _require_organizers_forecast(sources: ForecastSources) -> None:
@@ -220,8 +228,8 @@ def signed_in(request: Request) -> bool:
 
 
 @router.get("/", include_in_schema=False)
-def landing_page() -> FileResponse:
-    return FileResponse(PAGES_DIR / "landing.html")
+def landing_page(request: Request) -> HTMLResponse:
+    return HTMLResponse(request.app.state.landing_html)
 
 
 @router.get("/login", include_in_schema=False, response_model=None)

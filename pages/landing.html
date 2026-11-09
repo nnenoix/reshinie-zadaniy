@@ -57,11 +57,11 @@
   <p class="label">[ Ключевые числа ]</p>
   <dl class="lp-numbers lp-numbers--6">
     <div class="lp-num"><dt>прибыль обычного дня при лучших ценах</dt><dd>705<small>тыс. ₽</small></dd></div>
-    <div class="lp-num"><dt>прибыль пиковой пятницы</dt><dd>1 625<small>тыс. ₽</small></dd></div>
+    <div class="lp-num"><dt>прибыль пиковой пятницы</dt><dd>1&nbsp;625<small>тыс. ₽</small></dd></div>
     <div class="lp-num"><dt>теневая цена кресла в пиковую пятницу</dt><dd>4<small>тыс. ₽</small></dd></div>
     <div class="lp-num"><dt>прибыли больше, чем при базовой цене, на бэктесте мая</dt><dd>+6,7<small>млн ₽</small></dd></div>
     <div class="lp-num"><dt>случаев мая, где факт попал в коридор прогноза 10–90%</dt><dd>83<small>%</small></dd></div>
-    <div class="lp-num"><dt>автотестов проверяют сервис</dt><dd>300+</dd></div>
+    <div class="lp-num"><dt>автотестов проверяют сервис</dt><dd><span data-tests>355</span></dd></div>
   </dl>
 </section>
 
@@ -81,7 +81,7 @@
         <p class="cbar__note">Самолёт заполнен: у кресла появляется цена, 4 тыс. ₽.</p>
       </div>
       <dl class="metrics metrics--2">
-        <div class="metric"><dt class="metric__label">прибыль пиковой пятницы</dt><dd class="metric__value metric__value--acc">1 625<span class="metric__unit">тыс. ₽</span></dd></div>
+        <div class="metric"><dt class="metric__label">прибыль пиковой пятницы</dt><dd class="metric__value metric__value--acc">1&nbsp;625<span class="metric__unit">тыс. ₽</span></dd></div>
         <div class="metric"><dt class="metric__label">если не лететь в Сочи</dt><dd class="metric__value">−335<span class="metric__unit">тыс. ₽</span></dd></div>
       </dl>
     </div>
@@ -92,7 +92,7 @@
       <span class="case__n">02 →</span>
       <p class="label">[ <span class="label__num">02</span> / Прогноз ]</p>
       <h2 class="case__title">Спрос на июнь</h2>
-      <p class="case__text">Модель Chronos-2 в AutoGluon: самая быстрая из тех, что уступают лучшей не больше 2%. Признаки праздников снизили ошибку ансамбля с 42,31 до 40,88. Календарь РФ с переносами не помог, и это показано в ноутбуке.</p>
+      <p class="case__text">Модель Chronos-2 в AutoGluon: самая быстрая из тех, что уступают лучшей не больше чем на 2%. Признаки праздников снизили ошибку ансамбля с 42,31 до 40,88. Календарь РФ с переносами не помог, и это показано в ноутбуке.</p>
     </div>
     <div class="card case__card">
       <dl class="metrics metrics--2">
@@ -111,12 +111,12 @@
       <span class="case__n">03 →</span>
       <p class="label">[ <span class="label__num">03</span> / Продукт ]</p>
       <h2 class="case__title">Сервис для менеджера</h2>
-      <p class="case__text">Ввёл рейс, дату и цену — сразу видишь продажи, 9 сценариев спроса и лучшую цену по ожидаемой прибыли. Ещё есть схема салона, календарь загрузки на июнь, посадочный талон в PNG и PDF, история с выгрузкой в CSV и выбор прогноза: организаторов или наш. Регистрация, вход и гостевой вход для жюри. Защита от подбора пароля, CSRF и CSP.</p>
+      <p class="case__text">Ввёл рейс, дату и цену — сразу видишь продажи, 9 сценариев спроса и лучшую цену по ожидаемой прибыли. Ещё есть схема салона, календарь загрузки на июнь, посадочный талон в PNG и PDF, история с выгрузкой в CSV и выбор прогноза: организаторов или наш. Регистрация, вход и гостевой вход для жюри. Защита: лимит попыток входа, CSRF-токен, CSP.</p>
     </div>
     <div class="card case__card">
       <dl class="metrics metrics--2">
-        <div class="metric"><dt class="metric__label">автотестов</dt><dd class="metric__value">310</dd></div>
-        <div class="metric"><dt class="metric__label">лучшая цена 12 июня по прогнозу организаторов</dt><dd class="metric__value metric__value--acc">5 614<span class="metric__unit">₽</span></dd></div>
+        <div class="metric"><dt class="metric__label">автотестов</dt><dd class="metric__value"><span data-tests>355</span></dd></div>
+        <div class="metric"><dt class="metric__label">лучшая цена 12 июня по нашей модели</dt><dd class="metric__value metric__value--acc">5&nbsp;605<span class="metric__unit">₽</span></dd></div>
       </dl>
       <ol class="feat">
         <li><span class="feat__n">01 →</span><span class="feat__t">Ползунок цены</span><span class="feat__d">числа и график меняются живьём</span></li>
@@ -142,7 +142,7 @@
         <li><span class="steps-list__n">01 →</span><p><b>Ждали.</b> Пятница 12 июня, День России. Казалось, будет пик спроса, как в пятницу из модели аналитики.</p></li>
         <li><span class="steps-list__n">02 →</span><p><b>Прогноз.</b> На рейсе Москва → Санкт-Петербург спрос на 13% ниже соседних пятниц: медиана 917 против 1 049, коридор 782–1 039.</p></li>
         <li><span class="steps-list__n">03 →</span><p><b>Почему.</b> Праздничная пятница не деловой день.</p></li>
-        <li><span class="steps-list__n">04 →</span><p><b>Вывод.</b> Цену берём из прогноза, а не из правила «пятница — значит дороже». По нашему прогнозу лучшая цена около 5 610 ₽ при базовой 5 500 ₽.</p></li>
+        <li><span class="steps-list__n">04 →</span><p><b>Вывод.</b> Цену берём из прогноза. Правило «пятница — значит дороже» здесь не работает. По нашей модели лучшая цена 5 605 ₽: +3 217 ₽ ожидаемой прибыли к базовой цене 5 500 ₽.</p></li>
         <li><span class="steps-list__n">05 →</span><p><b>На сайте.</b> Расчёт 12 июня, лучшая цена и календарь, где 12 июня бледнее соседних пятниц. По прогнозу организаторов сервис советует 5 614 ₽: это +3 812 ₽ ожидаемой прибыли к цене 5 500 ₽.</p></li>
       </ol>
     </div>
@@ -163,27 +163,21 @@
 <section class="lp-section" id="checked">
   <div class="lp-note">
     <p class="label">[ КАК ПРОВЕРЕНО ]</p>
-    <p class="lp-note__text">Отдельный скрипт пересчитал 261 число аналитики. Прогноз проверен на мае 2026 года: факт попадает в коридор 10–90% в 83% случаев. Сервис проверяют 310 автотестов.</p>
+    <p class="lp-note__text">Отдельный скрипт пересчитал 261 число аналитики. Прогноз проверен на мае 2026 года: факт попадает в коридор 10–90% в 83% случаев. Сервис проверяют <span data-tests>355</span> автотестов.</p>
   </div>
 </section>
 
 <section class="lp-section" id="files">
   <p class="label">[ ФАЙЛЫ РЕШЕНИЯ ]</p>
   <div class="card files">
-    <a class="file" href="#"><span class="file__n">01</span><span class="file__name">Титаренко_Егор_Константинович_БиА.pdf</span><span class="file__desc">Решение блока «Бизнес и аналитика», 5 схем</span><span class="tag">PDF</span><span class="file__open">Открыть →</span></a>
-    <a class="file" href="#"><span class="file__n">02</span><span class="file__name">Титаренко_Егор_Константинович_ml_demand_forecast.ipynb</span><span class="file__desc">Ноутбук ML-части: обучение, выбор модели, проверка на мае, бэктест</span><span class="tag">IPYNB</span><span class="file__open">Открыть →</span></a>
-    <a class="file" href="#"><span class="file__n">03</span><span class="file__name">Титаренко_Егор_Константинович_my_forecast.csv</span><span class="file__desc">Прогноз спроса и цен на июнь, его читает сервис</span><span class="tag">CSV</span><span class="file__open">Открыть →</span></a>
-    <a class="file" href="https://github.com/nnenoix/reshinie-zadaniy" target="_blank" rel="noopener"><span class="file__n">04</span><span class="file__name">Код сервиса</span><span class="file__desc">FastAPI, SQLite, страница на JavaScript, тесты и README</span><span class="tag">GITHUB</span><span class="file__open">Открыть →</span></a>
-    <a class="file" href="#"><span class="file__n">05</span><span class="file__name">proverka_bia.py и proverka_forecast.py</span><span class="file__desc">Скрипты проверки чисел аналитики и файла прогноза</span><span class="tag">PY</span><span class="file__open">Открыть →</span></a>
-    <a class="file" href="#"><span class="file__n">06</span><span class="file__name">Видео</span><span class="file__desc">До 3 минут</span><span class="tag">ВИДЕО</span><span class="file__open">Открыть →</span></a>
-    <a class="file" href="#"><span class="file__n">07</span><span class="file__name">Сайт</span><span class="file__desc">Этот сервис</span><span class="tag">САЙТ</span><span class="file__open">Открыть →</span></a>
+    <!-- solution-files -->
   </div>
 </section>
 
 <section class="lp-section" id="tools">
   <div class="lp-note">
     <p class="label">[ ИНСТРУМЕНТЫ ]</p>
-    <p class="lp-note__text">Claude Code на модели Claude Opus 5.5 с несколькими агентами, Claude Design для дизайна сайта, AutoGluon и Chronos-2 для прогноза, FastAPI и SQLite для сервиса. Задачи ставил, решения выбирал и результат проверял автор.</p>
+    <p class="lp-note__text">Claude Code на модели Claude Opus 5.5 с несколькими агентами, Claude Design для дизайна сайта, AutoGluon и Chronos-2 для прогноза, FastAPI и Postgres для сервиса. Задачи ставил, решения выбирал и результат проверял автор.</p>
   </div>
 </section>
 

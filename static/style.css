@@ -557,3 +557,20 @@ a.btn:hover { color: var(--acc-ink); }
   .fri__row { grid-template-columns: 64px minmax(0, 1fr) 44px; gap: 8px; font-size: 11px; }
   .card__head { flex-wrap: wrap; }
 }
+
+/* ===== Фаза 3: правки по ревью ===== */
+
+/* «Файлы решения»: строка без адреса не кликается */
+.file.is-pending { cursor: default; }
+.file.is-pending:hover { background: none; }
+.file.is-pending .file__open { color: var(--mute); }
+
+/* большие числа не рвутся внутри: «1 625» целиком на одной строке */
+.lp-num dd, .metric__value { white-space: nowrap; }
+@media (max-width: 480px) {
+  .lp-numbers { grid-template-columns: minmax(0, 1fr); }
+  .lp-num:nth-child(even) { border-left: 0; }
+  .lp-num + .lp-num { border-top: 1px solid var(--line); }
+  .metrics--2 { grid-template-columns: minmax(0, 1fr); }
+  .metrics--2 .metric:nth-child(even) { border-left: 0; border-top: 1px solid var(--line); }
+}

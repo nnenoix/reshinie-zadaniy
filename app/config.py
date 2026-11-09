@@ -17,13 +17,16 @@ ACCOUNT_LOGIN_WINDOW_MINUTES  за какое окно; по умолчанию 
 CLIENT_IP_HEADER заголовок с адресом клиента, который ставит прокси (на Render — cf-connecting-ip);
                  пусто — адрес соединения, X-Forwarded-For не читается
 SIGNUP_LIMIT     сколько новых аккаунтов и гостей в час с одного адреса; по умолчанию 20
+LINK_*           адреса «Файлов решения» на витрине (список — в app/solution_files.py)
 
 Относительные пути считаются от папки проекта.
 """
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
+
+from app.solution_files import file_links
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 DEMO_LOGIN = "jury"
@@ -46,6 +49,7 @@ class Settings:
     account_login_window_minutes: int = 15
     client_ip_header: str | None = None
     signup_limit: int = 20  # новых аккаунтов (и гостей) с одного адреса в час
+    file_links: Mapping[str, str] = field(default_factory=lambda: file_links({}))  # «Файлы решения» на витрине
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -84,4 +88,5 @@ def from_environment(env: Mapping[str, str]) -> Settings:
         account_login_window_minutes=number("ACCOUNT_LOGIN_WINDOW_MINUTES", defaults.account_login_window_minutes),
         client_ip_header=text("CLIENT_IP_HEADER").lower() or None,
         signup_limit=number("SIGNUP_LIMIT", defaults.signup_limit),
+        file_links=file_links(env),
     )
