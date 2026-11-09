@@ -273,3 +273,47 @@ def test_chance_to_run_out_of_seats_is_an_honest_range(page, sold_out, chance):
     }""", sold_out)
 
     assert text == f"С вероятностью 80 % желающих от 782 до 1 039; в места упрёмся с вероятностью {chance}."
+
+
+LINE_BREAKS = r"""(selector) => [...document.querySelectorAll(selector)].map((element) => {
+    // символы, после которых строка переносится: у каждого символа своя верхняя граница
+    const text = element.textContent, range = document.createRange(), node = element;
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    const chars = [];
+    for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+        for (let i = 0; i < t.length; i++) {
+            range.setStart(t, i); range.setEnd(t, i + 1);
+            chars.push([t.data[i], range.getBoundingClientRect().top]);
+        }
+    }
+    const breaks = [];
+    for (let i = 1; i < chars.length; i++) if (chars[i][1] > chars[i - 1][1] + 2) breaks.push(chars[i - 1][0]);
+    return [text, breaks];
+})"""
+
+
+def test_file_names_on_a_phone_break_only_after_an_underscore(browser, base_url):
+    # «Титаренко_Егор_Ко / нстантинович_БиА. / pdf» рвало посреди слова.
+    context = browser.new_context(viewport={"width": 375, "height": 812})
+    tab = context.new_page()
+    tab.goto(base_url + "/")
+    names = tab.evaluate(LINE_BREAKS, "#files .file__name")
+    context.close()
+
+    wrapped = [(text, breaks) for text, breaks in names if breaks]
+    assert wrapped, "на 375 px длинные имена должны переноситься"
+    for text, breaks in wrapped:
+        assert set(breaks) <= {"_", " "}, (text, breaks)
+
+
+def test_empty_history_on_a_phone_is_seen_whole(browser, base_url):
+    context, tab = open_tool(browser, base_url, 375)
+    cut = tab.evaluate("""() => {
+        const cell = document.querySelector('.history__empty td'), box = cell.closest('.table-scroll');
+        const text = document.createRange();
+        text.selectNodeContents(cell);
+        return [text.getBoundingClientRect().right - box.getBoundingClientRect().right, box.scrollWidth - box.clientWidth];
+    }""")
+    context.close()
+
+    assert cut[0] <= 0 and cut[1] == 0  # текст не уходит за правый край и прокручивать нечего

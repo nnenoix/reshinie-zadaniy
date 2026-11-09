@@ -160,7 +160,7 @@ select.field__control { cursor: pointer; }
 .history th.l, .history td.l { text-align: left; }
 .history td.time { color: var(--mute); }
 .history td.buy { font-weight: 600; }
-.history__empty td { text-align: left; color: var(--mute); }
+.history__empty td { text-align: left; color: var(--mute); white-space: normal; }
 
 /* вход */
 .auth { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) 560px; }
@@ -503,6 +503,8 @@ a.btn:hover { color: var(--acc-ink); }
   .feat__d { grid-column: 2; }
   .file { grid-template-columns: 36px minmax(0, 1fr) auto; padding: 16px; }
   .file__desc, .file .tag { display: none; }
+  /* пустая история: шапка из 9 колонок шире экрана и уводила текст за край прокрутки */
+  .history:has(.history__empty) thead { display: none; }
 }
 
 /* ===== Дополнения фазы 2б: элементы, которых нет в макете, в тех же токенах ===== */
