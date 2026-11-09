@@ -88,6 +88,8 @@ def test_landing_texts_from_the_submission(client):
     html = page(client, "/")
 
     assert "Ансамбль точнее лишь на 1,8%" in html
+    assert "(WQL 0,068 против 0,076), и не требует переобучения." in html
+    assert "её не надо переобучать" not in html
     assert "пересчитал 287 чисел аналитики" in html
     assert "Защита: лимит попыток входа, CSRF-токен, CSP." in html
     assert "Цену берём из прогноза. Правило «пятница — значит дороже» здесь не работает." in html
