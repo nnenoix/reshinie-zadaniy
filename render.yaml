@@ -1,7 +1,14 @@
-# Render Blueprint: веб-сервис из Dockerfile на бесплатном тарифе.
+# Render Blueprint: веб-сервис из Dockerfile и база Postgres, оба на бесплатном тарифе.
 # Render → New → Blueprint → выбрать репозиторий. Порт сервис берёт из $PORT.
-# На бесплатном тарифе диска нет: база в /app/var пустеет при каждом перезапуске,
-# демо-аккаунт создаётся заново при старте, гость — по кнопке.
+# Пользователи, сессии и история лежат в Postgres и переживают засыпание и новые сборки.
+# Бесплатная база Render живёт 30 дней с момента создания, потом её нужно пересоздать или оплатить.
+databases:
+  - name: reshinie-zadaniy-db
+    plan: free
+    databaseName: aviaprognoz
+    user: aviaprognoz
+    ipAllowList: []   # только внутренняя сеть Render: снаружи к базе не подключиться
+
 services:
   - type: web
     name: reshinie-zadaniy
@@ -12,6 +19,10 @@ services:
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
+      - key: DATABASE_URL   # адрес базы выше; без него сервис пишет в SQLite внутри контейнера
+        fromDatabase:
+          name: reshinie-zadaniy-db
+          property: connectionString
       - key: COOKIE_SECURE   # Render отдаёт сайт по HTTPS: cookie только по HTTPS и заголовок HSTS
         value: "1"
       - key: CLIENT_IP_HEADER   # адрес клиента для лимитов ставит Cloudflare перед Render; X-Forwarded-For подделывается

@@ -4,6 +4,7 @@
 """
 import logging
 import math
+from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from time import perf_counter
@@ -22,6 +23,7 @@ from app.auth import AuthStore, LoginTaken, User, parse_credentials
 from app.calendar import month_calendar
 from app.catalog import CatalogError
 from app.config import PROJECT_DIR, Settings
+from app.db import open_database
 from app.errors import InputError
 from app.history import HistoryEntry, HistoryStore, history_csv
 from app.pricing import CURVE_STEP, advise, make_forecast, profit_curve
@@ -90,15 +92,23 @@ def create_app(settings: Settings | None = None, now: Callable[[], datetime] | N
     clock = now or (lambda: datetime.now(timezone.utc))
     _configure_logging()
 
+    database = open_database(settings.database_url, settings.db_path)
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        yield
+        database.close()
+
     app = FastAPI(title="Прогноз продаж авиабилетов", description=DESCRIPTION, version=VERSION,
-                  openapi_tags=TAGS, redoc_url=None)
+                  openapi_tags=TAGS, redoc_url=None, lifespan=lifespan)
     app.state.settings = settings
     app.state.clock = clock
     app.state.sources = ForecastSources(settings.routes_csv,
                                         {ORGANIZERS: settings.forecast_csv, ML: settings.ml_forecast_csv})
     _require_organizers_forecast(app.state.sources)
-    app.state.auth = AuthStore(settings.db_path, session_ttl=timedelta(days=settings.session_days), now=clock)
-    app.state.history = HistoryStore(settings.db_path)
+    app.state.database = database
+    app.state.auth = AuthStore(database, session_ttl=timedelta(days=settings.session_days), now=clock)
+    app.state.history = HistoryStore(database)
     app.state.login_limiter = RateLimiter(settings.login_limit, timedelta(minutes=settings.login_window_minutes), clock)
     app.state.account_limiter = RateLimiter(settings.account_login_limit,
                                             timedelta(minutes=settings.account_login_window_minutes), clock)
@@ -232,8 +242,9 @@ def tool_page(request: Request) -> Response:
 
 
 @router.get("/api/health", tags=["Служебное"], response_model=schemas.HealthOut, summary="Сервер работает?")
-def health(sources: ForecastSources = Depends(get_sources)) -> dict:
-    return {"status": "ok", "version": VERSION, "sources": {s.id: s.available for s in sources.describe()}}
+def health(request: Request, sources: ForecastSources = Depends(get_sources)) -> dict:
+    return {"status": "ok", "version": VERSION, "database": request.app.state.database.dialect,
+            "sources": {s.id: s.available for s in sources.describe()}}
 
 
 @router.get("/api/csrf", tags=["Служебное"], response_model=schemas.CsrfOut, summary="Токен защиты от CSRF",

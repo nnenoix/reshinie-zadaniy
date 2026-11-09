@@ -4,6 +4,7 @@ FORECAST_CSV     прогноз организаторов; по умолчан�
 ML_FORECAST_CSV  прогноз нашей ML-модели; по умолчанию data/my_forecast.csv
                  (если файла нет, работает только прогноз организаторов)
 ROUTES_CSV       маршруты; по умолчанию data/routes.csv
+DATABASE_URL     адрес Postgres (postgresql://…); если задан, база — Postgres, а не SQLite
 DB_PATH          база SQLite (пользователи, сессии, история); по умолчанию var/app.db
 COOKIE_SECURE    1 — cookie только по HTTPS (включить на хостинге)
 SESSION_DAYS     сколько дней действует вход; по умолчанию 7
@@ -34,6 +35,7 @@ class Settings:
     forecast_csv: Path = PROJECT_DIR / "data" / "seasonal_forecast.csv"
     ml_forecast_csv: Path = PROJECT_DIR / "data" / "my_forecast.csv"
     db_path: Path = PROJECT_DIR / "var" / "app.db"
+    database_url: str | None = None  # Postgres; без него — SQLite в db_path
     cookie_secure: bool = False
     session_days: int = 7
     demo_login: str = DEMO_LOGIN
@@ -53,6 +55,7 @@ class Settings:
             forecast_csv=_path("FORECAST_CSV", defaults.forecast_csv),
             ml_forecast_csv=_path("ML_FORECAST_CSV", defaults.ml_forecast_csv),
             db_path=_path("DB_PATH", defaults.db_path),
+            database_url=os.environ.get("DATABASE_URL", "").strip() or None,
             cookie_secure=os.environ.get("COOKIE_SECURE", "").strip().lower() in {"1", "true", "yes"},
             session_days=int(os.environ.get("SESSION_DAYS", defaults.session_days)),
             demo_login=os.environ.get("DEMO_LOGIN", defaults.demo_login).strip(),

@@ -1,4 +1,4 @@
-"""Регистрация, вход и сессии.
+"""Регистрация, вход и сессии (SQLite или Postgres, см. app/db.py).
 
 Пароли хранятся как scrypt-хеш с солью. В браузер уходит случайный токен сессии
 (в httpOnly-cookie), а в базе лежит только его SHA-256, поэтому утечка базы
@@ -9,13 +9,11 @@ import hashlib
 import hmac
 import re
 import secrets
-import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from typing import Any, Callable
 
-from app.db import Transaction, prepare
+from app.db import Database, Duplicate, prepare
 from app.errors import InputError
 
 SCRYPT_N, SCRYPT_R, SCRYPT_P, SCRYPT_LEN = 2**14, 8, 1, 32
@@ -24,16 +22,16 @@ PASSWORD_MIN, PASSWORD_MAX = 8, 128
 
 SCHEMA = """
 create table if not exists users (
-    id integer primary key,
+    id {id},
     login text not null,
     login_key text not null unique,
     password_hash text not null,
-    created_at integer not null
+    created_at bigint not null
 );
 create table if not exists sessions (
     token_hash text primary key,
-    user_id integer not null references users(id) on delete cascade,
-    expires_at integer not null
+    user_id bigint not null references users(id) on delete cascade,
+    expires_at bigint not null
 );
 """
 
@@ -83,30 +81,31 @@ def parse_credentials(data: Any) -> tuple[str, str]:
 
 
 class AuthStore:
-    """Пользователи и сессии в SQLite. Каждое действие открывает своё соединение,
+    """Пользователи и сессии. Каждое действие — своя транзакция,
     поэтому хранилище можно вызывать из разных потоков сервера."""
 
     def __init__(
         self,
-        db_path: Path,
+        database: Database,
         session_ttl: timedelta,
         now: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
     ):
-        self.db_path = Path(db_path)
+        self.database = database
         self.session_ttl = session_ttl
         self.now = now
-        prepare(self.db_path, SCHEMA)
+        prepare(database, SCHEMA)
 
     def register(self, login: str, password: str) -> User:
         try:
-            with self._connect() as db:
-                cursor = db.execute(
-                    "insert into users (login, login_key, password_hash, created_at) values (?, ?, ?, ?)",
+            with self.database.transaction() as db:
+                (user_id,) = db.one(
+                    "insert into users (login, login_key, password_hash, created_at) values (?, ?, ?, ?) "
+                    "returning id",
                     (login, login.casefold(), hash_password(password), self._timestamp()),
                 )
-        except sqlite3.IntegrityError:
+        except Duplicate:
             raise LoginTaken(login) from None
-        return User(id=cursor.lastrowid, login=login)
+        return User(id=user_id, login=login)
 
     def create_guest(self) -> User:
         """Гостевой аккаунт для жюри: случайный логин и пароль, который никто не знает."""
@@ -124,11 +123,8 @@ class AuthStore:
             pass
 
     def authenticate(self, login: str, password: str) -> User | None:
-        with self._connect() as db:
-            row = db.execute(
-                "select id, login, password_hash from users where login_key = ?",
-                (login.casefold(),),
-            ).fetchone()
+        with self.database.transaction() as db:
+            row = db.one("select id, login, password_hash from users where login_key = ?", (login.casefold(),))
         if row is None or not verify_password(password, row[2]):
             return None
         return User(id=row[0], login=row[1])
@@ -136,7 +132,7 @@ class AuthStore:
     def open_session(self, user: User) -> str:
         token = secrets.token_urlsafe(32)
         expires_at = self._timestamp(self.now() + self.session_ttl)
-        with self._connect() as db:
+        with self.database.transaction() as db:
             db.execute("delete from sessions where expires_at <= ?", (self._timestamp(),))
             db.execute(
                 "insert into sessions (token_hash, user_id, expires_at) values (?, ?, ?)",
@@ -147,22 +143,19 @@ class AuthStore:
     def user_for_session(self, token: str | None) -> User | None:
         if not token:
             return None
-        with self._connect() as db:
-            row = db.execute(
+        with self.database.transaction() as db:
+            row = db.one(
                 "select users.id, users.login from sessions join users on users.id = sessions.user_id "
                 "where sessions.token_hash = ? and sessions.expires_at > ?",
                 (_token_hash(token), self._timestamp()),
-            ).fetchone()
+            )
         return User(id=row[0], login=row[1]) if row else None
 
     def close_session(self, token: str | None) -> None:
         if not token:
             return
-        with self._connect() as db:
+        with self.database.transaction() as db:
             db.execute("delete from sessions where token_hash = ?", (_token_hash(token),))
-
-    def _connect(self) -> Transaction:
-        return Transaction(self.db_path)
 
     def _timestamp(self, moment: datetime | None = None) -> int:
         return int((moment or self.now()).timestamp())

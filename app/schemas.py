@@ -46,6 +46,7 @@ class CsrfOut(BaseModel):
 class HealthOut(BaseModel):
     status: str = Field(description="ok — сервер работает")
     version: str
+    database: str = Field(description="sqlite или postgres")
     sources: dict[str, bool] = Field(description="Какие источники прогноза доступны")
 
 

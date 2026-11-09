@@ -9,3 +9,4 @@ compare
 *.db
 .git
 .env
+.github

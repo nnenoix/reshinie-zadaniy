@@ -227,10 +227,11 @@ def test_demo_account_from_readme_logs_in(client):
     assert response.json() == {"login": DEMO_LOGIN}
 
 
-def test_health(client):
+def test_health(client, settings):
     body = client.get("/api/health").json()
 
     assert body["status"] == "ok"
+    assert body["database"] == ("postgres" if settings.database_url else "sqlite")
     assert body["sources"] == {"organizers": True, "ml": False}
 
 

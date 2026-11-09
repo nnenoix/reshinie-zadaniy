@@ -17,8 +17,8 @@ def entry(minutes: int = 0, **changes) -> HistoryEntry:
 
 
 @pytest.fixture
-def store(tmp_path):
-    return HistoryStore(tmp_path / "app.db")
+def store(database):
+    return HistoryStore(database)
 
 
 def test_latest_entries_are_newest_first_and_limited(store):
@@ -39,10 +39,10 @@ def test_users_see_only_their_own_history(store):
     assert [e.price for e in store.latest(user_id=2)] == [7000.0]
 
 
-def test_entry_round_trips_through_the_database(store, tmp_path):
+def test_entry_round_trips_through_the_database(store, database):
     saved = store.add(user_id=1, entry=entry())
 
-    (loaded,) = HistoryStore(tmp_path / "app.db").latest(user_id=1)
+    (loaded,) = HistoryStore(database).latest(user_id=1)
 
     assert loaded == saved
 

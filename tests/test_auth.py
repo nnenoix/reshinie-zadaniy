@@ -1,9 +1,9 @@
-import sqlite3
 from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from app.auth import AuthStore, LoginTaken, hash_password, parse_credentials, verify_password
+from app.db import open_database
 from app.errors import InputError
 
 
@@ -39,8 +39,8 @@ def clock():
 
 
 @pytest.fixture
-def store(tmp_path, clock):
-    return AuthStore(tmp_path / "app.db", session_ttl=timedelta(days=7), now=clock)
+def store(database, clock):
+    return AuthStore(database, session_ttl=timedelta(days=7), now=clock)
 
 
 def test_registered_user_can_log_in(store):
@@ -59,11 +59,11 @@ def test_login_is_unique_regardless_of_case(store):
     assert store.authenticate("ANNA", "password1").login == "Anna"
 
 
-def test_password_is_stored_hashed(store, tmp_path):
+def test_password_is_stored_hashed(store, database):
     store.register("anna", "password1")
 
-    with sqlite3.connect(tmp_path / "app.db") as db:
-        (stored,) = db.execute("select password_hash from users").fetchone()
+    with database.transaction() as db:
+        (stored,) = db.one("select password_hash from users")
     assert "password1" not in stored
     assert verify_password("password1", stored)
 
@@ -90,12 +90,16 @@ def test_unknown_or_empty_token_has_no_user(store):
     assert store.user_for_session(None) is None
 
 
-def test_reopening_the_database_keeps_users(tmp_path, clock):
-    AuthStore(tmp_path / "app.db", session_ttl=timedelta(days=7), now=clock).register("anna", "password1")
+def test_reopening_the_database_keeps_users(store, database, database_target, clock):
+    store.register("anna", "password1")
+    database.close()
 
-    again = AuthStore(tmp_path / "app.db", session_ttl=timedelta(days=7), now=clock)
-
-    assert again.authenticate("anna", "password1") is not None
+    reopened = open_database(*database_target)
+    try:
+        again = AuthStore(reopened, session_ttl=timedelta(days=7), now=clock)
+        assert again.authenticate("anna", "password1") is not None
+    finally:
+        reopened.close()
 
 
 def test_valid_credentials_are_parsed():

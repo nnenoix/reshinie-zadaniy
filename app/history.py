@@ -3,24 +3,23 @@ import csv
 import io
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timezone
-from pathlib import Path
 
-from app.db import Transaction, prepare
+from app.db import Database, prepare
 
 SCHEMA = """
 create table if not exists calculations (
-    id integer primary key,
-    user_id integer not null,
-    created_at integer not null,
+    id {id},
+    user_id bigint not null,
+    created_at bigint not null,
     source text not null,
     route_code text not null,
     origin text not null,
     destination text not null,
     flight_date text not null,
-    price real not null,
+    price {real} not null,
     seats integer not null,
-    wanted real not null,
-    sold real not null
+    wanted {real} not null,
+    sold {real} not null
 );
 create index if not exists calculations_by_user on calculations (user_id, id);
 """
@@ -49,19 +48,19 @@ class HistoryEntry:
 
 
 class HistoryStore:
-    def __init__(self, db_path: Path):
-        self.db_path = Path(db_path)
-        prepare(self.db_path, SCHEMA)
+    def __init__(self, database: Database):
+        self.database = database
+        prepare(database, SCHEMA)
 
     def add(self, user_id: int, entry: HistoryEntry) -> HistoryEntry:
-        with Transaction(self.db_path) as db:
-            cursor = db.execute(
+        with self.database.transaction() as db:
+            (entry_id,) = db.one(
                 "insert into calculations (user_id, created_at, source, route_code, origin, destination,"
-                " flight_date, price, seats, wanted, sold) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " flight_date, price, seats, wanted, sold) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) returning id",
                 (user_id, int(entry.created_at.timestamp()), entry.source, entry.route_code, entry.origin,
                  entry.destination, entry.flight_date.isoformat(), entry.price, entry.seats, entry.wanted, entry.sold),
             )
-        return replace(entry, id=cursor.lastrowid)
+        return replace(entry, id=entry_id)
 
     def latest(self, user_id: int, limit: int = 10) -> list[HistoryEntry]:
         return self._select(user_id, "limit ?", (limit,))
@@ -70,11 +69,11 @@ class HistoryStore:
         return self._select(user_id, "", ())
 
     def _select(self, user_id: int, tail: str, args: tuple) -> list[HistoryEntry]:
-        with Transaction(self.db_path) as db:
-            rows = db.execute(
+        with self.database.transaction() as db:
+            rows = db.all(
                 f"select {COLUMNS} from calculations where user_id = ? order by id desc {tail}",
                 (user_id, *args),
-            ).fetchall()
+            )
         return [_entry(row) for row in rows]
 
 
