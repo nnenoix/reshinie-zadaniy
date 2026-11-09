@@ -97,6 +97,16 @@ def test_negative_price_is_kept_and_explained(page):
     assert page.inner_text('[data-error-for="price"]') == "Цена должна быть больше нуля."
 
 
+def test_ticket_digits_are_drawn_the_way_html2canvas_draws_them(page):
+    # html2canvas берёт места слов из вёрстки, а цифры рисует без font-variant-numeric:
+    # с tabular-nums в PNG талона появлялись дыры внутри чисел — «1  440», «64  %».
+    page.click('.tabs--main [data-tab="ticket"]')
+    styled = page.evaluate("""() => [...document.querySelectorAll('#ticket *')]
+        .map((e) => getComputedStyle(e).fontVariantNumeric).filter((v) => v !== 'normal')""")
+
+    assert styled == []
+
+
 def test_ticket_png_contains_the_barcode(page, tmp_path):
     page.click('.tabs--main [data-tab="ticket"]')
     if not page.evaluate("() => typeof window.html2canvas === 'function'"):

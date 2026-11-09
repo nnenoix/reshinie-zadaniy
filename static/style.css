@@ -343,7 +343,7 @@ select.field__control { cursor: pointer; }
 .ticket__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 16px; margin: 0; padding-top: 18px; border-top: 1px solid var(--line); }
 .tf { display: flex; flex-direction: column; gap: 4px; }
 .tf dt { font-size: 12px; color: var(--mute); }
-.tf dd { margin: 0; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tf dd { margin: 0; font-size: 16px; font-weight: 600; }  /* без tabular-nums: html2canvas рисует цифры без него, в PNG были дыры */
 .tf--acc dd { color: var(--acc); }
 .ticket__status { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--mute); }
 .ticket__stub { position: relative; width: 210px; padding: 24px 22px; border-left: 1.5px dashed var(--line); display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
@@ -358,7 +358,7 @@ select.field__control { cursor: pointer; }
 .barcode i { flex: none; width: 1px; background: var(--ink); }
 .barcode i.b2 { width: 2px; }
 .barcode i.b3 { width: 3px; }
-.stub__id { font-size: 10px; color: var(--mute); font-variant-numeric: tabular-nums; }
+.stub__id { font-size: 10px; color: var(--mute); }
 .actions { display: flex; gap: 12px; flex-wrap: wrap; }
 .btn--ghost.btn--small { font-weight: 600; padding: 12px 18px; }
 
