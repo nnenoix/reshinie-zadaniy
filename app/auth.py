@@ -19,6 +19,7 @@ from app.errors import InputError
 SCRYPT_N, SCRYPT_R, SCRYPT_P, SCRYPT_LEN = 2**14, 8, 1, 32
 LOGIN_PATTERN = re.compile(r"[A-Za-zА-Яа-яЁё0-9_.@+\-]{3,64}")  # логин или email
 PASSWORD_MIN, PASSWORD_MAX = 8, 128
+GUEST_PREFIX = "гость-"
 
 SCHEMA = """
 create table if not exists users (
@@ -62,6 +63,10 @@ def verify_password(password: str, stored: str) -> bool:
         return False
 
 
+def is_guest(login: str) -> bool:
+    return login.casefold().startswith(GUEST_PREFIX)
+
+
 def parse_credentials(data: Any) -> tuple[str, str]:
     if not isinstance(data, dict):
         raise InputError(None, "Запрос должен быть JSON-объектом с полями login и password.")
@@ -73,6 +78,8 @@ def parse_credentials(data: Any) -> tuple[str, str]:
             "login",
             "Логин или email: от 3 до 64 символов — буквы, цифры, точка, дефис, подчёркивание, @ или +.",
         )
+    if is_guest(login):
+        raise InputError("login", f"Логины «{GUEST_PREFIX}…» заняты под гостевой вход.")
     if not isinstance(password, str) or not PASSWORD_MIN <= len(password) <= PASSWORD_MAX:
         raise InputError("password", f"Пароль: от {PASSWORD_MIN} до {PASSWORD_MAX} символов.")
     if "password2" in data and data.get("password2") != password:
@@ -111,7 +118,7 @@ class AuthStore:
         """Гостевой аккаунт для жюри: случайный логин и пароль, который никто не знает."""
         while True:
             try:
-                return self.register(f"гость-{secrets.token_hex(3)}", secrets.token_urlsafe(32))
+                return self.register(f"{GUEST_PREFIX}{secrets.token_hex(3)}", secrets.token_urlsafe(32))
             except LoginTaken:
                 continue
 

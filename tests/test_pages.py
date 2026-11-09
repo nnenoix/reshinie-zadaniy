@@ -219,3 +219,41 @@ def test_pages_load_design_fonts_allowed_by_csp(client, path):
 
 def test_old_static_page_is_gone(client):
     assert client.get("/static/index.html").status_code == 404
+
+
+# --- инструмент /app: правки по ревью ---
+
+def test_ticket_barcode_is_solid_bars_that_html2canvas_can_draw(client):
+    html = open_page(client, "/app").text
+    bars = re.search(r'<span class="barcode"[^>]*>(.*?)</span>', html).group(1)
+
+    assert bars.count('<i class="b') >= 20
+    css = (PROJECT / "static" / "style.css").read_text(encoding="utf-8")
+    rules = [line for line in css.splitlines() if line.startswith(".barcode")]
+    assert rules and not any("gradient" in line for line in rules)
+
+
+def test_tool_panels_are_numbered_like_their_tabs(client):
+    html = open_page(client, "/app").text
+
+    for number, tab in (("01", "calc"), ("02", "salon"), ("03", "calendar"), ("04", "ticket")):
+        panel = html.split(f'data-tabpanel="{tab}"', 1)[1][:400]
+        assert f'<span class="label__num">{number}</span>' in panel
+
+
+def test_seats_are_the_seats_of_all_flights_of_the_day(client):
+    html = open_page(client, "/app").text
+
+    assert "Мест на рейсах дня" in html and "Мест в самолёте" not in html
+
+
+def test_probability_lines_have_their_places(client):
+    html = open_page(client, "/app").text
+
+    assert 'id="chart-odds"' in html and 'id="salon-odds"' in html
+
+
+def test_guest_gets_a_link_to_register(client):
+    html = open_page(client, "/app").text
+
+    assert re.search(r'<a [^>]*href="/login#register"[^>]*id="register-link"', html)

@@ -1,6 +1,6 @@
 // Посадочный талон: поля [data-t] и выгрузка в PNG и PDF.
 // Картинку делает html2canvas по готовой вёрстке талона, PDF собирает pdf.js без библиотек.
-import { airportCodes, dow, fmt, rub, seatsText, shortDate, whole } from "./format.js";
+import { airportCodes, dow, rub, seatsText, shortDate, whole } from "./format.js";
 import { pdfFromJpeg } from "./pdf.js";
 
 const NO_LIBRARY = "Не загрузилась библиотека для картинок (html2canvas с cdnjs). " +
@@ -14,12 +14,12 @@ export function ticketData(d) {
   return {
     fromCode: codes.from, fromCity: d.route.origin, code: codes.to, city: d.route.destination,
     date: shortDate(d.date), day: dow(d.date) + (d.holiday ? " · ПРАЗДНИК" : ""),
-    price: rub(d.price), seats: whole(d.seats), want: fmt(want), buy: fmt(d.sold),
+    price: rub(d.price), seats: whole(d.seats), want: whole(want), buy: whole(d.sold),
     load: `${whole(d.load * 100)} %`, best: rub(d.best.price),
     tag: capped ? "УПОР В МЕСТА" : none ? "НЕТ СПРОСА" : `ЗАПАС ${seatsText(d.seats - want).toUpperCase()}`,
-    status: capped ? `Не хватит мест для ${fmt(d.wanted - d.seats)} желающих`
-      : none ? `Формула даёт ${fmt(d.wanted)}` : "Мест хватает всем желающим",
-    stubRoute: `${codes.from} → ${codes.to}`, buySeats: `${fmt(d.sold)} / ${whole(d.seats)}`,
+    status: capped ? `Не хватит мест для ${whole(d.wanted - d.seats)} желающих`
+      : none ? `Формула даёт ${whole(d.wanted)}` : "Мест хватает всем желающим",
+    stubRoute: `${codes.from} → ${codes.to}`, buySeats: `${whole(d.sold)} / ${whole(d.seats)}`,
     id: `RA-${codes.to}-${compact}-${Math.round(d.price)}`,
     none,
   };

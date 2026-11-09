@@ -305,3 +305,43 @@ def test_story_by_organizers_forecast_gives_5614(client):
 
     assert body["best"]["price"] == 5614
     assert round(body["best"]["gain"]) == 3812
+
+
+# --- вероятности: коридор 10–90 % и упор в места ---
+
+def test_forecast_shows_the_80_percent_corridor_and_chance_of_selling_out(guest):
+    body = guest.post("/api/forecast", json={**STORY, "price": 5500}).json()
+
+    assert body["odds"] == {"low": 758.0, "high": 1123.0, "sold_out_scenarios": 0}
+
+
+def test_sold_out_scenarios_are_counted(guest):
+    sochi = {"origin": "Москва", "destination": "Сочи", "date": "2026-06-12", "price": 9000}
+    body = guest.post("/api/forecast", json=sochi).json()
+
+    over = sum(1 for s in body["scenarios"] if s["sold_out"])
+    assert body["odds"]["sold_out_scenarios"] == over > 0
+
+
+def test_negative_demand_corridor_starts_at_zero(guest):
+    body = guest.post("/api/forecast", json={**STORY, "price": 11000}).json()
+
+    assert body["odds"]["low"] == 0
+
+
+# --- гость видит, как зарегистрироваться ---
+
+def test_me_tells_a_guest_from_a_user(client):
+    client.post("/api/guest")
+    assert client.get("/api/me").json()["guest"] is True
+
+    client.post("/api/logout")
+    client.post("/api/register", json={"login": "anna", "password": "password1"})
+    assert client.get("/api/me").json() == {"login": "anna", "guest": False}
+
+
+def test_guest_logins_are_reserved(client):
+    response = client.post("/api/register", json={"login": "гость-abc123", "password": "password1"})
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Логины «гость-…» заняты под гостевой вход.", "field": "login"}

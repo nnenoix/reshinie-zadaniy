@@ -64,7 +64,7 @@ def test_register_logs_in_with_http_only_cookie(client):
     cookie = response.headers["set-cookie"].lower()
     assert "session=" in cookie and "httponly" in cookie and "samesite=lax" in cookie
     assert "secure" not in cookie
-    assert client.get("/api/me").json() == {"login": "anna"}
+    assert client.get("/api/me").json() == {"login": "anna", "guest": False}
 
 
 def test_secure_cookie_can_be_switched_on(settings):

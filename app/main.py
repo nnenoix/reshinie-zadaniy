@@ -19,7 +19,7 @@ from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import schemas, views
-from app.auth import AuthStore, LoginTaken, User, parse_credentials
+from app.auth import AuthStore, LoginTaken, User, is_guest, parse_credentials
 from app.calendar import month_calendar
 from app.catalog import CatalogError
 from app.config import PROJECT_DIR, Settings
@@ -349,9 +349,9 @@ def logout(request: Request, auth: AuthStore = Depends(get_auth)) -> Response:
     return response
 
 
-@router.get("/api/me", tags=["Вход"], response_model=schemas.UserOut, responses=ERRORS, summary="Кто вошёл")
+@router.get("/api/me", tags=["Вход"], response_model=schemas.MeOut, responses=ERRORS, summary="Кто вошёл")
 def me(user: User = Depends(current_user)) -> dict:
-    return {"login": user.login}
+    return {"login": user.login, "guest": is_guest(user.login)}
 
 
 # --- прогноз ---

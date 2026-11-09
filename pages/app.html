@@ -17,6 +17,7 @@
   <a class="brand" href="/">[ РЕШИСЬ АВИА <span class="accent">/ ПРОГНОЗ</span> ]</a>
   <div class="topbar__right">
     <span class="topbar__user" id="user-login"></span>
+    <a class="btn btn--ghost" href="/login#register" id="register-link" hidden>Зарегистрироваться</a>
     <a class="btn btn--ghost" href="/login" id="logout">Выйти</a>
   </div>
 </header>
@@ -36,7 +37,7 @@
 <main class="layout">
   <div class="side">
     <form class="card" id="forecast-form" novalidate>
-      <p class="label">[ <span class="label__num">01</span> / Параметры рейса ]</p>
+      <p class="label">[ Параметры рейса ]</p>
       <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">ОШИБКА</span><span data-error-text></span></div>
 
       <div class="field" data-field="source">
@@ -115,7 +116,7 @@
 
     <!-- 01 Расчёт -->
     <section class="card tabpanel" data-tabpanel="calc" role="tabpanel" aria-live="polite">
-      <p class="label">[ <span class="label__num">02</span> / Результат ]</p>
+      <p class="label">[ <span class="label__num">01</span> / Результат ]</p>
 
       <div class="empty" data-panel="empty">
         <h2 class="state__title">Здесь появится прогноз</h2>
@@ -138,7 +139,7 @@
 
       <div class="result__ready" data-panel="ready" hidden>
         <dl class="metrics">
-          <div class="metric"><dt class="metric__label">Мест в самолёте</dt><dd class="metric__value" data-out="seats"></dd></div>
+          <div class="metric"><dt class="metric__label">Мест на рейсах дня</dt><dd class="metric__value" data-out="seats"></dd><span class="metric__sub">сумма по всем рейсам маршрута за день</span></div>
           <div class="metric"><dt class="metric__label">Желают купить</dt><dd class="metric__value" data-out="want"></dd><span class="metric__sub" data-out="wantRaw" hidden></span></div>
           <div class="metric"><dt class="metric__label">Купят</dt><dd class="metric__value metric__value--acc" data-out="buy"></dd></div>
           <div class="metric"><dt class="metric__label">Загрузка</dt><dd class="metric__value"><span data-out="load"></span><span class="metric__unit">%</span></dd><div class="meter"><div class="meter__fill" id="load-meter"></div></div></div>
@@ -157,6 +158,7 @@
           </div>
           <div class="chart" id="chart" role="img" aria-label="Распределение спроса по 9 сценариям"></div>
           <p class="how" id="chart-how"></p>
+          <p class="how how--odds" id="chart-odds"></p>
         </div>
         <div class="chart-block" id="compare">
           <div class="chart-block__head">
@@ -209,13 +211,14 @@
           <li><span class="legend__sw legend__sw--person"></span>НЕ ХВАТИЛО МЕСТ</li>
         </ul>
         <p class="how" id="salon-how"></p>
+        <p class="how how--odds" id="salon-odds"></p>
       </div>
     </section>
 
     <!-- 03 Календарь -->
     <section class="card tabpanel" data-tabpanel="calendar" role="tabpanel" hidden>
       <div class="panel-head">
-        <p class="label">[ <span class="label__num">02</span> / Календарь загрузки ]</p>
+        <p class="label">[ <span class="label__num">03</span> / Календарь загрузки ]</p>
         <p class="result__route" id="cal-title"></p>
       </div>
       <p class="panel-empty" data-needs-empty>Сначала рассчитайте прогноз.</p>
@@ -233,7 +236,7 @@
 
     <!-- 04 Талон -->
     <section class="card tabpanel" data-tabpanel="ticket" role="tabpanel" hidden>
-      <p class="label">[ <span class="label__num">02</span> / Посадочный талон ]</p>
+      <p class="label">[ <span class="label__num">04</span> / Посадочный талон ]</p>
       <p class="panel-empty" data-needs-empty>Сначала рассчитайте прогноз.</p>
       <div class="tabpanel" data-needs-result hidden>
         <article class="ticket" id="ticket">
@@ -266,7 +269,7 @@
               <div class="tf"><dt>КУПЯТ / МЕСТ</dt><dd data-t="buySeats"></dd></div>
               <div class="tf tf--acc stub__best"><dt>ЛУЧШАЯ ЦЕНА</dt><dd data-t="best"></dd></div>
             </dl>
-            <div class="stub__code"><span class="barcode"></span><span class="stub__id" data-t="id"></span></div>
+            <div class="stub__code"><span class="barcode" aria-hidden="true"><i class="b3"></i><i class="b2"></i><i class="b1"></i><i class="b3"></i><i class="b2"></i><i class="b1"></i><i class="b1"></i><i class="b3"></i><i class="b3"></i><i class="b1"></i><i class="b2"></i><i class="b2"></i><i class="b1"></i><i class="b3"></i><i class="b1"></i><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b1"></i><i class="b1"></i><i class="b2"></i><i class="b2"></i><i class="b3"></i><i class="b1"></i><i class="b2"></i><i class="b1"></i><i class="b3"></i></span><span class="stub__id" data-t="id"></span></div>
           </div>
         </article>
         <div class="actions">
@@ -283,7 +286,7 @@
 <div class="history-wrap">
   <section class="card">
     <div class="card__head">
-      <p class="label">[ <span class="label__num">03</span> / История расчётов ]</p>
+      <p class="label">[ История расчётов ]</p>
       <div class="card__tools">
         <span class="card__meta">Последние 5</span>
         <a class="btn btn--ghost btn--small" href="/api/history.csv" download id="history-csv">Вся история в CSV ↓</a>

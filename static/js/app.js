@@ -4,7 +4,7 @@ import { get, latestOnly, post } from "./api.js";
 import { downloadPdf, downloadPng, fillTicket, ticketData } from "./boarding-pass.js";
 import { drawCalendar } from "./calendar.js";
 import { drawQuantiles } from "./demand-chart.js";
-import { dayMonth, dow, fmt, node, parsePrice, plural, rub, seatsText, shortDate, whole } from "./format.js";
+import { dayMonth, dow, fmt, node, oddsText, parsePrice, plural, rub, seatsText, shortDate, whole } from "./format.js";
 import { drawProfit } from "./profit-chart.js";
 import { drawQueue, drawSeats, salonText } from "./seat-map.js";
 
@@ -105,11 +105,14 @@ function setRange(min, max, value, best) {
   }
 }
 
+// Положительная цена приводится к виду «5 500», ползунок встаёт на неё. Ноль, минус и не-число
+// остаются как введены: сервер ответит, что не так, и человек увидит свой ввод.
 function setPrice(value) {
   const number = Number(parsePrice(value));
-  priceInput.value = Number.isFinite(number) && String(value).trim() !== "" ? fmt(number, 2) : String(value);
+  const valid = Number.isFinite(number) && number > 0 && String(value).trim() !== "";
+  priceInput.value = valid ? fmt(number, 2) : String(value);
   const destination = currentDestination();
-  if (destination && Number.isFinite(number)) {
+  if (destination && valid) {
     setRange(destination.price_min, destination.price_max, number, bestFor(destination));
   }
 }
@@ -197,9 +200,7 @@ range.addEventListener("input", () => {
   S.timer = setTimeout(() => calculate({ live: true }), SLIDER_DELAY_MS);
 });
 priceInput.addEventListener("input", () => { S.autoPrice = false; });
-priceInput.addEventListener("blur", () => {
-  if (Number.isFinite(Number(parsePrice(priceInput.value)))) setPrice(priceInput.value);
-});
+priceInput.addEventListener("blur", () => setPrice(priceInput.value));
 form.elements.destination.addEventListener("change", () => {
   onDestinationChange();
   calculate({ live: true });
@@ -211,9 +212,12 @@ form.elements.date.addEventListener("change", () => {
 form.elements.source.addEventListener("change", async () => {
   if (await loadRoutes(form.elements.source.value)) calculate({ live: true });
 });
-form.addEventListener("submit", (event) => {
+const NARROW = window.matchMedia("(max-width: 960px)");
+
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  calculate({ save: true });
+  await calculate({ save: true });
+  if (NARROW.matches) result.scrollIntoView({ behavior: "smooth", block: "start" }); // на телефоне результат ниже формы
 });
 $("#retry").addEventListener("click", () => calculate({}));
 $("#apply-best").addEventListener("click", () => {
@@ -256,11 +260,11 @@ function render(d) {
   const want = Math.max(0, d.wanted);
   const out = (key) => $(`[data-out="${key}"]`, result);
   out("seats").textContent = whole(d.seats);
-  out("want").textContent = fmt(want);
-  out("buy").textContent = fmt(d.sold);
+  out("want").textContent = whole(want);
+  out("buy").textContent = whole(d.sold);
   out("load").textContent = whole(d.load * 100);
   out("wantRaw").hidden = d.wanted >= 0;
-  out("wantRaw").textContent = `по формуле ${fmt(d.wanted)}`;
+  out("wantRaw").textContent = `по формуле ${whole(d.wanted)}`;
   $("#load-meter").style.setProperty("--p", `${Math.min(100, d.load * 100)}%`);
   renderNote(d, want);
   renderFormula(d);
@@ -278,6 +282,7 @@ function render(d) {
         `${plural(over, ["сценарии", "сценариях", "сценариях"])} из 9. Слева пессимистичный сценарий 0.1, справа оптимистичный 0.9.`
       : "Каждый столбик — сколько человек захотят купить билет в одном из 9 сценариев: слева пессимистичный (0.1), " +
         "справа оптимистичный (0.9). Выделенный столбик — медиана, её мы показываем как «желают».";
+  $("#chart-odds").textContent = oddsText(d.odds);
 
   setPanel("ready");
   setRange(d.route.price_min, d.route.price_max, d.price, d.best.price);
@@ -307,11 +312,11 @@ function renderNote(d, want) {
   tag.className = `tag${none ? " tag--err" : ""}`;
   if (capped) {
     tag.textContent = "УПОР В МЕСТА";
-    $("#note-text").textContent = `Желают ${fmt(want)}, а мест ${whole(d.seats)} — купят ${fmt(d.sold)}. ` +
-      `Не хватит мест для ${fmt(d.wanted - d.seats)} желающих.`;
+    $("#note-text").textContent = `Желают ${whole(want)}, а мест ${whole(d.seats)} — купят ${whole(d.sold)}. ` +
+      `Не хватит мест для ${whole(d.wanted - d.seats)} желающих.`;
   } else if (none) {
     tag.textContent = "НЕТ СПРОСА";
-    $("#note-text").textContent = `При цене ${rub(d.price)} желающих нет: формула даёт ${fmt(d.wanted)}. ` +
+    $("#note-text").textContent = `При цене ${rub(d.price)} желающих нет: формула даёт ${whole(d.wanted)}. ` +
       "Попробуйте снизить цену.";
   } else {
     tag.textContent = `ЗАПАС ${seatsText(d.seats - want).toUpperCase()}`;
@@ -344,8 +349,8 @@ function renderBest(d) {
   let note = "Ожидаемая прибыль — среднее по 9 сценариям от (цена − расходы на пассажира) × купят. " +
     "Кривую и максимум считает сервер.";
   if (best.file_price !== null) {
-    note += ` В файле прогноза для медианного сценария указана цена ${rub(best.file_price)} (0.5_price), ` +
-      "а лучшая цена здесь подобрана под все девять сценариев.";
+    note += ` Цена медианного сценария из файла (0.5_price) — ${rub(best.file_price)}; ` +
+      "лучшая цена здесь подобрана под все девять сценариев.";
   }
   $("#best-note").textContent = note;
 }
@@ -391,7 +396,7 @@ async function refreshCompare(d) {
     if (s.source === d.source) row.className = "is-current";
     const f = s.forecast;
     const cells = f
-      ? [[s.name, "l"], [fmt(Math.max(0, f.wanted))], [fmt(f.sold)], [`${whole(f.load * 100)} %`], [whole(f.best_price)]]
+      ? [[s.name, "l"], [whole(Math.max(0, f.wanted))], [whole(f.sold)], [`${whole(f.load * 100)} %`], [whole(f.best_price)]]
       : [[s.name, "l"], [s.detail], [""], [""], [""]];
     row.replaceChildren(...cells.map(([text, cls]) => node("td", cls, text)));
     return row;
@@ -428,12 +433,13 @@ function renderSalon(d) {
   drawSeats($("#seats"), cabin, sold);
   const queue = drawQueue($("#queue"), cabin, over);
   $("#queue-title").hidden = !queue.shown;
-  $("#queue-title").textContent = `НЕ ХВАТИЛО МЕСТ · ${fmt(over)}`;
+  $("#queue-title").textContent = `НЕ ХВАТИЛО МЕСТ · ${whole(over)}`;
   $('[data-salon="seats"]').textContent = whole(d.seats);
-  $('[data-salon="sold"]').textContent = fmt(sold);
-  $('[data-salon="over"]').textContent = fmt(over);
+  $('[data-salon="sold"]').textContent = whole(sold);
+  $('[data-salon="over"]').textContent = whole(over);
   const { scale, text } = salonText(cabin, `0.${S.scenario + 1}`, scenario.wanted, sold, over, queue);
   $("#salon-how").replaceChildren(node("strong", "", scale), text);
+  $("#salon-odds").textContent = oddsText(d.odds);
 }
 
 // --- календарь ---
@@ -518,8 +524,8 @@ function historyRow(entry) {
   again.addEventListener("click", () => repeat(entry));
   flag.append(again);
   row.append(node("td", "l time", timeOf(entry.created_at)), route, node("td", "l", shortDate(entry.date)),
-    node("td", "", fmt(entry.price, 2)), node("td", "", whole(entry.seats)), node("td", "", fmt(want)),
-    node("td", "buy", fmt(entry.sold)), node("td", "", `${whole(entry.load * 100)} %`), flag);
+    node("td", "", fmt(entry.price, 2)), node("td", "", whole(entry.seats)), node("td", "", whole(want)),
+    node("td", "buy", whole(entry.sold)), node("td", "", `${whole(entry.load * 100)} %`), flag);
   return row;
 }
 
@@ -546,6 +552,13 @@ $("#logout").addEventListener("click", async (event) => {
   location.assign("/login");
 });
 
+// Гость может завести свой аккаунт: выходим из гостя и открываем регистрацию.
+$("#register-link").addEventListener("click", async (event) => {
+  event.preventDefault();
+  await post("/api/logout");
+  location.assign("/login#register");
+});
+
 window.addEventListener("resize", () => {
   if (!S.forecast) return;
   if (S.tab === "calc") drawDemand(S.forecast);
@@ -555,7 +568,10 @@ window.addEventListener("resize", () => {
 async function start() {
   const me = await get("/api/me");
   if (me.status === 401) return location.assign("/login");
-  if (me.ok) $("#user-login").textContent = me.data.login;
+  if (me.ok) {
+    $("#user-login").textContent = me.data.login;
+    $("#register-link").hidden = !me.data.guest;
+  }
   buildScenarioButtons();
   await loadSources();
   const params = new URLSearchParams(location.search);

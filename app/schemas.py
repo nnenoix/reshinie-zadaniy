@@ -39,6 +39,17 @@ class UserOut(BaseModel):
     login: str
 
 
+class MeOut(BaseModel):
+    login: str
+    guest: bool = Field(description="Временный гостевой аккаунт: ему показывается ссылка на регистрацию")
+
+
+class OddsOut(BaseModel):
+    low: float = Field(description="Желают в сценарии 0.1: нижняя граница коридора 80 %")
+    high: float = Field(description="Желают в сценарии 0.9: верхняя граница коридора 80 %")
+    sold_out_scenarios: int = Field(description="Сколько сценариев из 9 упираются в места; вероятность ≈ × 10 %")
+
+
 class CsrfOut(BaseModel):
     token: str = Field(description="Значение для заголовка X-CSRF-Token (то же, что в cookie csrf_token)")
 
@@ -148,6 +159,7 @@ class ForecastOut(BaseModel):
     best: BestOut
     seat_map: SeatMapOut
     scenarios: list[ScenarioOut]
+    odds: OddsOut
     saved: bool = Field(description="Расчёт записан в историю")
 
 

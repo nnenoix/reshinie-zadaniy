@@ -17,9 +17,9 @@ export const rub = (value) => `${whole(value)} ₽`;
 export const signedRub = (value) => `${value > 0 ? "+" : ""}${rub(value)}`;
 export const percent = (share) => `${whole(share * 100)} %`;
 
-// «5 500 ₽», «5500,5» → «5500.5»: так цену понимает сервер.
+// «5 500 ₽», «5500,5» → «5500.5»: так цену понимает сервер. Типографский минус и тире — обычный минус.
 export function parsePrice(text) {
-  return String(text).replace(/[\s ₽]/g, "").replace(",", ".");
+  return String(text).replace(/[\s ₽]/g, "").replace(/[−–—]/g, "-").replace(",", ".");
 }
 
 export function shortDate(iso) {
@@ -55,9 +55,18 @@ export function plural(n, [one, few, many]) {
   return many;
 }
 
-// «523 места», «1 440 мест»; дробное — «523,5 места».
+// Люди и места в подписях — целые: «523 места», «1 440 мест». Точные дроби остаются только в формуле.
 export function seatsText(n) {
-  return `${fmt(n)} ${Number.isInteger(Math.round(n * 10) / 10) ? plural(Math.round(n), ["место", "места", "мест"]) : "места"}`;
+  return `${whole(n)} ${plural(Math.round(n), ["место", "места", "мест"])}`;
+}
+
+// «С вероятностью 80% желающих от 782 до 1 039; в места упрёмся с вероятностью ≈ 30%».
+// Сценарии 0.1 и 0.9 ограничивают 80% вероятности, каждый из 9 сценариев — примерно 10%.
+export function oddsText(odds) {
+  const n = odds.sold_out_scenarios;
+  const chance = n === 0 ? "меньше 10%" : n === 9 ? "больше 90%" : `≈ ${n * 10}%`;
+  return `С вероятностью 80% желающих от ${whole(odds.low)} до ${whole(odds.high)}; ` +
+    `в места упрёмся с вероятностью ${chance}.`;
 }
 
 // Элемент с классом и текстом: разметку собираем без innerHTML.

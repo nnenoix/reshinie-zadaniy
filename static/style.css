@@ -356,7 +356,11 @@ select.field__control { cursor: pointer; }
 .stub__col { display: flex; flex-direction: column; gap: 14px; margin: 0; }
 .stub__route { font-family: var(--f-head); font-size: 20px; font-weight: 700; }
 .stub__code { display: flex; flex-direction: column; gap: 6px; }
-.barcode { height: 44px; background: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 5px, var(--ink) 5px 6px, transparent 6px 9px, var(--ink) 9px 11px, transparent 11px 12px, var(--ink) 12px 13px, transparent 13px 16px); }
+/* штрихкод из сплошных полос: html2canvas не рисует repeating-linear-gradient, и в PNG/PDF он пропадал */
+.barcode { display: flex; gap: 2px; height: 44px; overflow: hidden; }
+.barcode i { flex: none; width: 1px; background: var(--ink); }
+.barcode i.b2 { width: 2px; }
+.barcode i.b3 { width: 3px; }
 .stub__id { font-family: var(--f-mono); font-size: 9px; letter-spacing: .08em; color: var(--mute); }
 .actions { display: flex; gap: 12px; flex-wrap: wrap; }
 .btn--ghost.btn--small { font-weight: 600; padding: 12px 18px; }
@@ -573,4 +577,17 @@ a.btn:hover { color: var(--acc-ink); }
   .lp-num + .lp-num { border-top: 1px solid var(--line); }
   .metrics--2 { grid-template-columns: minmax(0, 1fr); }
   .metrics--2 .metric:nth-child(even) { border-left: 0; border-top: 1px solid var(--line); }
+}
+
+/* вероятность под графиком и в салоне */
+.how--odds { color: var(--ink); }
+/* подпись «МЕСТ» справа от графика, а не поверх столбика 0.9 */
+.ch-seats-label--side { text-anchor: start; }
+
+/* ≤ 960 px: результат сразу под формой, «Лучшая цена» — после него */
+@media (max-width: 960px) {
+  .side { display: contents; }
+  #forecast-form { order: 1; }
+  .main-col { order: 2; }
+  #best { order: 3; }
 }

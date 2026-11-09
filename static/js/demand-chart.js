@@ -1,7 +1,7 @@
 // График спроса по 9 сценариям (вёрстка из макета Claude Design).
 // Столбик — «желают» в сценарии; выше линии мест — штриховка: этим людям не хватит кресел.
 // Отрицательный спрос рисуется нулём, над столбиком мелко — значение по формуле.
-import { fmt } from "./format.js";
+import { fmt, whole } from "./format.js";
 import { el, hatchDefs, niceScale } from "./svg.js";
 
 const MEDIAN = 4;
@@ -10,7 +10,8 @@ export function drawQuantiles(box, { seats, quantiles }) {
   const W = box.clientWidth || 800;
   const H = box.clientHeight || 300;
   const compact = W < 500;
-  const L = compact ? 32 : 48, R = compact ? 4 : 16, T = 24, B = compact ? 42 : 46;
+  // справа поле под подпись «МЕСТ»: так она не налезает на столбик 0.9
+  const L = compact ? 32 : 48, R = compact ? 38 : 64, T = 24, B = compact ? 42 : 46;
   const iw = W - L - R, ih = H - T - B;
   const top = Math.max(seats, ...quantiles.map((q) => Math.max(0, q))) * 1.08;
   const scale = niceScale(top);
@@ -36,12 +37,14 @@ export function drawQuantiles(box, { seats, quantiles }) {
     } else {
       group.append(el("rect", { class: "ch-bar", x, y: y(0) - 2, width: bw, height: 2 }));
     }
-    group.append(el("text", { class: "ch-val", x: cx, y: y(v) - 7 }, fmt(v)));
-    if (q < 0) group.append(el("text", { class: "ch-raw", x: cx, y: y(v) - 24 }, fmt(q)));
+    group.append(el("text", { class: "ch-val", x: cx, y: y(v) - 7 }, whole(v)));
+    if (q < 0) group.append(el("text", { class: "ch-raw", x: cx, y: y(v) - 24 }, whole(q)));
     group.append(el("text", { class: "ch-q", x: cx, y: H - B + 20 }, String((i + 1) / 10)));
     if (i === MEDIAN) group.append(el("text", { class: "ch-median-label", x: cx, y: H - B + 35 }, "медиана"));
     root.append(group);
   });
-  root.append(el("text", { class: "ch-seats-label", x: W - R - 6, y: y(seats) - 7 }, `МЕСТ · ${fmt(seats)}`));
+  const label = el("text", { class: "ch-seats-label ch-seats-label--side", x: W - R + 6, y: y(seats) - 2 });
+  label.append(el("tspan", { x: W - R + 6 }, "МЕСТ"), el("tspan", { x: W - R + 6, dy: 13 }, whole(seats)));
+  root.append(label);
   box.replaceChildren(root);
 }

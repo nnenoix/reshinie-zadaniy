@@ -251,3 +251,11 @@ def test_account_is_locked_after_ten_failures_from_different_addresses(behind_cl
     clock.now += timedelta(minutes=15, seconds=1)
     assert behind_cloudflare.post("/api/login", json=LOGIN,
                                   headers={"CF-Connecting-IP": "198.51.100.2"}).status_code == 200
+
+
+def test_static_files_are_revalidated_after_a_deploy(raw_client):
+    # Иначе браузер держит старый модуль format.js рядом с новым app.js, и страница ломается.
+    response = raw_client.get("/static/js/format.js")
+
+    assert response.headers["cache-control"] == "no-cache"
+    assert response.headers.get("etag")

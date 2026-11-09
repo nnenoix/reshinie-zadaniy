@@ -88,7 +88,19 @@ def forecast_json(source: str, route: Route, flight: Flight, result: Forecast, a
         "best": best_json(advice),
         "seat_map": seat_map_json(cabin),
         "scenarios": scenarios_json(result),
+        "odds": odds_json(result),
         "saved": saved,
+    }
+
+
+def odds_json(result: Forecast) -> dict:
+    """Коридор 10–90 %: с вероятностью 80 % желающих от low до high.
+    Каждый из 9 сценариев — примерно 10 % вероятности, поэтому упор в места ≈ sold_out_scenarios × 10 %."""
+    wanted = [s.outcome.wanted for s in result.scenarios]
+    return {
+        "low": money(max(0.0, wanted[0])),
+        "high": money(max(0.0, wanted[-1])),
+        "sold_out_scenarios": sum(1 for s in result.scenarios if s.outcome.sold_out),
     }
 
 

@@ -83,6 +83,8 @@ def security_headers(path: str, https: bool) -> dict[str, str]:
     }
     if path.startswith("/api/"):
         headers["Cache-Control"] = "no-store"
+    elif path.startswith("/static/"):
+        headers["Cache-Control"] = "no-cache"  # браузер сверяет ETag: после деплоя модули не смешиваются
     if https:
         headers["Strict-Transport-Security"] = "max-age=31536000"
     return headers

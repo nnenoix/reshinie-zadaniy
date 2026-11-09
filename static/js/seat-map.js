@@ -1,7 +1,7 @@
 // Схема салона и очередь у трапа (вёрстка из макета Claude Design).
 // Масштаб приходит с сервера (app/seatmap.py): одно кресло — 1, 2, 5, 10, 20 или 50 мест,
 // кресел не больше 150, последнее может вмещать меньше. Кресло закрашено по доле проданных мест.
-import { fmt, node, plural } from "./format.js";
+import { node, plural, whole } from "./format.js";
 
 // cabin — seat_map из ответа /api/forecast; sold и over — для выбранного сценария.
 export function drawSeats(grid, cabin, sold) {
@@ -39,17 +39,17 @@ export function salonText(cabin, scenarioLabel, wanted, sold, over, queue) {
   const icons = cabin.icons_total;
   const scale = `1 кресло = ${N} ${plural(N, ["место", "места", "мест"])}, ` +
     `1 человечек = ${N} ${plural(N, ["человек", "человека", "человек"])}.`;
-  let text = ` В самолёте ${fmt(cabin.seats)} ${plural(cabin.seats, ["место", "места", "мест"])} — это ${icons} ` +
+  let text = ` На рейсах дня ${whole(cabin.seats)} ${plural(cabin.seats, ["место", "места", "мест"])} — это ${icons} ` +
     `${plural(icons, ["значок", "значка", "значков"])}` +
     (cabin.last_icon_seats !== N ? `, последний вмещает ${cabin.last_icon_seats}` : "") + ".";
   if (cabin.more_than_one_aircraft) {
     text += " Это больше, чем в самом вместительном самолёте (A380, до 853 мест), значит, в данных сумма " +
       "по нескольким рейсам дня. Схема показывает их одним салоном.";
   }
-  text += ` Сценарий ${scenarioLabel}: желают ${fmt(Math.max(0, wanted))}. `;
+  text += ` Сценарий ${scenarioLabel}: желают ${whole(Math.max(0, wanted))}. `;
   text += over > 0
-    ? `Не хватило мест ${fmt(over)} желающим — это ${queue.shown} ${plural(queue.shown, ["значок", "значка", "значков"])}` +
+    ? `Не хватило мест ${whole(over)} желающим — это ${queue.shown} ${plural(queue.shown, ["значок", "значка", "значков"])}` +
       (queue.capped ? ` (показана часть очереди, всего нужно ${Math.ceil(over / N)})` : "") + "."
-    : `Мест хватило всем, свободно ${fmt(cabin.seats - sold)}.`;
+    : `Мест хватило всем, свободно ${whole(cabin.seats - sold)}.`;
   return { scale, text };
 }
