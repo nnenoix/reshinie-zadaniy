@@ -4,9 +4,17 @@ CSRF: браузер получает cookie csrf_token (её может про�
 Каждый POST к /api/ должен прислать то же значение в заголовке X-CSRF-Token. Чужой сайт
 не может ни прочитать cookie, ни поставить свой заголовок без CORS, которого здесь нет.
 Дополнительно запросы с заголовком Origin другого сайта отклоняются.
+
+Адрес клиента для лимитов берётся из TCP-соединения. X-Forwarded-For по умолчанию
+не читается: его может прислать сам клиент, и прокси Render его не очищает, а только
+дописывает. За прокси адрес берётся из заголовка, который ставит сам прокси
+(на Render — CF-Connecting-IP от Cloudflare); имя заголовка задаёт CLIENT_IP_HEADER.
 """
 import hmac
+import ipaddress
 import secrets
+from typing import Mapping
+from urllib.parse import urlsplit
 
 CSRF_COOKIE = "csrf_token"
 CSRF_HEADER = "X-CSRF-Token"
@@ -49,11 +57,15 @@ def new_csrf_token() -> str:
 
 
 def csrf_problem(method: str, path: str, cookie_token: str | None, header_token: str | None,
-                 origin: str | None, own_origin: str) -> str | None:
-    """Почему запрос нужно отклонить, или None, если всё в порядке."""
+                 origin: str | None, own_host: str) -> str | None:
+    """Почему запрос нужно отклонить, или None, если всё в порядке.
+
+    Origin сверяется по адресу сайта без схемы: за HTTPS-прокси сервер видит http,
+    а браузер присылает https.
+    """
     if method not in UNSAFE_METHODS or not path.startswith("/api/"):
         return None
-    if origin is not None and origin != own_origin:
+    if origin is not None and urlsplit(origin).netloc.lower() != own_host.lower():
         return FOREIGN_ORIGIN
     if not cookie_token or not header_token or not hmac.compare_digest(cookie_token, header_token):
         return NO_TOKEN
@@ -74,3 +86,19 @@ def security_headers(path: str, https: bool) -> dict[str, str]:
     if https:
         headers["Strict-Transport-Security"] = "max-age=31536000"
     return headers
+
+
+def client_address(headers: Mapping[str, str], peer: str | None, trusted_header: str | None) -> str:
+    """Адрес клиента для лимитов.
+
+    trusted_header — заголовок, который ставит свой прокси (например, cf-connecting-ip).
+    Если в нём список, берётся последний адрес: его дописал ближайший прокси.
+    Пустой или испорченный заголовок не учитывается.
+    """
+    if trusted_header:
+        candidate = headers.get(trusted_header.lower(), "").split(",")[-1].strip()
+        try:
+            return str(ipaddress.ip_address(candidate))
+        except ValueError:
+            pass
+    return peer or "unknown"

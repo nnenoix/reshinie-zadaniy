@@ -14,3 +14,5 @@ services:
     envVars:
       - key: COOKIE_SECURE   # Render отдаёт сайт по HTTPS: cookie только по HTTPS и заголовок HSTS
         value: "1"
+      - key: CLIENT_IP_HEADER   # адрес клиента для лимитов ставит Cloudflare перед Render; X-Forwarded-For подделывается
+        value: cf-connecting-ip

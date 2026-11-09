@@ -9,8 +9,12 @@ COOKIE_SECURE    1 — cookie только по HTTPS (включить на х�
 SESSION_DAYS     сколько дней действует вход; по умолчанию 7
 DEMO_LOGIN       демо-аккаунт для жюри; по умолчанию jury
 DEMO_PASSWORD    пароль демо-аккаунта; пустая строка — демо-аккаунт не создаётся
-LOGIN_LIMIT      сколько неудачных входов подряд разрешено; по умолчанию 5
+LOGIN_LIMIT      сколько неудачных входов подряд разрешено с одного адреса; по умолчанию 5
 LOGIN_WINDOW_MINUTES  за какое окно они считаются; по умолчанию 5
+ACCOUNT_LOGIN_LIMIT   сколько неудачных входов в один аккаунт с любых адресов; по умолчанию 10
+ACCOUNT_LOGIN_WINDOW_MINUTES  за какое окно; по умолчанию 15
+CLIENT_IP_HEADER заголовок с адресом клиента, который ставит прокси (на Render — cf-connecting-ip);
+                 пусто — адрес соединения, X-Forwarded-For не читается
 SIGNUP_LIMIT     сколько новых аккаунтов и гостей в час с одного адреса; по умолчанию 20
 
 Относительные пути считаются от папки проекта.
@@ -36,6 +40,9 @@ class Settings:
     demo_password: str = DEMO_PASSWORD
     login_limit: int = 5
     login_window_minutes: int = 5
+    account_login_limit: int = 10  # неудачных входов в один аккаунт с любых адресов
+    account_login_window_minutes: int = 15
+    client_ip_header: str | None = None
     signup_limit: int = 20  # новых аккаунтов (и гостей) с одного адреса в час
 
     @classmethod
@@ -52,6 +59,10 @@ class Settings:
             demo_password=os.environ.get("DEMO_PASSWORD", defaults.demo_password),
             login_limit=int(os.environ.get("LOGIN_LIMIT", defaults.login_limit)),
             login_window_minutes=int(os.environ.get("LOGIN_WINDOW_MINUTES", defaults.login_window_minutes)),
+            account_login_limit=int(os.environ.get("ACCOUNT_LOGIN_LIMIT", defaults.account_login_limit)),
+            account_login_window_minutes=int(os.environ.get("ACCOUNT_LOGIN_WINDOW_MINUTES",
+                                                            defaults.account_login_window_minutes)),
+            client_ip_header=os.environ.get("CLIENT_IP_HEADER", "").strip().lower() or None,
             signup_limit=int(os.environ.get("SIGNUP_LIMIT", defaults.signup_limit)),
         )
 

@@ -21,4 +21,6 @@ VOLUME ["/app/var"]
 EXPOSE 8000
 
 # Порт берётся из $PORT (так его передают Render и другие хостинги), без него — 8000.
-CMD ["sh", "-c", "exec uvicorn app.main:create_app --factory --host 0.0.0.0 --port \"${PORT:-8000}\" --proxy-headers --forwarded-allow-ips '*' --no-access-log"]
+# Заголовки прокси uvicorn не читает: X-Forwarded-For может подделать клиент. Адрес клиента
+# за прокси приложение берёт из заголовка CLIENT_IP_HEADER (на Render — cf-connecting-ip).
+CMD ["sh", "-c", "exec uvicorn app.main:create_app --factory --host 0.0.0.0 --port \"${PORT:-8000}\" --no-proxy-headers --no-access-log"]

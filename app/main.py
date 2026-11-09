@@ -29,7 +29,8 @@ from app.queries import parse_flight_query, parse_forecast_query, parse_route_pr
 from app.ratelimit import RateLimiter
 from app.seatmap import seat_map
 from app.story import STORY_DAY, STORY_ROUTE, friday_story
-from app.security import CSRF_COOKIE, CSRF_HEADER, csrf_problem, new_csrf_token, security_headers
+from app.security import (CSRF_COOKIE, CSRF_HEADER, client_address, csrf_problem, new_csrf_token,
+                          security_headers)
 from app.sources import ML, ORGANIZERS, ForecastSources
 
 VERSION = "2.0"
@@ -99,6 +100,8 @@ def create_app(settings: Settings | None = None, now: Callable[[], datetime] | N
     app.state.auth = AuthStore(settings.db_path, session_ttl=timedelta(days=settings.session_days), now=clock)
     app.state.history = HistoryStore(settings.db_path)
     app.state.login_limiter = RateLimiter(settings.login_limit, timedelta(minutes=settings.login_window_minutes), clock)
+    app.state.account_limiter = RateLimiter(settings.account_login_limit,
+                                            timedelta(minutes=settings.account_login_window_minutes), clock)
     app.state.signup_limiter = RateLimiter(settings.signup_limit, timedelta(hours=1), clock)
     if settings.demo_login and settings.demo_password:
         app.state.auth.ensure_user(settings.demo_login, settings.demo_password)
@@ -141,7 +144,7 @@ async def _guard(request: Request, call_next):
     request.state.csrf_token = cookie_token or new_csrf_token()
     problem = csrf_problem(
         request.method, request.url.path, cookie_token, request.headers.get(CSRF_HEADER),
-        request.headers.get("origin"), f"{request.url.scheme}://{request.headers.get('host', '')}",
+        request.headers.get("origin"), request.headers.get("host", ""),
     )
     if problem:
         log.warning("отклонён запрос %s %s: %s", request.method, request.url.path, problem)
@@ -181,7 +184,8 @@ def current_user(request: Request, auth: AuthStore = Depends(get_auth),
 
 
 def client_ip(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
+    peer = request.client.host if request.client else None
+    return client_address(request.headers, peer, request.app.state.settings.client_ip_header)
 
 
 def body_doc(model: type[BaseModel]) -> dict:
@@ -276,23 +280,32 @@ def register(request: Request, response: Response, payload: Any = Body(None),
 @router.post("/api/login", tags=["Вход"], response_model=schemas.UserOut, responses=ERRORS,
              dependencies=csrf_protected, openapi_extra=body_doc(schemas.CredentialsIn), summary="Вход",
              description="После 5 неудачных попыток за 5 минут вход для этого логина с этого адреса "
-                         "закрывается на 5 минут (ответ 429).")
+                         "закрывается на 5 минут, после 10 неудачных попыток с любых адресов за 15 минут — "
+                         "вход в этот аккаунт (ответ 429).")
 def login(request: Request, response: Response, payload: Any = Body(None),
           auth: AuthStore = Depends(get_auth)) -> dict:
     data = payload if isinstance(payload, dict) else {}
     login_text = str(data.get("login") or "").strip()
     limiter: RateLimiter = request.app.state.login_limiter
-    key = f"{client_ip(request)}|{login_text.casefold()}"
+    account_limiter: RateLimiter = request.app.state.account_limiter
+    account = login_text.casefold()
+    key = f"{client_ip(request)}|{account}"
     wait = limiter.retry_after(key)
     if wait:
         log.warning("вход закрыт на %d с: логин=%r, адрес=%s", wait, login_text, client_ip(request))
         raise TooManyAttempts("Слишком много неудачных попыток входа.", wait)
+    wait = account_limiter.retry_after(account)
+    if wait:
+        log.warning("аккаунт закрыт на %d с: логин=%r, адрес=%s", wait, login_text, client_ip(request))
+        raise TooManyAttempts("Слишком много неудачных попыток входа в этот аккаунт.", wait)
     user = auth.authenticate(login_text, str(data.get("password") or ""))
     if user is None:
         limiter.hit(key)
+        account_limiter.hit(account)
         log.warning("неудачный вход: логин=%r, адрес=%s", login_text, client_ip(request))
         return JSONResponse({"detail": "Неверный логин или пароль.", "field": None}, status_code=401)
     limiter.reset(key)
+    account_limiter.reset(account)
     _start_session(request, response, user)
     return {"login": user.login}
 
