@@ -354,7 +354,7 @@ select.field__control { cursor: pointer; }
 .ticket__stub::before { top: -11px; }
 .ticket__stub::after { bottom: -11px; }
 .stub__col { display: flex; flex-direction: column; gap: 14px; margin: 0; }
-.stub__route { font-family: var(--f-sub); font-size: 20px; font-weight: 800; }
+.stub__route { margin: 0; font-family: var(--f-sub); font-size: 20px; font-weight: 800; }  /* у dd по умолчанию отступ 40 px слева */
 .stub__code { display: flex; flex-direction: column; gap: 6px; }
 /* штрихкод из сплошных полос: html2canvas не рисует repeating-linear-gradient, и в PNG/PDF он пропадал */
 .barcode { display: flex; gap: 2px; height: 44px; overflow: hidden; }

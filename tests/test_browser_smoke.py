@@ -135,6 +135,22 @@ def test_salon_scale_note_reads_as_one_paragraph(page):
     assert lines == 1
 
 
+@pytest.mark.parametrize("width", [1440, 375])
+def test_ticket_stub_route_is_one_line_under_its_label(browser, base_url, width):
+    context, tab = open_tool(browser, base_url, width)
+    tab.click('.tabs--main [data-tab="ticket"]')
+    lines, shift = tab.evaluate("""async () => {
+        await document.fonts.ready;
+        const route = document.querySelector('.stub__route'), label = document.querySelector('.stub__col .label');
+        const text = document.createRange();
+        text.selectNodeContents(route);
+        return [text.getClientRects().length, route.getBoundingClientRect().left - label.getBoundingClientRect().left];
+    }""")
+    context.close()
+
+    assert (lines, round(shift)) == (1, 0)  # «MOW → LED» без сдвига вправо и без переноса
+
+
 def test_negative_price_is_kept_and_explained(page):
     page.fill("#price", "−500")
     page.locator("#price").blur()
