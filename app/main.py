@@ -26,6 +26,7 @@ from app.config import PROJECT_DIR, Settings
 from app.db import open_database
 from app.errors import InputError
 from app.history import HistoryEntry, HistoryStore, history_csv
+from app.landing import fill_tests
 from app.pricing import CURVE_STEP, advise, make_forecast, profit_curve
 from app.queries import parse_flight_query, parse_forecast_query, parse_route_price_query, parse_source
 from app.ratelimit import RateLimiter
@@ -131,9 +132,9 @@ def create_app(settings: Settings | None = None, now: Callable[[], datetime] | N
 
 
 def render_landing(settings: Settings) -> str:
-    """Витрина с блоком «Файлы решения» по адресам из настроек."""
+    """Витрина с блоком «Файлы решения» по адресам из настроек и числом автотестов."""
     template = (PAGES_DIR / "landing.html").read_text(encoding="utf-8")
-    return template.replace("<!-- solution-files -->", files_html(settings.file_links))
+    return fill_tests(template.replace("<!-- solution-files -->", files_html(settings.file_links)))
 
 
 def _require_organizers_forecast(sources: ForecastSources) -> None:

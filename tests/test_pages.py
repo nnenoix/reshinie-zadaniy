@@ -13,6 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.config import Settings
+from app.landing import count_phrases
 from app.main import create_app
 from app.solution_files import FILES
 
@@ -70,6 +71,33 @@ def test_landing_names_the_actual_number_of_tests(client):
 
     assert len(shown) == 3 and len(set(shown)) == 1
     assert int(shown[0]) == full_suite_size()
+
+
+@pytest.mark.parametrize("n, word", [(1, "автотест"), (21, "автотест"), (391, "автотест"), (392, "автотеста"),
+                                     (394, "автотеста"), (395, "автотестов"), (400, "автотестов"),
+                                     (411, "автотестов"), (412, "автотестов"), (514, "автотестов")])
+def test_word_for_tests_agrees_with_their_number(n, word):
+    assert count_phrases(n)["<!-- tests-word -->"] == word
+
+
+@pytest.mark.parametrize("n, sentence", [
+    (391, "Сервис проверяет <span data-tests>391</span> автотест."),
+    (392, "Сервис проверяют <span data-tests>392</span> автотеста."),
+    (395, "Сервис проверяют <span data-tests>395</span> автотестов."),
+])
+def test_tests_sentence_agrees_with_the_number(n, sentence):
+    assert count_phrases(n)["<!-- tests-sentence -->"] == sentence
+
+
+def test_landing_spells_the_number_of_tests_in_agreement(client):
+    html = page(client, "/")
+    n = int(re.search(r"<span data-tests>(\d+)</span>", html).group(1))
+    phrases = count_phrases(n)
+
+    assert f"<dt>{phrases['<!-- tests-label -->']}</dt><dd><span data-tests>{n}</span></dd>" in html
+    assert f'<dt class="metric__label">{phrases["<!-- tests-word -->"]}</dt>' in html
+    assert phrases["<!-- tests-sentence -->"] in html
+    assert "<!-- tests" not in html
 
 
 def test_best_price_on_landing_is_the_one_the_service_computes(client):
