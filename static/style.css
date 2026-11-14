@@ -47,6 +47,9 @@ b, strong { font-weight: 600; }  /* у Onest загружены 400–600 */
 /* шапка */
 .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 22px var(--pad); border-bottom: 1px solid var(--line); background: var(--card); }
 .topbar__right { display: flex; align-items: center; gap: 16px; }
+/* Шапка витрины не уезжает при прокрутке; разделы по ссылкам меню встают под неё, а не за неё. */
+body[data-page="landing"] .topbar { position: sticky; top: 0; z-index: 20; }
+body[data-page="landing"] section[id] { scroll-margin-top: 110px; }
 .topbar__user { font-size: 12px; color: var(--mute); }
 
 /* кнопки */

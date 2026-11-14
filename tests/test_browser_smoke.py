@@ -237,7 +237,7 @@ def test_opening_the_story_without_login_leaves_no_errors_in_the_console(browser
     assert errors == []
 
 
-@pytest.mark.parametrize("start", ["/", "/login"])
+@pytest.mark.parametrize("start", ["/login"])
 def test_guest_sees_the_story_flight_while_routes_are_still_loading(browser, base_url, start):
     # «Войти как гость» открывает /app без параметров. Пока сервер отвечает на /api/routes,
     # поля «Куда» и «Дата» уже заполнены, а вместо «Здесь появится прогноз» идёт расчёт.
@@ -961,3 +961,22 @@ def test_texts_written_by_the_landing_script_keep_short_words_together(browser, 
     context.close()
 
     assert bad == []
+
+
+def test_landing_header_stays_on_screen_and_does_not_cover_sections(browser, base_url):
+    # шапка витрины не уезжает при прокрутке, а раздел по ссылке меню не прячется под неё
+    context = browser.new_context(viewport={"width": 1440, "height": 900})
+    tab = context.new_page()
+    tab.goto(base_url + "/")
+    tab.evaluate("document.documentElement.style.scrollBehavior = 'auto'")
+    tab.mouse.wheel(0, 2500)
+    tab.wait_for_timeout(200)
+    header_top = tab.evaluate("document.querySelector('.topbar').getBoundingClientRect().top")
+    tab.click(".lp-nav a[href='#files']")
+    tab.wait_for_timeout(300)
+    header_bottom, title_top = tab.evaluate("""() => [document.querySelector('.topbar').getBoundingClientRect().bottom,
+        document.querySelector('#files .section-title').getBoundingClientRect().top]""")
+    context.close()
+
+    assert header_top == 0
+    assert title_top >= header_bottom, (title_top, header_bottom)

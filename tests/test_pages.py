@@ -162,10 +162,13 @@ def test_landing_says_things_plainly(client):
 
 
 def test_landing_buttons_lead_into_the_tool(client):
+    # на витрине один вход в инструмент — «Открыть расчёт 12 июня» (входит гостем сам);
+    # «Войти как гость» только на /login, куда ведёт «Войти» в шапке
     html = page(client, "/")
 
-    assert re.search(r'<button[^>]*data-guest', html)
-    assert 'href="/app?destination=' in html
+    assert "data-guest" not in html.replace("data-guest-error", "")
+    assert len(re.findall(r'<a[^>]*data-open-story[^>]*>Открыть расчёт 12 июня</a>', html)) == 2
+    assert "Москва → Санкт-Петербург, пятница, День России. Без регистрации" in plain(html)
     assert 'href="/login"' in html
 
 
