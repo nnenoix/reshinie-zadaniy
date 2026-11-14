@@ -91,6 +91,15 @@ select.field__control { cursor: pointer; }
 .metric__value--acc { color: var(--acc); }
 .metric__unit { font-size: 24px; margin-left: 4px; }
 .metric__sub { font-size: 12px; color: var(--mute); }
+/* Четыре числа в ряд и талон с корешком сбоку — только когда широка колонка результата, а не экран:
+   на 1024 px экран широкий, а колонка рядом с формой узкая, и «1 440» налезало на «917». */
+.main-col { container: result / inline-size; }
+@container result (max-width: 700px) {
+  .metrics--4 { grid-template-columns: 1fr 1fr; }
+  .metrics--4 .metric + .metric { border-left: 0; }
+  .metrics--4 .metric:nth-child(even) { border-left: 1px solid var(--line); }
+  .metrics--4 .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
 .meter { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
 .meter__fill { height: 100%; width: var(--p, 0%); background: var(--acc); }
 
@@ -192,11 +201,7 @@ select.field__control { cursor: pointer; }
   .steps { display: none; }
   .layout { grid-template-columns: 1fr; gap: 16px; }
   .card { padding: 20px; }
-  .metrics { grid-template-columns: 1fr 1fr; }
   .metric { padding: 16px; }
-  .metric + .metric { border-left: 0; }
-  .metric:nth-child(even) { border-left: 1px solid var(--line); }
-  .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
   .metric__value { font-size: 30px; }
   .metric__unit { font-size: 18px; }
   .chart { height: 250px; }
@@ -362,6 +367,19 @@ select.field__control { cursor: pointer; }
 .barcode i.b2 { width: 2px; }
 .barcode i.b3 { width: 3px; }
 .stub__id { font-size: 10px; color: var(--mute); }
+@container result (max-width: 700px) {
+  .ticket { flex-direction: column; }
+  .ticket__band { border-radius: 13px 13px 0 0; padding: 12px 16px; font-size: 12px; }
+  .ticket__body { padding: 18px 16px; gap: 18px; }
+  .ticket__route { gap: 12px; }
+  .ticket__code { font-size: 36px; }
+  .ticket__grid { grid-template-columns: 1fr 1fr; gap: 14px 12px; }
+  .ticket__stub { width: auto; flex-direction: row; padding: 18px 16px; border-left: 0; border-top: 1.5px dashed var(--line); }
+  .ticket__stub::before, .ticket__stub::after { top: -11px; bottom: auto; }
+  .ticket__stub::after { left: auto; right: -11px; }
+  .stub__best { display: none; }
+  .stub__code { justify-content: flex-end; width: 120px; }
+}
 .actions { display: flex; gap: 12px; flex-wrap: wrap; }
 .btn--ghost.btn--small { font-weight: 600; padding: 12px 18px; }
 
@@ -451,8 +469,6 @@ a.btn:hover { color: var(--acc-ink); }
   .scen__btn { padding: 6px 7px; }
   .metrics--3 .metric { padding: 12px; }
   .metrics--3 .metric__value { font-size: 22px; }
-  .metrics--3 .metric + .metric { border-left: 1px solid var(--line); }
-  .metrics--3 .metric:nth-child(n+3) { border-top: 0; }
   .plane-box { padding: 16px 0; }
   .plane { flex-direction: column; align-items: center; gap: 16px; }
   .plane__craft { padding: 0 80px; }
@@ -473,17 +489,6 @@ a.btn:hover { color: var(--acc-ink); }
   .cal__load { font-size: 12px; }
   .cal__load small, .cal__hol, .cal__cap { display: none; }
   .cal__day.is-capped::after { height: 5px; }
-  .ticket { flex-direction: column; }
-  .ticket__band { border-radius: 13px 13px 0 0; padding: 12px 16px; font-size: 12px; }
-  .ticket__body { padding: 18px 16px; gap: 18px; }
-  .ticket__route { gap: 12px; }
-  .ticket__code { font-size: 36px; }
-  .ticket__grid { grid-template-columns: 1fr 1fr; gap: 14px 12px; }
-  .ticket__stub { width: auto; flex-direction: row; padding: 18px 16px; border-left: 0; border-top: 1.5px dashed var(--line); }
-  .ticket__stub::before, .ticket__stub::after { top: -11px; bottom: auto; }
-  .ticket__stub::after { left: auto; right: -11px; }
-  .stub__best { display: none; }
-  .stub__code { justify-content: flex-end; width: 120px; }
   .lp-nav { display: none; }
   .lp-hero { grid-template-columns: 1fr; gap: 32px; padding: 32px var(--pad); }
   .lp-title { font-size: 36px; }

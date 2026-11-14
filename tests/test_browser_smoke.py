@@ -26,7 +26,8 @@ def free_port() -> int:
 @pytest.fixture(scope="module")
 def base_url(tmp_path_factory):
     port = free_port()
-    app = create_app(Settings(db_path=tmp_path_factory.mktemp("smoke") / "app.db"))
+    # гостей здесь больше 20 за час: лимит регистраций с одного адреса проверяют другие тесты
+    app = create_app(Settings(db_path=tmp_path_factory.mktemp("smoke") / "app.db", signup_limit=1000))
     server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning"))
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
@@ -304,6 +305,73 @@ def test_file_names_on_a_phone_break_only_after_an_underscore(browser, base_url)
     assert wrapped, "на 375 px длинные имена должны переноситься"
     for text, breaks in wrapped:
         assert set(breaks) <= {"_", " "}, (text, breaks)
+
+
+CROWDED_NUMBERS = """async (tab) => {
+    // Крупные числа вкладки: число в одну строку (слова вроде «Пт · праздник» переносить можно),
+    // целиком в своей ячейке и не налезает на соседей.
+    await document.fonts.ready;
+    const panel = document.querySelector(`[data-tabpanel="${tab}"]`);
+    const groups = [
+        ['.metrics', '.metric__value', '.metric'],
+        ['.ticket__route', '.ticket__code', '.ticket__port'],
+        ['.ticket__grid', 'dd', '.tf'],
+        ['.stub__col', 'dd', '.tf, .stub__col'],
+    ];
+    const textBox = (element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        // строки считаем по тексту: у «100» и «%» разный кегль, но это одна строка
+        const rects = [...range.getClientRects()].filter((r) => r.width > 0).sort((a, b) => a.top - b.top);
+        let lines = 0, bottom = -Infinity;
+        for (const r of rects) if (r.top >= bottom - 1) { lines++; bottom = r.bottom; } else bottom = Math.max(bottom, r.bottom);
+        return [range.getBoundingClientRect(), lines];
+    };
+    const meet = (a, b) => a.left < b.right - .5 && b.left < a.right - .5 && a.top < b.bottom - .5 && b.top < a.bottom - .5;
+    const problems = [];
+    for (const [groupSel, valueSel, cellSel] of groups) {
+        for (const group of panel.querySelectorAll(groupSel)) {
+            const values = [...group.querySelectorAll(valueSel)].filter((v) => v.closest(groupSel) === group);
+            const boxes = values.map((value) => {
+                const [text, lines] = textBox(value), cell = value.closest(cellSel).getBoundingClientRect();
+                const name = value.textContent.replace(/\\s/g, ' ');
+                if (value.scrollWidth > value.clientWidth) problems.push(`${name}: шире своей ячейки`);
+                if (lines > 1 && /\d/.test(name)) problems.push(`${name}: перенос на ${lines} строки`);
+                if (text.left < cell.left - .5 || text.right > cell.right + .5) problems.push(`${name}: вылезает из карточки`);
+                return [name, text];
+            });
+            for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+                if (meet(boxes[i][1], boxes[j][1])) problems.push(`${boxes[i][0]} налезает на ${boxes[j][0]}`);
+            }
+        }
+    }
+    for (const label of panel.querySelectorAll('.metric__label')) {
+        const [, lines] = textBox(label);
+        if (lines > 2) problems.push(`подпись «${label.textContent}» сжата в ${lines} строки`);
+    }
+    return problems;
+}"""
+
+
+@pytest.fixture(scope="module")
+def full_flight(browser, base_url):
+    """Самые широкие числа: 3 300 ₽ на 12 июня — желают 1 564, купят 1 440 из 1 440, загрузка 100 %."""
+    context, tab = open_tool(browser, base_url)
+    tab.goto(base_url + "/app?destination=Санкт-Петербург&date=2026-06-12&price=3300")
+    wait_for_result(tab)
+    assert tab.inner_text('[data-out="load"]') == "100"
+    yield tab
+    context.close()
+
+
+@pytest.mark.parametrize("tab_name", ["calc", "salon", "ticket"])
+@pytest.mark.parametrize("width", [375, 800, 900, 1024, 1100, 1280, 1440])
+def test_big_numbers_fit_their_cards_at_every_width(full_flight, width, tab_name):
+    # На 1024 «1 440» заходило на «917», «100 %» вылезало из карточки, подписи стояли столбиком.
+    full_flight.set_viewport_size({"width": width, "height": 900})
+    full_flight.click(f'.tabs--main [data-tab="{tab_name}"]')
+
+    assert full_flight.evaluate(CROWDED_NUMBERS, tab_name) == []
 
 
 def test_empty_history_on_a_phone_is_seen_whole(browser, base_url):
