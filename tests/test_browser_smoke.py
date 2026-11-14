@@ -873,3 +873,36 @@ def test_register_link_keeps_the_guest_signed_in(browser, base_url):
     context.close()
 
     assert session["user"] is not None and session["user"]["guest"] is True
+
+
+# --- вариант 2 «Привычный сервис»: без украшений варианта 1 ---
+
+ARROWS_IN_CONTROLS = """() => [...document.querySelectorAll('button, .btn, .link-btn, .file__open')]
+    .map((control) => control.textContent).filter((text) => text.includes('→'))"""
+
+
+def test_buttons_written_by_scripts_carry_no_arrow(page):
+    # «5 605 ₽ →» в «Поставить лучшую цену» и «Повторить →» в истории пишет app.js
+    page.click("#submit")
+    page.wait_for_function("() => document.querySelector('#history-body .link-btn')")
+
+    assert page.evaluate(ARROWS_IN_CONTROLS) == []
+
+
+LABEL_FRAMES = """() => {
+    const probe = (cls) => { const el = document.createElement('span'); el.className = cls; document.body.append(el); return el; };
+    const tags = [...document.querySelectorAll('.tag, .chip'), probe('cal__cap')];
+    const how = document.querySelector('.how');
+    return [tags.length, tags.filter((el) => getComputedStyle(el).borderTopStyle !== 'none').map((el) => el.className),
+            getComputedStyle(how, '::before').content];
+}"""
+
+
+def test_labels_are_plain_text_without_frames_or_arrows(browser, base_url):
+    context = browser.new_context(viewport={"width": 1440, "height": 900})
+    tab = context.new_page()
+    tab.goto(base_url + "/")
+    count, framed, before = tab.evaluate(LABEL_FRAMES)
+    context.close()
+
+    assert count > 5 and framed == [] and before == "none"

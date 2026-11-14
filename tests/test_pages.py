@@ -44,7 +44,7 @@ def test_landing_is_public(client):
     html = plain(page(client, "/"))
 
     assert "Цена из <span class=\"accent\">прогноза</span>, а не из правила" in html
-    assert '<p class="label">Турнир «Решись» · Технологии</p>' in html
+    assert "Егор Титаренко · Центральный университет · направление «Технологии»" in html
 
 
 @pytest.mark.parametrize("number", ["705<small>", "1&nbsp;625<small>", "4<small>", "+6,7<small>", "83<small>"])
@@ -443,3 +443,38 @@ def test_read_only_origin_is_out_of_the_tab_order(client):
     origin = re.search(r'<input[^>]*id="origin"[^>]*>', open_page(client, "/app").text).group(0)
 
     assert 'tabindex="-1"' in origin and "readonly" in origin
+
+
+# --- вариант 2 «Привычный сервис»: без украшений варианта 1 ---
+
+BUTTONS = re.compile(r'<(button|a)\b[^>]*class="[^"]*\b(btn|link-btn|file)\b[^"]*"[^>]*>(.*?)</\1>', re.S)
+
+
+@pytest.mark.parametrize("path", ["/", "/login", "/app"])
+def test_buttons_and_links_carry_no_arrow(client, path):
+    # «→» в маршрутах («MOW → LED», «Москва → Санкт-Петербург») — смысл, в кнопках — украшение
+    html = open_page(client, path).text
+    found = [inner for _, _, inner in BUTTONS.findall(html) if "→" in inner]
+
+    assert found == []
+
+
+@pytest.mark.parametrize("path", ["/", "/login", "/app"])
+def test_unordered_lists_carry_no_numbers(client, path):
+    html = open_page(client, path).text
+
+    for number in ("feat__n", "file__n", "facts__n", "steps__n"):
+        assert f'class="{number}"' not in html, number
+
+
+def test_story_steps_keep_their_numbers(client):
+    # сквозная история 12 июня — последовательность, её шаги 1–5 остаются
+    assert re.findall(r'<span class="steps-list__n">(\d)</span>', page(client, "/")) == list("12345")
+
+
+@pytest.mark.parametrize("path", ["/", "/login", "/app"])
+def test_no_overline_above_a_heading(client, path):
+    # над h1/h2 нет мелкой серой подписи: «Турнир «Решись» · Технологии», «Аналитика», «Внутренний инструмент»
+    html = open_page(client, path).text
+
+    assert re.findall(r'<p class="label">[^<]*</p>\s*<h[12]\b', html) == []

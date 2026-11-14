@@ -2,7 +2,7 @@
 import pytest
 
 from app.config import from_environment
-from app.solution_files import FILES, file_links, files_html, safe_url
+from app.solution_files import FILES, breakable, file_links, files_html, safe_url
 
 GITHUB = "https://github.com/nnenoix/reshinie-zadaniy"
 
@@ -51,7 +51,7 @@ def test_external_link_opens_in_a_new_tab_and_text_is_escaped():
     html = files_html({"code": GITHUB + '?a=1&b="2"'})
 
     assert f'href="{GITHUB}?a=1&amp;b=&quot;2&quot;" target="_blank" rel="noopener"' in html
-    assert "Открыть →" in html
+    assert '<span class="file__open">Открыть</span>' in html and "→" not in html
 
 
 def test_check_scripts_come_as_one_archive():
@@ -63,8 +63,8 @@ def test_check_scripts_come_as_one_archive():
                                   "пересчёт чисел аналитики и проверка файла прогноза")
 
 
-def test_files_keep_their_order_and_numbers():
+def test_files_keep_their_order_without_numbers():
     html = files_html({})
 
-    numbers = [html.index(f'<span class="file__n">{i}</span>') for i in range(1, len(FILES) + 1)]
-    assert numbers == sorted(numbers)
+    names = [html.index(breakable(f.name)) for f in FILES]
+    assert names == sorted(names) and 'class="file__n"' not in html

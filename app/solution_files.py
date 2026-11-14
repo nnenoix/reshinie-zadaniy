@@ -63,16 +63,15 @@ def breakable(name: str) -> str:
 
 def files_html(links: Mapping[str, str]) -> str:
     rows = []
-    for number, file in enumerate(FILES, start=1):
-        cells = (f'<span class="file__n">{number}</span>'
-                 f'<span class="file__name">{breakable(file.name)}</span>'
+    for file in FILES:
+        cells = (f'<span class="file__name">{breakable(file.name)}</span>'
                  f'<span class="file__desc">{escape(file.description)}</span>'
                  f'<span class="tag">{escape(file.tag)}</span>')
         url = safe_url(links.get(file.key, ""))
         if url:
             new_tab = ' target="_blank" rel="noopener"' if url.startswith("http") else ""
             rows.append(f'<a class="file" href="{escape(url, quote=True)}"{new_tab}>{cells}'
-                        '<span class="file__open">Открыть →</span></a>')
+                        '<span class="file__open">Открыть</span></a>')
         else:
             rows.append(f'<div class="file is-pending">{cells}<span class="file__open">{NO_LINK}</span></div>')
     return "\n    ".join(rows)

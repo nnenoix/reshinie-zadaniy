@@ -367,7 +367,7 @@ function renderFormula(d) {
 function renderBest(d) {
   const { best } = d;
   $("#best-price").textContent = fmt(best.price);
-  $("#apply-best-price").textContent = `${rub(best.price)} →`;
+  $("#apply-best-price").textContent = rub(best.price);
   const gain = Math.round(best.gain || 0);
   const text = $("#best-text");
   if (gain <= 0) {
@@ -468,9 +468,7 @@ function renderSalon(d) {
   $('[data-salon="sold"]').textContent = whole(sold);
   $('[data-salon="over"]').textContent = whole(over);
   const { scale, text } = salonText(cabin, `0,${S.scenario + 1}`, scenario.wanted, sold, over, queue);
-  const note = node("span"); // одним блоком: у .how display: flex, и <strong> иначе становился узкой колонкой
-  note.append(node("strong", "", scale), text);
-  $("#salon-how").replaceChildren(note);
+  $("#salon-how").replaceChildren(node("strong", "", scale), text);
   $("#salon-odds").textContent = oddsText(d.odds);
 }
 
@@ -551,7 +549,7 @@ function historyRow(entry) {
   const flag = node("td");
   if (want > entry.seats) flag.append(node("span", "tag", "Упор в места"));
   else if (entry.sold <= 0) flag.append(node("span", "tag tag--err", "Нет спроса"));
-  const again = node("button", "link-btn", "Повторить →");
+  const again = node("button", "link-btn", "Повторить");
   again.type = "button";
   again.addEventListener("click", () => repeat(entry));
   flag.append(again);

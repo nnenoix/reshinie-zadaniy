@@ -27,13 +27,12 @@
 
 <section class="lp-hero">
   <div class="lp-hero__text">
-    <p class="label">Турнир «Решись» · Технологии</p>
     <h1 class="lp-title">Цена из <span class="accent">прогноза</span>, а&nbsp;не из правила</h1>
     <p class="lp-lead">Динамическое ценообразование авиабилетов. Модель одного дня самолёта, прогноз спроса на июнь 2026 года и&nbsp;сервис, который считает продажи и&nbsp;цену на лету.</p>
     <p class="lp-author">Егор Титаренко · Центральный университет · направление «Технологии»</p>
     <div class="lp-cta">
       <div class="lp-cta__item">
-        <a class="btn btn--auto" href="/app?destination=%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3&amp;date=2026-06-12" data-open-story><span>Открыть расчёт 12 июня</span><span>→</span></a>
+        <a class="btn btn--auto" href="/app?destination=%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3&amp;date=2026-06-12" data-open-story>Открыть расчёт 12 июня</a>
         <p class="lp-cta__hint">Москва → Санкт-Петербург, пятница, День&nbsp;России</p>
       </div>
       <div class="lp-cta__item">
@@ -69,7 +68,6 @@
 <section class="lp-section" id="case">
   <article class="case">
     <div class="case__aside">
-      <p class="label">Аналитика</p>
       <h2 class="case__title">Модель одного дня</h2>
       <p class="case__text">Один самолёт летает между Петербургом, Москвой и&nbsp;Сочи, у&nbsp;каждого из шести рынков свой спрос. В&nbsp;пиковую пятницу перелёт П→М заполнен: 150 из 150. Теневая цена кресла 4&nbsp;тыс.&nbsp;₽. Билет П→М в&nbsp;этот день продаём за 11,5&nbsp;тыс.&nbsp;₽ вместо 5,5.</p>
     </div>
@@ -89,7 +87,6 @@
 
   <article class="case">
     <div class="case__aside">
-      <p class="label">Прогноз</p>
       <h2 class="case__title">Спрос на июнь</h2>
       <p class="case__text">Модель Chronos-2 в&nbsp;AutoGluon. Ансамбль точнее лишь на 1,8&nbsp;%, а&nbsp;Chronos-2 лучше предсказывает коридор сценариев, из которого считается цена (WQL 0,068 против 0,076), и&nbsp;не требует переобучения. Признаки праздников и&nbsp;маршрута снизили ошибку ансамбля с&nbsp;42,31 до 40,88. Календарь РФ с&nbsp;переносами не помог, и&nbsp;это показано в&nbsp;ноутбуке.</p>
     </div>
@@ -107,7 +104,6 @@
 
   <article class="case">
     <div class="case__aside">
-      <p class="label">Продукт</p>
       <h2 class="case__title">Сервис для менеджера</h2>
       <p class="case__text">Ввёл рейс, дату и&nbsp;цену — сразу видишь продажи, 9&nbsp;сценариев спроса и&nbsp;лучшую цену по ожидаемой прибыли. Ещё есть схема салона, календарь загрузки на июнь, посадочный талон в&nbsp;PNG и&nbsp;PDF, история с&nbsp;выгрузкой в&nbsp;CSV и&nbsp;выбор прогноза: организаторов или наш. Регистрация, вход и&nbsp;гостевой вход для жюри. Защита: лимит попыток входа, CSRF-токен, CSP.</p>
     </div>
@@ -116,15 +112,15 @@
         <div class="metric"><dt class="metric__label"><!-- tests-word --></dt><dd class="metric__value"><!-- tests-count --></dd></div>
         <div class="metric"><dt class="metric__label">лучшая цена 12 июня по нашей модели</dt><dd class="metric__value metric__value--acc">5&nbsp;605<span class="metric__unit">₽</span></dd></div>
       </dl>
-      <ol class="feat">
-        <li><span class="feat__n">1</span><span class="feat__t">Ползунок цены</span><span class="feat__d">числа и&nbsp;график меняются живьём</span></li>
-        <li><span class="feat__n">2</span><span class="feat__t">Лучшая цена</span><span class="feat__d">кривая прибыли и&nbsp;её максимум</span></li>
-        <li><span class="feat__n">3</span><span class="feat__t">Схема салона</span><span class="feat__d">проданные кресла и&nbsp;очередь у&nbsp;трапа</span></li>
-        <li><span class="feat__n">4</span><span class="feat__t">Календарь июня</span><span class="feat__d">тепловая карта загрузки по дням</span></li>
-        <li><span class="feat__n">5</span><span class="feat__t">Посадочный талон</span><span class="feat__d">итог расчёта в&nbsp;PNG и&nbsp;PDF</span></li>
-      </ol>
+      <ul class="feat">
+        <li><span class="feat__t">Ползунок цены</span><span class="feat__d">числа и&nbsp;график меняются живьём</span></li>
+        <li><span class="feat__t">Лучшая цена</span><span class="feat__d">кривая прибыли и&nbsp;её максимум</span></li>
+        <li><span class="feat__t">Схема салона</span><span class="feat__d">проданные кресла и&nbsp;очередь у&nbsp;трапа</span></li>
+        <li><span class="feat__t">Календарь июня</span><span class="feat__d">тепловая карта загрузки по дням</span></li>
+        <li><span class="feat__t">Посадочный талон</span><span class="feat__d">итог расчёта в&nbsp;PNG и&nbsp;PDF</span></li>
+      </ul>
       <div class="lp-cta">
-        <a class="btn btn--small" href="/app?destination=%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3&amp;date=2026-06-12" data-open-story>Открыть расчёт 12 июня →</a>
+        <a class="btn btn--small" href="/app?destination=%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3&amp;date=2026-06-12" data-open-story>Открыть расчёт 12 июня</a>
         <button class="btn btn--ghost btn--small" type="button" data-guest>Войти как гость</button>
       </div>
     </div>
@@ -134,7 +130,6 @@
 <section class="lp-section" id="story">
   <div class="story">
     <div class="story__aside">
-      <p class="label">12.06.2026 · Сквозная история</p>
       <h2 class="case__title">Пятница, которая не стала пиком</h2>
       <ol class="steps-list">
         <li><span class="steps-list__n">1</span><p><b>Ждали.</b> Пятница 12 июня, День&nbsp;России. Казалось, будет пик спроса, как в&nbsp;пятницу из модели аналитики.</p></li>
