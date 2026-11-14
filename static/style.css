@@ -169,6 +169,21 @@ select.field__control { cursor: pointer; }
 .history th.l, .history td.l { text-align: left; }
 .history td.time { color: var(--mute); }
 .history td.buy { font-weight: 600; }
+/* «Два прогноза»: пять столбцов в колонке результата. Заголовки переносятся по словам, числа — нет;
+   в узкой колонке (телефон) название прогноза встаёт строкой над своими четырьмя числами.
+   Раньше «Лучшая цена, ₽» на 1024 px уходила за край карточки. */
+.history--compare th { white-space: normal; }
+.history--compare th, .history--compare td { padding-left: 8px; padding-right: 8px; }
+.history--compare th:first-child, .history--compare td:first-child { padding-left: 0; }
+.history--compare th:last-child, .history--compare td:last-child { padding-right: 0; }
+@container result (max-width: 480px) {
+  .history--compare, .history--compare thead, .history--compare tbody { display: block; }
+  .history--compare tr { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .history--compare th.l { display: none; }
+  .history--compare td.l { grid-column: 1 / -1; padding: 14px 0 0; border-bottom: 0; text-align: left; }
+  .history--compare th, .history--compare td { padding-left: 0; padding-right: 0; }
+  .history--compare td:not(.l) { padding-top: 6px; }
+}
 .history__empty td { text-align: left; color: var(--mute); white-space: normal; }
 
 /* вход */

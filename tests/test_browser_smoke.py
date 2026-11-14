@@ -358,7 +358,7 @@ CROWDED_NUMBERS = """async (tab) => {
                 const [text, lines] = textBox(value), cell = value.closest(cellSel).getBoundingClientRect();
                 const name = value.textContent.replace(/\\s/g, ' ');
                 if (value.scrollWidth > value.clientWidth) problems.push(`${name}: шире своей ячейки`);
-                if (lines > 1 && /\d/.test(name)) problems.push(`${name}: перенос на ${lines} строки`);
+                if (lines > 1 && /\\d/.test(name)) problems.push(`${name}: перенос на ${lines} строки`);
                 if (text.left < cell.left - .5 || text.right > cell.right + .5) problems.push(`${name}: вылезает из карточки`);
                 return [name, text];
             });
@@ -394,6 +394,30 @@ def test_big_numbers_fit_their_cards_at_every_width(full_flight, width, tab_name
     full_flight.click(f'.tabs--main [data-tab="{tab_name}"]')
 
     assert full_flight.evaluate(CROWDED_NUMBERS, tab_name) == []
+
+
+COMPARE_FITS = """async () => {
+    // Таблица «Два прогноза на этот рейс» целиком в карточке: без прокрутки, последний столбец виден.
+    await document.fonts.ready;
+    const box = document.querySelector('#compare-table'), card = box.closest('.card').getBoundingClientRect();
+    const right = Math.min(box.getBoundingClientRect().right, card.right);
+    const cut = [...box.querySelectorAll('tr > :last-child')].map((cell) => {
+        const text = document.createRange();
+        text.selectNodeContents(cell);
+        return [cell.textContent.replace(/\\s/g, ' '), Math.round(text.getBoundingClientRect().right - right)];
+    }).filter(([, over]) => over > 0);
+    return { scroll: box.scrollWidth - box.clientWidth, cut };
+}"""
+
+
+@pytest.mark.parametrize("width", [360, 375, 800, 900, 1024, 1100, 1280, 1440])
+def test_two_forecasts_table_fits_its_card(full_flight, width):
+    # На 1024 px столбец «Лучшая цена, ₽» обрезало справа, его можно было только прокрутить.
+    full_flight.set_viewport_size({"width": width, "height": 900})
+    full_flight.click('.tabs--main [data-tab="calc"]')
+    full_flight.wait_for_selector("#compare-table:not([hidden])")
+
+    assert full_flight.evaluate(COMPARE_FITS) == {"scroll": 0, "cut": []}
 
 
 def test_empty_history_on_a_phone_is_seen_whole(browser, base_url):
