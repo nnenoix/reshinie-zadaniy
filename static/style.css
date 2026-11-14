@@ -203,7 +203,7 @@ select.field__control { cursor: pointer; }
 /* вход */
 .auth { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) 560px; }
 .auth__side { display: flex; flex-direction: column; justify-content: space-between; gap: 40px; padding: 48px var(--pad); border-right: 1px solid var(--line); }
-.auth__body { display: flex; flex-direction: column; gap: 40px; }
+.auth__body { display: flex; flex-direction: column; gap: 40px; margin-block: auto; } /* заголовок посередине, под логотипом */
 .auth__title { font-family: var(--f-sub); font-size: 54px; font-weight: 800; line-height: 1.06; letter-spacing: -.025em; max-width: 720px; margin: 0; }
 .facts { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
 .facts li { padding: 18px 0; border-bottom: 1px solid var(--line); font-size: 18px; }
@@ -650,8 +650,7 @@ a.btn:hover { color: var(--acc-ink); }
   .auth__side { display: contents; }
   .auth__side > .brand { order: 1; padding: 20px var(--pad) 0; }
   .auth__main { order: 2; }
-  .auth__body { order: 3; padding: 8px var(--pad) 0; gap: 24px; }
-  .auth__side > .label { order: 4; padding: 20px var(--pad) 32px; }
+  .auth__body { order: 3; padding: 8px var(--pad) 32px; gap: 24px; margin-block: 0; }
 
   /* цели касания не меньше 44 × 44 px */
   .topbar .btn--ghost, .tabs--main .tabs__btn, .tabs__btn { min-height: 44px; }
