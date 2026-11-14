@@ -479,6 +479,7 @@ a.btn:hover { color: var(--acc-ink); }
 .lp-num dd { margin: 0; font-family: var(--f-sub); font-size: 44px; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
 .lp-num dd small { font-size: 24px; margin-left: 6px; color: var(--acc); }
 .lp-num dt { font-size: 16px; line-height: 1.4; color: var(--mute); max-width: 240px; }
+.lp-num dd.lp-num__group { font-family: var(--f-text); font-size: 13px; font-weight: 600; line-height: 1; color: var(--mute); }
 .lp-section { padding: 48px var(--pad) 0; }
 .case { display: grid; grid-template-columns: 420px minmax(0, 1fr); gap: 56px; padding: 56px 0; border-top: 1px solid var(--line); }
 .case:first-of-type { margin-top: 20px; }  /* линия над первым кейсом одна: у карточки «Ключевых чисел» своя рамка */

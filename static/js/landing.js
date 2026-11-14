@@ -28,7 +28,7 @@ function drawFridays(box, data) {
     return row;
   });
   const legend = node("p", "fri__legend",
-    `Медиана спроса по базовой цене · пунктир — среднее других пятниц, ${whole(data.others_mean)}`);
+    `Спрос в среднем сценарии при базовой цене · пунктир — другие пятницы в среднем, ${whole(data.others_mean)}`);
   box.replaceChildren(...rows, legend);
 }
 
@@ -44,7 +44,7 @@ async function loadStory() {
     return;
   }
   story = response.data;
-  setStory("source", story.source_name);
+  setStory("source", story.source === "ml" ? "прогноз нашей модели" : "прогноз организаторов");
   setStory("drop", `−${percent(story.drop)}`);
   setStory("summary", `медиана ${whole(story.median)} против ${whole(story.others_mean)} в\u00A0другие пятницы`);
   setStory("chart-title", `${story.route.origin} → ${story.route.destination} · ${dayMonth(story.date)} · ${rub(story.price)}`);

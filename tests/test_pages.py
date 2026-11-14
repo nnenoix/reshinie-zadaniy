@@ -111,7 +111,7 @@ def test_best_price_on_landing_is_the_one_the_service_computes(client):
 
     assert "5&nbsp;605<span class=\"metric__unit\">₽</span>" in html
     assert "лучшая цена 12 июня по нашей модели" in text
-    assert "По нашей модели лучшая цена 5 605 ₽: +3 217 ₽ ожидаемой прибыли к базовой цене 5 500 ₽." in text
+    assert "По нашей модели лучшая цена 5 605 ₽: +3 217 ₽ ожидаемой прибыли за день к базовой цене 5 500 ₽." in text
     assert "5 610" not in text
     # 5 614 ₽ — только с пометкой, что это прогноз организаторов
     for found in re.finditer("5 614", text):
@@ -121,11 +121,11 @@ def test_best_price_on_landing_is_the_one_the_service_computes(client):
 def test_landing_texts_from_the_submission(client):
     html = plain(page(client, "/"))
 
-    assert "Ансамбль точнее лишь на 1,8 %" in html
-    assert "(WQL 0,068 против 0,076), и не требует переобучения." in html
+    assert "По средней ошибке ансамбль точнее лишь на 1,8 %." in html
+    assert "(WQL 0,068 против 0,076 у ансамбля), и не требует переобучения." in html
     assert "её не надо переобучать" not in html
     assert "пересчитал 302 числа аналитики" in html
-    assert "Защита: лимит попыток входа, CSRF-токен, CSP." in html
+    assert "Вход защищён от подбора пароля, формы — от подделки запросов." in html
     assert "Цену берём из прогноза. Правило «пятница — значит дороже» здесь не работает." in html
     # оборот «X, а не Y» — только в заголовке
     body = html.split('<h1 class="lp-title">', 1)[1].split("</h1>", 1)[1]
@@ -138,6 +138,27 @@ def test_landing_tells_the_june_12_story(client):
     assert "Пятница, которая не стала пиком" in html
     assert "медиана 917 против 1 049" in plain(html)
     assert 'id="story-fridays"' in html
+
+
+def test_landing_says_things_plainly(client):
+    # правки витрины 14.11.2026: без жаргона, с единицами, без выдачи догадки за факт
+    html = page(client, "/")
+    text = plain(html)
+
+    assert "Модель одного дня работы самолёта, прогноз спроса на июнь 2026 года и сервис, который на лету считает продажи и лучшую цену." in text
+    assert "если вместо Сочи дважды летать в Москву" in text
+    assert "не лететь в Сочи" not in text
+    assert "Вероятно, праздничная пятница не деловой день: в прошлом году 12 июня спрос на этом рейсе тоже упал, 598 против 822–878 в будни до и после." in text
+    assert "+3 812 ₽ ожидаемой прибыли за день" in text
+    assert "столько приносит одно лишнее кресло П→М в пиковую пятницу" in text
+    assert "если бы в мае 2026 цены ставили по прогнозу" in text
+    assert "дней мая, когда реальный спрос попал в коридор прогноза (ожидалось 80 %)" in text
+    assert "с 42,3 до 40,9 пассажира в день на маршрут" in text
+    assert re.findall(r'<dd class="lp-num__group">([^<]*)</dd>', html) == [
+        "Аналитика", "Аналитика", "Аналитика", "Прогноз", "Прогноз", "Сервис"]
+    assert '<a href="#case">Решение</a>' in html
+    for gone in ("бэктесте", "теневая цена кресла в", "живьём", "ошибка 42,31 → 40,88", "Рейс дня", "CSRF"):
+        assert gone not in text, gone
 
 
 def test_landing_buttons_lead_into_the_tool(client):
@@ -479,7 +500,7 @@ def test_no_overline_above_a_heading(client, path):
 
 
 @pytest.mark.parametrize("path, headings", [
-    ("/", ["Рейс дня", "Ключевые числа", "Пиковая пятница · П→М", "Как проверено", "Файлы решения", "Инструменты"]),
+    ("/", ["12 июня ·", "Ключевые числа", "Пиковая пятница · П→М", "Как проверено", "Файлы решения", "Инструменты"]),
     ("/app", ["Параметры рейса", "Лучшая цена", "История расчётов"]),
 ])
 def test_section_and_card_captions_are_headings(client, path, headings):
