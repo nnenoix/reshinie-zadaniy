@@ -32,10 +32,29 @@ export async function post(path, body, signal) {
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   let response = await send();
-  if (response.status === 403 && !csrfToken()) {
-    await get("/api/csrf"); // cookie потерялась — получаем новую и пробуем ещё раз
+  if (response.status === 403 && response.data && response.data.code === "NO_TOKEN") {
+    await get("/api/csrf"); // cookie потерялась или устарела — берём действующую и повторяем один раз
     response = await send();
   }
+  return response;
+}
+
+// Кнопка на время запроса: недоступна, aria-busy и текст вроде «Входим…» — при холодном старте
+// сервера ответ идёт долго, и второй клик не должен слать второй запрос. После ошибки кнопка
+// возвращается сразу, после успеха — когда страницу вернут кнопкой «Назад» (pageshow).
+export async function whileBusy(button, label, task) {
+  const before = [...button.childNodes];
+  const restore = () => {
+    button.replaceChildren(...before);
+    button.disabled = false;
+    button.removeAttribute("aria-busy");
+  };
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  button.textContent = label;
+  const response = await task();
+  if (response.ok) window.addEventListener("pageshow", restore, { once: true });
+  else restore();
   return response;
 }
 

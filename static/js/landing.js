@@ -1,8 +1,8 @@
 // Витрина /: пятницы июня и 9 сценариев 12 июня — с сервера (/api/story), кнопки входа в инструмент.
-import { get } from "./api.js";
+import { get, whileBusy } from "./api.js";
 import { drawQuantiles } from "./demand-chart.js";
 import { dayMonth, dow, fmt, node, percent, rub, whole, withPercent } from "./format.js";
-import { ensureSession, enterAsGuest } from "./guest.js";
+import { ensureSession } from "./guest.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -72,8 +72,9 @@ function showGuestError(data) {
   slot.hidden = false;
 }
 
+// Уже вошли (аккаунт или гость) — просто открываем инструмент, а не выходим из аккаунта в нового гостя.
 $$("[data-guest]").forEach((button) => button.addEventListener("click", async () => {
-  const response = await enterAsGuest();
+  const response = await whileBusy(button, "Входим…", ensureSession);
   if (response.ok) location.assign("/app");
   else showGuestError(response.data);
 }));
