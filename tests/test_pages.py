@@ -478,3 +478,17 @@ def test_no_overline_above_a_heading(client, path):
     html = open_page(client, path).text
 
     assert re.findall(r'<p class="label">[^<]*</p>\s*<h[12]\b', html) == []
+
+
+@pytest.mark.parametrize("path, headings", [
+    ("/", ["Рейс дня", "Ключевые числа", "Пиковая пятница · П→М", "Как проверено", "Файлы решения", "Инструменты"]),
+    ("/app", ["Параметры рейса", "Лучшая цена", "История расчётов"]),
+])
+def test_section_and_card_captions_are_headings(client, path, headings):
+    # подписи разделов без заголовка рядом и подписи карточек стали заголовками, как в макете
+    html = open_page(client, path).text
+    found = [re.sub(r"<[^>]*>", "", text) for text in
+             re.findall(r'<h[23] class="(?:section|card)-title"[^>]*>(.*?)</h[23]>', html)]
+
+    for heading in headings:
+        assert any(text.startswith(heading) for text in found), (heading, found)

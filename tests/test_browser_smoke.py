@@ -775,16 +775,19 @@ def test_seat_limit_has_one_colour_everywhere(full_flight):
 
 
 @pytest.mark.parametrize("width", [375, 1440])
-def test_landing_numbers_line_up_under_their_label_without_a_double_rule(browser, base_url, width):
+def test_landing_numbers_card_lines_up_under_its_heading_without_a_double_rule(browser, base_url, width):
+    # «Ключевые числа» — белая карточка вровень с заголовком; линия над первым кейсом одна и отстоит от карточки
     context = browser.new_context(viewport={"width": width, "height": 900})
     tab = context.new_page()
     tab.goto(base_url + "/")
-    shift, rule = tab.evaluate("""() => [
-        document.querySelector('.lp-num dd').getBoundingClientRect().left - document.querySelector('#numbers .label').getBoundingClientRect().left,
-        getComputedStyle(document.querySelector('#case .case')).borderTopWidth]""")
+    shift, gap = tab.evaluate("""() => {
+        const card = document.querySelector('.lp-numbers').getBoundingClientRect();
+        return [card.left - document.querySelector('#numbers .section-title').getBoundingClientRect().left,
+                document.querySelector('#case .case').getBoundingClientRect().top - card.bottom];
+    }""")
     context.close()
 
-    assert (round(shift), rule) == (0, "0px")
+    assert round(shift) == 0 and gap >= 32, (shift, gap)
 
 
 @pytest.mark.parametrize("width", [360, 375])
@@ -906,3 +909,31 @@ def test_labels_are_plain_text_without_frames_or_arrows(browser, base_url):
     context.close()
 
     assert count > 5 and framed == [] and before == "none"
+
+
+# --- вариант 2 «Привычный сервис»: светло-серый фон, белые карточки, тёмные заголовки ---
+
+SURFACES = """() => {
+    const style = (s) => getComputedStyle(document.querySelector(s));
+    const card = style('.card'), numbers = style('.lp-numbers');
+    return {
+        page: style('body').backgroundColor, topbar: style('.topbar').backgroundColor,
+        card: [card.backgroundColor, card.borderTopLeftRadius, card.boxShadow !== 'none'],
+        numbers: [numbers.backgroundColor, numbers.borderTopLeftRadius],
+        headings: [...document.querySelectorAll('.section-title, .card-title')].map((h) => getComputedStyle(h).color),
+        ink: style('.lp-title').color,
+    };
+}"""
+
+
+def test_landing_has_grey_page_white_cards_and_dark_headings(browser, base_url):
+    context = browser.new_context(viewport={"width": 1440, "height": 900})
+    tab = context.new_page()
+    tab.goto(base_url + "/")
+    found = tab.evaluate(SURFACES)
+    context.close()
+
+    white = "rgb(255, 255, 255)"
+    assert found["page"] == "rgb(245, 246, 248)"  # --bg #F5F6F8
+    assert (found["topbar"], found["card"], found["numbers"]) == (white, [white, "12px", True], [white, "12px"])
+    assert len(found["headings"]) >= 6 and set(found["headings"]) == {found["ink"]}
