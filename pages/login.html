@@ -3,12 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>Вход · Решись Авиа</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700&amp;family=Manrope:wght@700;800&amp;family=Onest:wght@400;500;600&amp;display=swap" rel="stylesheet">
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/style.css">
+<script type="module" src="/static/js/tabs.js"></script>
 <script type="module" src="/static/js/login.js"></script>
 </head>
 <body data-page="auth">
@@ -28,12 +30,12 @@
 
   <main class="auth__main">
     <div class="card auth__card">
-      <div class="tabs" role="tablist">
-        <button class="tabs__btn" type="button" role="tab" aria-selected="true" data-tab="login">Вход</button>
-        <button class="tabs__btn" type="button" role="tab" aria-selected="false" data-tab="register">Регистрация</button>
+      <div class="tabs" role="tablist" aria-label="Вход или регистрация">
+        <button class="tabs__btn" type="button" role="tab" id="tab-login" aria-controls="login-form" aria-selected="true" data-tab="login">Вход</button>
+        <button class="tabs__btn" type="button" role="tab" id="tab-register" aria-controls="register-form" aria-selected="false" data-tab="register">Регистрация</button>
       </div>
 
-      <form class="auth__form" id="login-form" data-form="login" action="/api/login" method="post" novalidate>
+      <form class="auth__form" id="login-form" role="tabpanel" aria-labelledby="tab-login" data-form="login" action="/api/login" method="post" novalidate>
         <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">Ошибка</span><span data-error-text></span></div>
         <div class="field" data-field="login">
           <label class="field__label" for="login-login">Логин или email</label>
@@ -49,12 +51,12 @@
         <p class="auth__switch">Нет аккаунта? <button class="link-btn" type="button" data-tab="register">Зарегистрироваться →</button></p>
       </form>
 
-      <form class="auth__form" id="register-form" data-form="register" action="/api/register" method="post" novalidate hidden>
+      <form class="auth__form" id="register-form" role="tabpanel" aria-labelledby="tab-register" data-form="register" action="/api/register" method="post" novalidate hidden>
         <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">Ошибка</span><span data-error-text></span></div>
         <div class="field" data-field="login">
           <label class="field__label" for="reg-login">Логин или email</label>
           <div class="field__box"><input class="field__control" type="text" id="reg-login" name="login" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
-          <p class="field__hint">3–64 символа: буквы, цифры, . - _ @ +</p>
+          <p class="field__hint">3–64 символа: русские и латинские буквы, цифры, . - _ @ +</p>
           <p class="field__error" data-error-for="login" hidden></p>
         </div>
         <div class="field" data-field="password">

@@ -41,7 +41,7 @@ def page(client, path) -> str:
 
 
 def test_landing_is_public(client):
-    html = page(client, "/")
+    html = plain(page(client, "/"))
 
     assert "Цена из <span class=\"accent\">прогноза</span>, а не из правила" in html
     assert '<p class="label">Турнир «Решись» · Технологии</p>' in html
@@ -100,22 +100,28 @@ def test_landing_spells_the_number_of_tests_in_agreement(client):
     assert "<!-- tests" not in html
 
 
+def plain(html: str) -> str:
+    """Текст без типографских связок: неразрывный пробел — обычный, невидимая связка после тире убрана."""
+    return html.replace("&nbsp;", " ").replace(" ", " ").replace("&#8288;", "").replace("⁠", "")
+
+
 def test_best_price_on_landing_is_the_one_the_service_computes(client):
     html = page(client, "/")
+    text = plain(html)
 
     assert "5&nbsp;605<span class=\"metric__unit\">₽</span>" in html
-    assert "лучшая цена 12 июня по нашей модели" in html
-    assert "По нашей модели лучшая цена 5 605 ₽: +3 217 ₽ ожидаемой прибыли к базовой цене 5 500 ₽." in html
-    assert "5 610" not in html
+    assert "лучшая цена 12 июня по нашей модели" in text
+    assert "По нашей модели лучшая цена 5 605 ₽: +3 217 ₽ ожидаемой прибыли к базовой цене 5 500 ₽." in text
+    assert "5 610" not in text
     # 5 614 ₽ — только с пометкой, что это прогноз организаторов
-    for found in re.finditer("5 614", html):
-        assert "прогнозу организаторов" in html[max(0, found.start() - 60):found.start()]
+    for found in re.finditer("5 614", text):
+        assert "прогнозу организаторов" in text[max(0, found.start() - 60):found.start()]
 
 
 def test_landing_texts_from_the_submission(client):
-    html = page(client, "/")
+    html = plain(page(client, "/"))
 
-    assert "Ансамбль точнее лишь на 1,8&nbsp;%" in html
+    assert "Ансамбль точнее лишь на 1,8 %" in html
     assert "(WQL 0,068 против 0,076), и не требует переобучения." in html
     assert "её не надо переобучать" not in html
     assert "пересчитал 302 числа аналитики" in html
@@ -130,7 +136,7 @@ def test_landing_tells_the_june_12_story(client):
     html = page(client, "/")
 
     assert "Пятница, которая не стала пиком" in html
-    assert "медиана 917 против 1 049" in html
+    assert "медиана 917 против 1 049" in plain(html)
     assert 'id="story-fridays"' in html
 
 
@@ -230,8 +236,9 @@ def test_tool_opens_on_the_story_flight_before_its_script_runs(guest):
     assert "hidden" not in re.search(r'data-panel="loading"[^>]*>', html).group(0)
 
 
-def test_login_page_sends_signed_in_user_to_the_tool(guest):
-    response = guest.get("/login")
+def test_login_page_sends_signed_in_user_to_the_tool(client):
+    assert client.post("/api/register", json={"login": "anna", "password": "password1"}).status_code == 201
+    response = client.get("/login")
 
     assert response.status_code == 303
     assert response.headers["location"] == "/app"
@@ -381,6 +388,53 @@ def test_june_12_is_compared_with_the_other_fridays_of_june(client):
     # 12 июня сравнивается со всеми остальными пятницами июня (5, 19, 26), а не с «соседними».
     html = page(client, "/")
 
-    assert "спрос на 13&nbsp;% ниже других пятниц июня: медиана 917 против 1 049" in html
-    assert "12 июня бледнее других пятниц июня" in html
+    assert "спрос на 13 % ниже других пятниц июня: медиана 917 против 1 049" in plain(html)
+    assert "12 июня бледнее других пятниц июня" in plain(html)
     assert "соседн" not in html
+
+
+# --- правки по проверке вёрстки ---
+
+@pytest.mark.parametrize("path", ["/", "/login", "/app"])
+def test_pages_declare_a_light_colour_scheme(client, path):
+    assert '<meta name="color-scheme" content="light">' in open_page(client, path).text
+
+
+def visible_text(html: str) -> str:
+    body = html.split("<body", 1)[1]
+    return re.sub(r"<[^>]*>", "", body).replace("&nbsp;", " ")
+
+
+# Висячие однобуквенные предлоги и союзы: «попал в / коридор», «кресла в / пиковую».
+HANGING = re.compile(r"(?<![А-Яа-яЁё])[вксуоиаВКСУОИА] ")
+
+
+def test_landing_keeps_numbers_rubles_and_short_words_together(client):
+    html = page(client, "/")
+    # «Файлы решения» собирает сервер из app/solution_files.py — их подписи проверяются не здесь
+    files = html.split('<div class="card files">', 1)[1].split("</section>", 1)[0]
+    text = visible_text(html.replace(files, ""))
+
+    assert re.findall(r"\d \d|.. ₽|\d сценари|День России", text) == []
+    assert HANGING.findall(text) == []
+    assert "10–90" not in text  # после тире строка не рвётся: «10–⁠90»
+
+
+def test_quantiles_on_the_landing_are_written_with_a_comma(client):
+    text = visible_text(page(client, "/"))
+
+    assert "0.1" not in text and "0.9" not in text
+    assert "0,1" in text
+
+
+def test_form_note_names_every_action_that_writes_history(client):
+    note = re.search(r'<p class="form-note">([^<]*)</p>', open_page(client, "/app").text).group(1)
+
+    for action in ("«Рассчитать»", "календар", "«Поставить лучшую цену»", "«Повторить»"):
+        assert action in note, action
+
+
+def test_read_only_origin_is_out_of_the_tab_order(client):
+    origin = re.search(r'<input[^>]*id="origin"[^>]*>', open_page(client, "/app").text).group(0)
+
+    assert 'tabindex="-1"' in origin and "readonly" in origin

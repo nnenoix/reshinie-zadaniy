@@ -5,6 +5,24 @@ import { fmt, whole } from "./format.js";
 import { el, hatchDefs, niceScale } from "./svg.js";
 
 const MEDIAN = 4;
+const GAP = 2; // зазор между подписями соседних столбиков, px
+
+// На узком графике (телефон) «997» и «1 039» над соседними столбиками налезают друг на друга:
+// тогда подписи нечётных столбиков поднимаются над подписями соседей — соседи оказываются на разной высоте.
+function separateValues(root) {
+  const labels = [...root.querySelectorAll(".ch-val")];
+  const boxes = labels.map((label) => label.getBBox());
+  const clash = boxes.slice(1).some((b, i) => boxes[i].x + boxes[i].width + GAP > b.x);
+  if (!clash) return;
+  labels.forEach((label, i) => {
+    if (i % 2 === 0) return;
+    const top = Math.min(...[boxes[i - 1], boxes[i + 1]].filter(Boolean).map((b) => b.y));
+    const lift = Math.max(0, boxes[i].y + boxes[i].height + GAP - top);
+    for (const text of label.parentNode.querySelectorAll(".ch-val, .ch-raw")) {
+      text.setAttribute("y", Number(text.getAttribute("y")) - lift);
+    }
+  });
+}
 
 export function drawQuantiles(box, { seats, quantiles }) {
   const W = box.clientWidth || 800;
@@ -39,12 +57,16 @@ export function drawQuantiles(box, { seats, quantiles }) {
     }
     group.append(el("text", { class: "ch-val", x: cx, y: y(v) - 7 }, whole(v)));
     if (q < 0) group.append(el("text", { class: "ch-raw", x: cx, y: y(v) - 24 }, whole(q)));
-    group.append(el("text", { class: "ch-q", x: cx, y: H - B + 20 }, String((i + 1) / 10)));
+    group.append(el("text", { class: "ch-q", x: cx, y: H - B + 20 }, `0,${i + 1}`)); // квантиль с запятой, как в формуле
     if (i === MEDIAN) group.append(el("text", { class: "ch-median-label", x: cx, y: H - B + 35 }, "медиана"));
     root.append(group);
   });
   const label = el("text", { class: "ch-seats-label ch-seats-label--side", x: W - R + 6, y: y(seats) - 2 });
   label.append(el("tspan", { x: W - R + 6 }, "Мест"), el("tspan", { x: W - R + 6, dy: 13 }, whole(seats)));
   root.append(label);
+  // подписи осей: слева над делениями — единицы, под подписями столбиков слева — что это за ряд
+  root.append(el("text", { class: "ch-axis", x: 0, y: 11 }, "человек"));
+  root.append(el("text", { class: "ch-axis", x: 0, y: H - B + 35 }, "сценарий"));
   box.replaceChildren(root);
+  separateValues(root);
 }

@@ -4,7 +4,9 @@
 import { dateOf, fmt, node, shortDate, withPercent } from "./format.js";
 
 const WEEK = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-const PALEST = 8, DARK_FROM = 78; // доля акцентного цвета, %: у самого слабого дня и с которой текст белый
+// Доля акцентного цвета в клетке, %. До INK_TO читается тёмный текст (контраст не ниже 4,5:1), с DARK_FROM — белый.
+// Между ними ни тот, ни другой не дотягивает до 4,5:1 (на 78 % белый давал 4,18:1), и клетки туда не попадают.
+const PALEST = 8, INK_TO = 75, DARK_FROM = 82;
 
 export function loadRange(days) {
   const loads = days.map((d) => Math.round(d.load * 100));
@@ -13,7 +15,9 @@ export function loadRange(days) {
 
 export function shade(loadPercent, { min, max }) {
   const k = max > min ? (loadPercent - min) / (max - min) : 1;
-  return Math.round(PALEST + Math.max(0, Math.min(1, k)) * (100 - PALEST));
+  const mix = Math.round(PALEST + Math.max(0, Math.min(1, k)) * (100 - PALEST));
+  if (mix <= INK_TO || mix >= DARK_FROM) return mix;
+  return mix - INK_TO < DARK_FROM - mix ? INK_TO : DARK_FROM;
 }
 
 export function drawCalendar(box, days, { selected, onPick }) {

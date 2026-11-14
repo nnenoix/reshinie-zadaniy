@@ -27,7 +27,8 @@ def free_port() -> int:
 def base_url(tmp_path_factory):
     port = free_port()
     # гостей здесь больше 20 за час: лимит регистраций с одного адреса проверяют другие тесты
-    app = create_app(Settings(db_path=tmp_path_factory.mktemp("smoke") / "app.db", signup_limit=1000))
+    app = create_app(Settings(db_path=tmp_path_factory.mktemp("smoke") / "app.db", signup_limit=1000,
+                              guest_limit=1000, guest_minute_limit=1000))
     server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning"))
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
@@ -431,3 +432,444 @@ def test_empty_history_on_a_phone_is_seen_whole(browser, base_url):
     context.close()
 
     assert cut[0] <= 0 and cut[1] == 0  # текст не уходит за правый край и прокручивать нечего
+
+
+# --- правки по проверке вёрстки и доступности ---
+
+COLORS = r"""
+    const canvas = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+    const rgb = (css) => {
+        canvas.clearRect(0, 0, 1, 1);
+        canvas.fillStyle = '#000';
+        canvas.fillStyle = css;
+        canvas.fillRect(0, 0, 1, 1);
+        return [...canvas.getImageData(0, 0, 1, 1).data].slice(0, 3);
+    };
+    const lum = (c) => {
+        const [r, g, b] = c.map((v) => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
+        return .2126 * r + .7152 * g + .0722 * b;
+    };
+    const ratio = (a, b) => { const [x, y] = [lum(rgb(a)), lum(rgb(b))].sort((p, q) => q - p); return (x + .05) / (y + .05); };
+"""
+
+
+def guest_tab(browser, base_url, width, height=900):
+    """Гость на /app без ожидания расчёта: для страниц, где нужно поймать момент загрузки."""
+    context = browser.new_context(viewport={"width": width, "height": height})
+    tab = context.new_page()
+    tab.goto(base_url + "/login")
+    tab.click("[data-guest]")
+    tab.wait_for_url("**/app")
+    return context, tab
+
+
+PLANE_IN_VIEW = """async () => {
+    await document.fonts.ready;
+    const box = document.querySelector('.plane-box'), b = box.getBoundingClientRect();
+    const inner = b.left + box.clientLeft;
+    const parts = ['.plane', '.plane__craft', '.plane__fin--a', '.plane__fin--b', '.plane__wing--a', '.plane__wing--b']
+        .map((s) => [s, Math.round(document.querySelector(s).getBoundingClientRect().left - inner)]);
+    return { cut: parts.filter(([, left]) => left < 0), scroll: box.scrollWidth - box.clientWidth };
+}"""
+
+
+@pytest.mark.parametrize("width", [360, 375, 768, 1024, 1100, 1280, 1440, 1920])
+def test_whole_plane_is_seen_in_the_salon(full_flight, width):
+    # На 1024–1440 самолёт обрезало слева (justify-content: center при overflow-x: auto): нос и кили не прокрутить.
+    full_flight.set_viewport_size({"width": width, "height": 900})
+    full_flight.click('.tabs--main [data-tab="salon"]')
+
+    assert full_flight.evaluate(PLANE_IN_VIEW) == {"cut": [], "scroll": 0}
+
+
+def test_read_only_origin_is_skipped_by_tab_and_fields_show_focus(page):
+    page.focus("#source")
+    page.keyboard.press("Tab")
+    focused = page.evaluate("""() => {
+        const style = getComputedStyle(document.activeElement);
+        return [document.activeElement.id, style.outlineStyle, style.outlineWidth];
+    }""")
+    origin = page.evaluate("() => getComputedStyle(document.querySelector('#origin')).backgroundColor")
+
+    assert focused == ["destination", "solid", "2px"]
+    assert origin == "rgba(0, 0, 0, 0)"  # поле только для чтения без белой подложки, не как обычное
+
+
+def test_borders_of_fields_and_outline_buttons_stand_out(page):
+    ratios = page.evaluate("() => {" + COLORS + """
+        const card = getComputedStyle(document.querySelector('.card')).backgroundColor;
+        const edge = (s) => getComputedStyle(document.querySelector(s)).borderTopColor;
+        return {
+            field: ratio(edge('#price'), getComputedStyle(document.querySelector('#price')).backgroundColor),
+            fieldOnCard: ratio(edge('#price'), card),
+            ghost: ratio(edge('#logout'), getComputedStyle(document.body).backgroundColor),
+            tabs: ratio(edge('.tabs--main'), getComputedStyle(document.body).backgroundColor),
+            scenario: ratio(edge('.scen__btn:not(.is-median)'), card),
+        };
+    }""")
+
+    assert {name: value >= 3 for name, value in ratios.items()} == dict.fromkeys(ratios, True), ratios
+
+
+DELAY_SAVES = """(ms) => {
+    const send = window.fetch;
+    window.fetch = async (url, options = {}) => {
+        if (String(url).includes('/api/forecast') && String(options.body || '').includes('"save":true')) {
+            await new Promise((done) => setTimeout(done, ms));
+        }
+        return send(url, options);
+    };
+}"""
+
+
+def test_calculate_dims_the_old_result_instead_of_collapsing_it(page):
+    before = page.evaluate("() => document.querySelector('#result').getBoundingClientRect().height")
+    page.evaluate(DELAY_SAVES, 1500)
+    page.click("#submit")
+    page.wait_for_timeout(300)
+    during = page.evaluate("() => document.querySelector('#result').getBoundingClientRect().height")
+    wait_for_result(page)
+
+    assert during >= before * 0.9, (before, during)
+
+
+def test_saved_calculation_reaches_history_when_the_slider_moves_right_after(page):
+    # «Рассчитать» и сразу ползунок: запрос с записью отменялся, запись в базе была, а в таблице — нет.
+    page.evaluate(DELAY_SAVES, 800)
+    page.click("#submit")
+    page.wait_for_timeout(100)
+    page.evaluate("""() => {
+        const range = document.querySelector('#price-range');
+        range.value = 6000;
+        range.dispatchEvent(new Event('input', { bubbles: true }));
+    }""")
+
+    page.wait_for_function("() => !document.querySelector('#history-body .history__empty')", timeout=6000)
+
+
+@pytest.mark.parametrize("width", [1024, 1100])
+def test_landing_hero_fits_between_tablet_and_desktop(browser, base_url, width):
+    context = browser.new_context(viewport={"width": width, "height": 900})
+    tab = context.new_page()
+    tab.goto(base_url + "/")
+    lines, tops = tab.evaluate("""async () => {
+        await document.fonts.ready;
+        const title = document.createRange();
+        title.selectNodeContents(document.querySelector('.lp-title'));
+        const rows = new Set([...title.getClientRects()].map((r) => Math.round(r.top)));
+        const tops = [...document.querySelectorAll('.lp-hero .lp-cta__item')].map((i) => Math.round(i.getBoundingClientRect().top));
+        return [rows.size, tops];
+    }""")
+    context.close()
+
+    assert lines <= 3 and len(set(tops)) == 1, (lines, tops)  # кнопки в ряд, а не столбиком
+
+
+def test_story_chart_card_is_as_tall_as_its_content(browser, base_url):
+    context = browser.new_context(viewport={"width": 1440, "height": 900})
+    tab = context.new_page()
+    tab.goto(base_url + "/")
+    tab.wait_for_function("() => document.querySelector('#story-chart svg')")
+    empty = tab.evaluate("""() => {
+        const card = document.querySelector('.story .case__card');
+        return card.getBoundingClientRect().bottom - card.lastElementChild.getBoundingClientRect().bottom;
+    }""")
+    context.close()
+
+    assert empty <= 40  # только отступ карточки, без 270 px пустоты под графиком
+
+
+@pytest.mark.parametrize("width", [360, 375])
+def test_login_form_and_guest_button_are_on_the_first_phone_screen(browser, base_url, width):
+    context = browser.new_context(viewport={"width": width, "height": 800})
+    tab = context.new_page()
+    tab.goto(base_url + "/login")
+    form, guest = tab.evaluate("""() => [document.querySelector('#login-form').getBoundingClientRect().top,
+        document.querySelector('[data-guest]').getBoundingClientRect().bottom]""")
+    context.close()
+
+    assert form < 250 and guest <= 800, (form, guest)
+
+
+NUMBER_SPACES = r"""() => {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const bad = [];
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.parentElement.closest('[hidden]') && /\d \d| ₽/.test(node.textContent)) bad.push(node.textContent.trim());
+    }
+    return bad;
+}"""
+
+
+def test_numbers_and_rubles_on_the_landing_do_not_break(browser, base_url):
+    context = browser.new_context(viewport={"width": 1440, "height": 900})
+    tab = context.new_page()
+    tab.goto(base_url + "/")
+    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
+    bad = tab.evaluate(NUMBER_SPACES)
+    context.close()
+
+    assert bad == []
+
+
+CALENDAR_CONTRAST = "() => {" + COLORS + """
+    return [...document.querySelectorAll('.cal__day[data-date]')].flatMap((day) => {
+        const bg = getComputedStyle(day).backgroundColor;
+        return [...day.querySelectorAll('.cal__date, .cal__load')]
+            .map((text) => [day.dataset.date, Math.round(ratio(getComputedStyle(text).color, bg) * 100) / 100])
+            .filter(([, value]) => value < 4.5);
+    });
+}"""
+
+
+@pytest.mark.parametrize("price", ["3300", "5500", "8000"])
+def test_calendar_day_numbers_are_readable_on_their_colour(browser, base_url, price):
+    context, tab = guest_tab(browser, base_url, 1440)
+    tab.goto(base_url + f"/app?destination=Санкт-Петербург&date=2026-06-12&price={price}&tab=calendar")
+    tab.wait_for_function("() => document.querySelectorAll('.cal__day[data-date]').length > 20")
+    low = tab.evaluate(CALENDAR_CONTRAST)
+    context.close()
+
+    assert low == []
+
+
+def test_calendar_never_shades_a_day_where_neither_text_colour_reads(page):
+    shades = page.evaluate("""async () => {
+        const { shade } = await import('/static/js/calendar.js');
+        return [...Array(101).keys()].map((load) => shade(load, { min: 0, max: 100 }));
+    }""")
+
+    assert [s for s in shades if 75 < s < 82] == []
+
+
+def test_calendar_dates_on_a_phone_are_at_least_12px(browser, base_url):
+    context, tab = open_tool(browser, base_url, 375)
+    tab.click('.tabs--main [data-tab="calendar"]')
+    tab.wait_for_selector(".cal__day[data-date]")
+    size = tab.evaluate("() => parseFloat(getComputedStyle(document.querySelector('.cal__day[data-date] .cal__date')).fontSize)")
+    context.close()
+
+    assert size >= 12
+
+
+TABS_WIRED = """(list) => {
+    const tabs = [...document.querySelectorAll(list + ' [role="tab"]')];
+    return tabs.map((tab) => {
+        const panel = document.getElementById(tab.getAttribute('aria-controls'));
+        return [tab.id !== '', panel && panel.getAttribute('role'), panel && panel.getAttribute('aria-labelledby') === tab.id,
+                tab.tabIndex === (tab.getAttribute('aria-selected') === 'true' ? 0 : -1)];
+    });
+}"""
+
+FOCUSED_TAB = """() => [document.activeElement.getAttribute('role'), document.activeElement.textContent.trim(),
+    document.activeElement.getAttribute('aria-selected')]"""
+
+
+def test_tool_tabs_follow_the_tabs_pattern(page):
+    assert page.evaluate(TABS_WIRED, ".tabs--main") == [[True, "tabpanel", True, True]] * 4
+    page.focus('.tabs--main [aria-selected="true"]')
+    seen = []
+    for key in ("ArrowRight", "End", "ArrowRight", "ArrowLeft", "Home"):
+        page.keyboard.press(key)
+        seen.append(page.evaluate(FOCUSED_TAB)[1])
+
+    assert seen == ["Салон", "Талон", "Расчёт", "Талон", "Расчёт"]
+    assert page.evaluate("() => document.querySelector('[data-tabpanel=\"salon\"]').hidden") is True
+    assert page.evaluate("""() => [...document.querySelectorAll('[aria-live]')].map((e) => e.id)""") == ["note"]
+
+
+def test_login_tabs_follow_the_tabs_pattern(browser, base_url):
+    context = browser.new_context(viewport={"width": 1440, "height": 900})
+    tab = context.new_page()
+    tab.goto(base_url + "/login")
+    wired = tab.evaluate(TABS_WIRED, ".auth__card")
+    tab.focus('.tabs [aria-selected="true"]')
+    tab.keyboard.press("ArrowRight")
+    after = [tab.evaluate(FOCUSED_TAB), tab.is_visible("#register-form")]
+    context.close()
+
+    assert wired == [[True, "tabpanel", True, True]] * 2
+    assert after == [["tab", "Регистрация", "true"], True]
+
+
+def test_phone_focus_order_matches_the_screen(browser, base_url):
+    context, tab = open_tool(browser, base_url, 375)
+    order = tab.evaluate("""() => {
+        const result = document.querySelector('.main-col'), best = document.querySelector('#apply-best');
+        return [Boolean(result.compareDocumentPosition(best) & Node.DOCUMENT_POSITION_FOLLOWING),
+                best.getBoundingClientRect().top > result.getBoundingClientRect().bottom];
+    }""")
+    context.close()
+
+    assert order == [True, True]  # «Поставить лучшую цену» и в порядке Tab, и на экране — после результата
+
+
+def test_best_price_stays_under_the_form_on_a_desktop(page):
+    form, best = page.evaluate("""() => [document.querySelector('#forecast-form').getBoundingClientRect().toJSON(),
+        document.querySelector('#best').getBoundingClientRect().toJSON()]""")
+
+    assert (best["left"], best["width"]) == (form["left"], form["width"])
+    assert 0 < best["top"] - form["bottom"] <= 32
+
+
+SMALL_TARGETS = """(selectors) => selectors.flatMap((s) => [...document.querySelectorAll(s)]
+    .filter((e) => e.getClientRects().length)
+    .map((e) => [s, Math.round(e.getBoundingClientRect().width), Math.round(e.getBoundingClientRect().height)])
+    .filter(([, w, h]) => w < 44 || h < 44))"""
+
+
+def test_touch_targets_on_a_phone_are_at_least_44px(browser, base_url):
+    context, tab = open_tool(browser, base_url, 375)
+    tab.click("#submit")
+    tab.wait_for_selector("#history-body .link-btn")
+    tab.click('.tabs--main [data-tab="salon"]')
+    in_tool = tab.evaluate(SMALL_TARGETS, [".scen__btn", ".tabs--main .tabs__btn", ".topbar .btn", ".history .link-btn"])
+    tab.goto(base_url + "/")
+    on_landing = tab.evaluate(SMALL_TARGETS, [".topbar .btn"])
+    context.close()
+    context = browser.new_context(viewport={"width": 375, "height": 812})
+    tab = context.new_page()
+    tab.goto(base_url + "/login")
+    on_login = tab.evaluate(SMALL_TARGETS, [".tabs__btn", ".field__toggle", ".link-btn"])
+    context.close()
+
+    assert (in_tool, on_landing, on_login) == ([], [], [])
+
+
+CHART_LABELS = """() => {
+    const svg = document.querySelector('#chart svg');
+    const sizes = [...svg.querySelectorAll('.ch-tick, .ch-val, .ch-q, .ch-median-label')].map((t) => parseFloat(getComputedStyle(t).fontSize));
+    const values = [...svg.querySelectorAll('.ch-val')].map((t) => t.getBBox());
+    const touching = values.slice(1).filter((b, i) => {
+        const a = values[i];
+        return a.x + a.width + 2 > b.x && a.y < b.y + b.height && b.y < a.y + a.height;
+    }).length;
+    return { smallest: Math.min(...sizes), touching, quantiles: [...svg.querySelectorAll('.ch-q')].map((t) => t.textContent),
+             axes: [...svg.querySelectorAll('.ch-axis')].map((t) => t.textContent) };
+}"""
+
+
+@pytest.mark.parametrize("width", [360, 375, 1440])
+def test_demand_chart_labels_are_readable_and_named(browser, base_url, width):
+    context, tab = open_tool(browser, base_url, width)
+    labels = tab.evaluate(CHART_LABELS)
+    legend = tab.inner_text("#best .legend")
+    context.close()
+
+    assert labels == {"smallest": 11, "touching": 0, "quantiles": [f"0,{i}" for i in range(1, 10)],
+                      "axes": ["человек", "сценарий"]}
+    assert "Лучшая цена" in legend  # пункт легенды у точки «Макс» на кривой прибыли
+
+
+def test_seat_limit_has_one_colour_everywhere(full_flight):
+    full_flight.set_viewport_size({"width": 1440, "height": 900})
+    full_flight.click('.tabs--main [data-tab="salon"]')
+    colours = full_flight.evaluate("""() => {
+        const colour = (e, pseudo) => getComputedStyle(e, pseudo).color;
+        const accent = getComputedStyle(document.querySelector('.accent')).color;
+        return [accent, colour(document.querySelector('#note-tag')), colour(document.querySelector('#queue-title')),
+                getComputedStyle(document.querySelector('.person'), '::before').backgroundColor];
+    }""")
+
+    assert len(set(colours)) == 1, colours
+
+
+@pytest.mark.parametrize("width", [375, 1440])
+def test_landing_numbers_line_up_under_their_label_without_a_double_rule(browser, base_url, width):
+    context = browser.new_context(viewport={"width": width, "height": 900})
+    tab = context.new_page()
+    tab.goto(base_url + "/")
+    shift, rule = tab.evaluate("""() => [
+        document.querySelector('.lp-num dd').getBoundingClientRect().left - document.querySelector('#numbers .label').getBoundingClientRect().left,
+        getComputedStyle(document.querySelector('#case .case')).borderTopWidth]""")
+    context.close()
+
+    assert (round(shift), rule) == (0, "0px")
+
+
+@pytest.mark.parametrize("width", [360, 375])
+def test_phone_header_of_a_guest_fits_at_narrow_widths(browser, base_url, width):
+    context, tab = guest_tab(browser, base_url, width, 800)
+    lines, overflow = tab.evaluate("""async () => {
+        await document.fonts.ready;
+        const text = document.createRange();
+        text.selectNodeContents(document.querySelector('.brand'));
+        const rows = new Set([...text.getClientRects()].map((r) => Math.round(r.top)));
+        return [rows.size, document.documentElement.scrollWidth - innerWidth];
+    }""")
+    context.close()
+
+    assert (lines, overflow) == (1, 0)
+
+
+def test_date_hint_names_the_available_range_with_a_dash(page):
+    assert page.inner_text("#date-hint") == "Пт · День России · доступно 01.06–01.07.2026"
+
+
+def test_missing_flight_moves_focus_to_the_date_without_a_useless_retry(page):
+    page.fill("#date", "2026-07-15")
+    page.dispatch_event("#date", "change")
+    page.wait_for_selector('[data-panel="error"]:not([hidden])')
+    state = page.evaluate("""() => [document.activeElement.id, document.querySelector('#retry').offsetParent === null,
+        document.querySelector('#error-code').textContent]""")
+
+    assert state == ["date", True, ""]
+
+
+def test_price_out_of_the_new_route_range_is_kept_and_explained(page):
+    page.fill("#price", "4000")
+    page.locator("#price").blur()
+    page.select_option("#destination", "Новосибирск")
+    wait_for_result(page)
+
+    assert page.input_value("#price") == "4 000"
+    assert page.inner_text("#price-hint") == "Цена вне диапазона маршрута: 7 200–24 000 ₽"
+
+
+@pytest.mark.parametrize("date", ["2026-08-15", "2026-02-30"])
+def test_date_from_the_address_that_is_not_in_the_forecast_is_reported(browser, base_url, date):
+    context, tab = guest_tab(browser, base_url, 1440)
+    tab.goto(base_url + f"/app?date={date}")
+    wait_for_result(tab)
+    shown = [tab.input_value("#date"), tab.is_visible("#date-note"), tab.inner_text("#date-note")]
+    context.close()
+
+    assert shown[:2] == ["2026-06-01", True]
+    assert date in shown[2] and "01.06.2026" in shown[2]
+
+
+def test_unknown_source_in_the_address_falls_back_to_the_default(browser, base_url):
+    context, tab = guest_tab(browser, base_url, 1440)
+    tab.goto(base_url + "/app?source=xyz")
+    wait_for_result(tab)
+    form = tab.evaluate("""() => [document.querySelector('#destination').options.length > 1,
+        document.querySelector('#price').value !== '', Number(document.querySelector('#price-range').max) > 1]""")
+    context.close()
+
+    assert form == [True, True, True]
+
+
+def test_back_to_a_cached_tool_after_logout_leaves_no_errors(browser, base_url):
+    context, tab = open_tool(browser, base_url)
+    cached = tab.request.get(base_url + "/app").text()
+    errors = []
+    tab.on("console", lambda message: errors.append(message.text) if message.type == "error" else None)
+    tab.click("#logout")
+    tab.wait_for_url("**/login**")
+    tab.route("**/app", lambda route: route.fulfill(status=200, content_type="text/html", body=cached))
+    tab.goto(base_url + "/app")
+    tab.wait_for_url("**/login**")
+    context.close()
+
+    assert errors == []
+
+
+def test_register_link_keeps_the_guest_signed_in(browser, base_url):
+    # История гостя переносится при регистрации на сервере, поэтому ссылка не выходит из гостя.
+    context, tab = open_tool(browser, base_url)
+    tab.click("#register-link")
+    tab.wait_for_load_state()
+    session = tab.request.get(base_url + "/api/session").json()
+    context.close()
+
+    assert session["user"] is not None and session["user"]["guest"] is True

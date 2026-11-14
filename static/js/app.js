@@ -52,26 +52,34 @@ function showFieldError(data) {
 
 // --- состояния результата и вкладки ---
 
+function setBusy(on) {
+  $("#submit").disabled = on;
+  $("[data-btn-text]", $("#submit")).textContent = on ? "Считаем…" : "Рассчитать";
+}
+
 function setPanel(name) {
   $$("[data-panel]", result).forEach((panel) => { panel.hidden = panel.dataset.panel !== name; });
-  $("#submit").disabled = name === "loading";
-  $("[data-btn-text]", $("#submit")).textContent = name === "loading" ? "Считаем…" : "Рассчитать";
+  setBusy(name === "loading");
   const ready = name === "ready";
   $$("[data-needs-result]").forEach((part) => { part.hidden = !ready; });
   $$("[data-needs-empty]").forEach((part) => { part.hidden = ready; });
   $("#best").hidden = !ready;
 }
 
-function showError(code, title, text) {
-  $("#error-code").textContent = `Ошибка ${code}`;
+// code — номер ошибки сервера, мелко, для поддержки; у ошибки в параметрах рейса его нет: менеджеру он ничего не скажет.
+// retry — кнопка «Повторить расчёт»; её нет, когда повтор даст тот же ответ.
+function showError({ code = null, title, text, retry = true }) {
+  $("#error-code").textContent = code ? `Ошибка ${code}` : "";
   $("#error-title").textContent = title;
   $("#error-text").textContent = text;
+  $("#retry").hidden = !retry;
   setPanel("error");
 }
 
+// Старый результат приглушён, пока считается новый: колонка не схлопывается в заготовку и не прыгает.
 function setUpdating(on) {
   result.classList.toggle("is-updating", on);
-  $(".side").classList.toggle("is-updating", on);
+  $("#best").classList.toggle("is-updating", on);
 }
 
 function setTab(name) {
@@ -109,11 +117,15 @@ function setRange(min, max, value, best) {
 
 // Положительная цена приводится к виду «5 500», ползунок встаёт на неё. Ноль, минус и не-число
 // остаются как введены: сервер ответит, что не так, и человек увидит свой ввод.
+// Цена вне диапазона маршрута тоже не меняется молча: под полем сказано, каков диапазон.
 function setPrice(value) {
   const number = Number(parsePrice(value));
   const valid = Number.isFinite(number) && number > 0 && String(value).trim() !== "";
   priceInput.value = valid ? fmt(number, 2) : String(value);
   const destination = currentDestination();
+  const outside = Boolean(destination && valid && (number < destination.price_min || number > destination.price_max));
+  $("#price-hint").hidden = !outside;
+  if (outside) $("#price-hint").textContent = `Цена вне диапазона маршрута: ${fmt(destination.price_min)}–${rub(destination.price_max)}`;
   if (destination && valid) {
     setRange(destination.price_min, destination.price_max, number, bestFor(destination));
   }
@@ -130,7 +142,7 @@ function updateDateHint() {
   if (!destination || !day) return;
   const holiday = S.holidays[day];
   $("#date-hint").textContent = `${dow(day)}${holiday ? ` · ${holiday}` : ""} · доступно ` +
-    `${dayMonth(destination.first_date)} — ${shortDate(destination.last_date)}`;
+    `${dayMonth(destination.first_date)}–${shortDate(destination.last_date)}`;
 }
 
 function onDestinationChange() {
@@ -208,6 +220,7 @@ form.elements.destination.addEventListener("change", () => {
   calculate({ live: true });
 });
 form.elements.date.addEventListener("change", () => {
+  $("#date-note").hidden = true;
   updateDateHint();
   calculate({ live: true });
 });
@@ -231,15 +244,29 @@ $("#apply-best").addEventListener("click", () => {
 
 // --- расчёт ---
 
+// Номер последнего запроса расчёта: на экран попадает только его ответ.
+let lastRequest = 0;
+
+// Расчёт уже на экране — он приглушается до ответа; заготовка со скелетоном только при первой загрузке.
+// Запрос с записью в историю не отменяется следующим (ползунком): запись всё равно будет в базе,
+// поэтому таблица истории обновляется по его ответу, даже если на экран попадёт более новый расчёт.
 async function calculate({ save = false, live = false }) {
   clearErrors();
-  if (live && S.forecast) setUpdating(true);
+  const shown = !$('[data-panel="ready"]', result).hidden;
+  if (shown) setUpdating(true);
   else setPanel("loading");
-  const response = await post("/api/forecast", { ...readQuery(), save }, signals.forecast());
-  if (response.aborted) return;
+  if (shown && !live) setBusy(true);
+  const request = ++lastRequest;
+  const cancel = signals.forecast(); // отменяет предыдущий запрос без записи
+  const response = await post("/api/forecast", { ...readQuery(), save }, save ? undefined : cancel);
+  if (save && response.ok) refreshHistory();
+  if (response.aborted || request !== lastRequest) return;
   setUpdating(false);
+  setBusy(false);
   if (response.status === 401) return location.assign("/login");
-  if (response.status === 0 || response.status >= 500) return showError(response.status || 503, ...DOWN);
+  if (response.status === 0 || response.status >= 500) {
+    return showError({ code: response.status || 503, title: DOWN[0], text: DOWN[1] });
+  }
   if (!response.ok) {
     showFieldError(response.data);
     if (response.data && response.data.field === "date") return showMissingFlight(response.data.detail);
@@ -247,14 +274,15 @@ async function calculate({ save = false, live = false }) {
     return;
   }
   render(response.data);
-  if (save) refreshHistory();
 }
 
 // Рейса на эту дату нет: старый результат прячем, чтобы его не приняли за ответ на новый запрос.
+// Повтор дал бы тот же ответ — вместо кнопки «Повторить расчёт» фокус в поле даты.
 function showMissingFlight(detail) {
   const { origin, destination, date } = readQuery();
   const day = /^\d{4}-\d{2}-\d{2}$/.test(date) ? ` на ${shortDate(date)}` : "";
-  showError(422, `Рейса ${origin} → ${destination}${day} нет`, detail);
+  showError({ title: `Рейса ${origin} → ${destination}${day} нет`, text: detail, retry: false });
+  form.elements.date.focus();
 }
 
 function render(d) {
@@ -274,16 +302,16 @@ function render(d) {
 
   const quantiles = d.scenarios.map((s) => s.wanted);
   const over = quantiles.filter((q) => q > d.seats).length;
-  $("#chart-title").textContent = `Спрос при цене ${rub(d.price)} по 9 сценариям`;
+  $("#chart-title").textContent = `Спрос при цене ${rub(d.price)} по 9\u00A0сценариям`;
   $("#legend-hatch").hidden = !over;
   $("#chart-how").textContent = d.sold <= 0
     ? "При такой цене формула даёт отрицательный спрос. Отрицательных покупателей не бывает, поэтому столбики " +
       "равны 0; над ними мелко — значение по формуле."
     : over
       ? `Заштрихованная часть — желающие, которым не хватит кресел: так выходит в ${over} ` +
-        `${plural(over, ["сценарии", "сценариях", "сценариях"])} из 9. Слева пессимистичный сценарий 0.1, справа оптимистичный 0.9.`
-      : "Каждый столбик — сколько человек захотят купить билет в одном из 9 сценариев: слева пессимистичный (0.1), " +
-        "справа оптимистичный (0.9). Выделенный столбик — медиана, её мы показываем как «желают».";
+        `${plural(over, ["сценарии", "сценариях", "сценариях"])} из\u00A09. Слева пессимистичный сценарий 0,1, справа оптимистичный 0,9.`
+      : "Каждый столбик — сколько человек захотят купить билет в одном из 9\u00A0сценариев: слева пессимистичный (0,1), " +
+        "справа оптимистичный (0,9). Выделенный столбик — медиана, её мы показываем как «желают».";
   $("#chart-odds").textContent = oddsText(d.odds);
 
   setPanel("ready");
@@ -348,7 +376,7 @@ function renderBest(d) {
     text.replaceChildren(`Лучшая цена ${rub(best.price)} — это `, node("b", "", `+${rub(gain)}`),
       " ожидаемой прибыли к вашей цене.");
   }
-  let note = "Ожидаемая прибыль — среднее по 9 сценариям от (цена − расходы на пассажира) × купят. " +
+  let note = "Ожидаемая прибыль — среднее по 9\u00A0сценариям от (цена − расходы на пассажира) × купят. " +
     "Кривую и максимум считает сервер.";
   if (best.file_price !== null) {
     note += ` Цена медианного сценария из файла (0.5_price) — ${rub(best.file_price)}; ` +
@@ -412,7 +440,7 @@ async function refreshCompare(d) {
 function buildScenarioButtons() {
   const group = $("#scen");
   for (let i = 0; i < 9; i++) {
-    const button = node("button", `scen__btn${i === 4 ? " is-median" : ""}`, `0.${i + 1}`);
+    const button = node("button", `scen__btn${i === 4 ? " is-median" : ""}`, `0,${i + 1}`);
     button.type = "button";
     button.dataset.q = i;
     button.setAttribute("aria-pressed", String(i === S.scenario));
@@ -439,7 +467,7 @@ function renderSalon(d) {
   $('[data-salon="seats"]').textContent = whole(d.seats);
   $('[data-salon="sold"]').textContent = whole(sold);
   $('[data-salon="over"]').textContent = whole(over);
-  const { scale, text } = salonText(cabin, `0.${S.scenario + 1}`, scenario.wanted, sold, over, queue);
+  const { scale, text } = salonText(cabin, `0,${S.scenario + 1}`, scenario.wanted, sold, over, queue);
   const note = node("span"); // одним блоком: у .how display: flex, и <strong> иначе становился узкой колонкой
   note.append(node("strong", "", scale), text);
   $("#salon-how").replaceChildren(note);
@@ -556,12 +584,8 @@ $("#logout").addEventListener("click", async (event) => {
   location.assign("/login");
 });
 
-// Гость может завести свой аккаунт: выходим из гостя и открываем регистрацию.
-$("#register-link").addEventListener("click", async (event) => {
-  event.preventDefault();
-  await post("/api/logout");
-  location.assign("/login#register");
-});
+// «Зарегистрироваться» гостя — обычная ссылка на /login#register: из гостя не выходим,
+// его история переходит в новый аккаунт на сервере.
 
 window.addEventListener("resize", () => {
   if (!S.forecast) return;
@@ -569,23 +593,36 @@ window.addEventListener("resize", () => {
   drawCurve();
 });
 
+// Дата из адреса, которой нет в прогнозе маршрута (или в календаре вовсе): поле встаёт на первый день,
+// и под полем сказано почему, а не молча.
+function useDateFromAddress(wanted) {
+  form.elements.date.value = wanted || STORY.date;
+  onDestinationChange();
+  const shown = form.elements.date.value;
+  const note = $("#date-note");
+  note.hidden = !wanted || shown === wanted;
+  if (!note.hidden) note.textContent = `Даты ${wanted} из адреса страницы нет в прогнозе. Показано ${shortDate(shown)}.`;
+}
+
+// /api/session без входа отвечает 200 и user: null, а не 401: после «Выйти» и «Назад» страница
+// из кэша уходит на /login без ошибки в консоли.
 async function start() {
-  const me = await get("/api/me");
-  if (me.status === 401) return location.assign("/login");
-  if (me.ok) {
-    $("#user-login").textContent = me.data.login;
-    $("#register-link").hidden = !me.data.guest;
-  }
+  const session = await get("/api/session");
+  const user = session.ok ? session.data.user : null;
+  if (!user) return location.assign("/login");
+  $("#user-login").textContent = user.login;
+  $("#register-link").hidden = !user.guest;
   buildScenarioButtons();
   await loadSources();
   const params = new URLSearchParams(location.search);
-  if (!(await loadRoutes(params.get("source"), params.get("destination")))) return setPanel("empty");
-  form.elements.date.value = params.get("date") || STORY.date;
+  const routed = await loadRoutes(params.get("source"), params.get("destination")) ||
+    (params.get("source") !== null && await loadRoutes(null, params.get("destination"))); // неизвестный источник — по умолчанию
+  if (!routed) return setPanel("empty");
   if (params.get("price")) {
     S.autoPrice = false;
     setPrice(params.get("price"));
   }
-  onDestinationChange();
+  useDateFromAddress(params.get("date"));
   const tab = params.get("tab");
   setTab(TABS.includes(tab) ? tab : "calc");
   refreshHistory();

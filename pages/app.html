@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>Прогноз продаж · Решись Авиа</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,6 +11,7 @@
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+<script type="module" src="/static/js/tabs.js"></script>
 <script type="module" src="/static/js/app.js"></script>
 </head>
 <body data-page="forecast">
@@ -17,7 +19,7 @@
   <a class="brand" href="/">Решись Авиа</a>
   <div class="topbar__right">
     <span class="topbar__user" id="user-login"></span>
-    <a class="btn btn--ghost" href="/login#register" id="register-link" hidden>Зарегистрироваться</a>
+    <a class="btn btn--ghost" href="/login#register" id="register-link" hidden><span class="topbar__long">Зарегистрироваться</span><span class="topbar__short">Регистрация</span></a>
     <a class="btn btn--ghost" href="/login" id="logout">Выйти</a>
   </div>
 </header>
@@ -35,87 +37,72 @@
 </section>
 
 <main class="layout">
-  <div class="side">
-    <form class="card" id="forecast-form" novalidate>
-      <p class="label">Параметры рейса</p>
-      <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">Ошибка</span><span data-error-text></span></div>
+  <form class="card" id="forecast-form" novalidate>
+    <p class="label">Параметры рейса</p>
+    <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">Ошибка</span><span data-error-text></span></div>
 
-      <div class="field" data-field="source">
-        <label class="field__label" for="source">Прогноз спроса</label>
-        <div class="field__box">
-          <select class="field__control" id="source" name="source">
-            <option value="ml">Наша ML-модель</option>
-            <option value="organizers">Прогноз организаторов</option>
-          </select>
-          <span class="field__suffix">▾</span>
-        </div>
-        <p class="field__hint" id="source-hint"></p>
-        <p class="field__error" data-error-for="source" hidden></p>
+    <div class="field" data-field="source">
+      <label class="field__label" for="source">Прогноз спроса</label>
+      <div class="field__box">
+        <select class="field__control" id="source" name="source">
+          <option value="ml">Наша ML-модель</option>
+          <option value="organizers">Прогноз организаторов</option>
+        </select>
+        <span class="field__suffix">▾</span>
       </div>
-      <div class="field" data-field="origin">
-        <label class="field__label" for="origin">Откуда</label>
-        <div class="field__box"><input class="field__control" id="origin" name="origin" value="Москва" readonly><span class="field__suffix">MOW</span></div>
-        <p class="field__error" data-error-for="origin" hidden></p>
+      <p class="field__hint" id="source-hint"></p>
+      <p class="field__error" data-error-for="source" hidden></p>
+    </div>
+    <div class="field" data-field="origin">
+      <label class="field__label" for="origin">Откуда</label>
+      <div class="field__box"><input class="field__control" id="origin" name="origin" value="Москва" readonly tabindex="-1"><span class="field__suffix">MOW</span></div>
+      <p class="field__error" data-error-for="origin" hidden></p>
+    </div>
+    <div class="field" data-field="destination">
+      <label class="field__label" for="destination">Куда</label>
+      <div class="field__box">
+        <select class="field__control" id="destination" name="destination"><option selected>Санкт-Петербург</option></select>
+        <span class="field__suffix">▾</span>
       </div>
-      <div class="field" data-field="destination">
-        <label class="field__label" for="destination">Куда</label>
-        <div class="field__box">
-          <select class="field__control" id="destination" name="destination"><option selected>Санкт-Петербург</option></select>
-          <span class="field__suffix">▾</span>
-        </div>
-        <p class="field__error" data-error-for="destination" hidden></p>
+      <p class="field__error" data-error-for="destination" hidden></p>
+    </div>
+    <div class="field" data-field="date">
+      <label class="field__label" for="date">Дата вылета</label>
+      <div class="field__box"><input class="field__control" type="date" id="date" name="date" value="2026-06-12" required></div>
+      <p class="field__hint" id="date-hint"></p>
+      <p class="field__hint field__hint--note" id="date-note" role="status" hidden></p>
+      <p class="field__error" data-error-for="date" hidden></p>
+    </div>
+    <div class="field" data-field="price">
+      <label class="field__label" for="price">Цена билета</label>
+      <div class="field__box"><input class="field__control" type="text" inputmode="decimal" id="price" name="price" autocomplete="off" required><span class="field__suffix">₽</span></div>
+      <p class="field__hint field__hint--note" id="price-hint" role="status" hidden></p>
+      <p class="field__error" data-error-for="price" hidden></p>
+    </div>
+    <div class="range-wrap">
+      <div class="range-box">
+        <input class="range" type="range" id="price-range" min="0" max="1" step="10" value="0" aria-label="Цена билета">
+        <div class="range-best" id="range-best" hidden><span id="range-best-label"></span></div>
       </div>
-      <div class="field" data-field="date">
-        <label class="field__label" for="date">Дата вылета</label>
-        <div class="field__box"><input class="field__control" type="date" id="date" name="date" value="2026-06-12" required></div>
-        <p class="field__hint" id="date-hint"></p>
-        <p class="field__error" data-error-for="date" hidden></p>
-      </div>
-      <div class="field" data-field="price">
-        <label class="field__label" for="price">Цена билета</label>
-        <div class="field__box"><input class="field__control" type="text" inputmode="decimal" id="price" name="price" autocomplete="off" required><span class="field__suffix">₽</span></div>
-        <p class="field__error" data-error-for="price" hidden></p>
-      </div>
-      <div class="range-wrap">
-        <div class="range-box">
-          <input class="range" type="range" id="price-range" min="0" max="1" step="10" value="0" aria-label="Цена билета">
-          <div class="range-best" id="range-best" hidden><span id="range-best-label"></span></div>
-        </div>
-        <div class="range-scale"><span id="range-min"></span><span>Цены маршрута</span><span id="range-max"></span></div>
-      </div>
-      <button class="btn" type="submit" id="submit"><span data-btn-text>Рассчитать</span><span>→</span></button>
-      <p class="form-note">Ползунок пересчитывает прогноз сразу. «Рассчитать» сохраняет расчёт в историю.</p>
-    </form>
-
-    <section class="card best" id="best" hidden>
-      <p class="label">Лучшая цена</p>
-      <div class="best__head">
-        <p class="best__price"><span id="best-price"></span><small>₽</small></p>
-        <p class="best__text" id="best-text"></p>
-      </div>
-      <div class="profit-chart" id="profit-chart" role="img" aria-label="Ожидаемая прибыль в зависимости от цены"></div>
-      <ul class="legend">
-        <li><span class="legend__sw legend__sw--line"></span>Ожидаемая прибыль</li>
-        <li><span class="legend__sw legend__sw--dot"></span>Ваша цена</li>
-      </ul>
-      <button class="btn btn--outline" type="button" id="apply-best"><span>Поставить лучшую цену</span><span class="btn__small" id="apply-best-price"></span></button>
-      <p class="small-note" id="best-note">Ожидаемая прибыль — среднее по 9 сценариям от (цена − расходы на пассажира) × купят. Кривую и максимум считает сервер.</p>
-    </section>
-  </div>
+      <div class="range-scale"><span id="range-min"></span><span>Цены маршрута</span><span id="range-max"></span></div>
+    </div>
+    <button class="btn" type="submit" id="submit"><span data-btn-text>Рассчитать</span><span>→</span></button>
+    <p class="form-note">Ползунок пересчитывает прогноз сразу, в историю не пишет. В историю пишут «Рассчитать», «Поставить лучшую цену», «Повторить» в истории и клик по дню календаря.</p>
+  </form>
 
   <div class="main-col" id="result">
     <div class="tabbar">
       <div class="tabs tabs--main" role="tablist" aria-label="Результат">
-        <button class="tabs__btn" type="button" role="tab" data-tab="calc" aria-selected="true">Расчёт</button>
-        <button class="tabs__btn" type="button" role="tab" data-tab="salon" aria-selected="false">Салон</button>
-        <button class="tabs__btn" type="button" role="tab" data-tab="calendar" aria-selected="false">Календарь</button>
-        <button class="tabs__btn" type="button" role="tab" data-tab="ticket" aria-selected="false">Талон</button>
+        <button class="tabs__btn" type="button" role="tab" id="tab-calc" aria-controls="panel-calc" data-tab="calc" aria-selected="true">Расчёт</button>
+        <button class="tabs__btn" type="button" role="tab" id="tab-salon" aria-controls="panel-salon" data-tab="salon" aria-selected="false">Салон</button>
+        <button class="tabs__btn" type="button" role="tab" id="tab-calendar" aria-controls="panel-calendar" data-tab="calendar" aria-selected="false">Календарь</button>
+        <button class="tabs__btn" type="button" role="tab" id="tab-ticket" aria-controls="panel-ticket" data-tab="ticket" aria-selected="false">Талон</button>
       </div>
       <p class="result__route" id="result-route"></p>
     </div>
 
     <!-- Расчёт -->
-    <section class="card tabpanel" data-tabpanel="calc" role="tabpanel" aria-live="polite">
+    <section class="card tabpanel" id="panel-calc" data-tabpanel="calc" role="tabpanel" aria-labelledby="tab-calc">
       <div class="empty" data-panel="empty" hidden>
         <h2 class="state__title">Здесь появится прогноз</h2>
         <p class="state__text">Выберите город, дату и цену билета — и нажмите «Рассчитать».</p>
@@ -125,7 +112,7 @@
         <div class="progress"></div>
         <div class="skel-row"><span class="skel"></span><span class="skel"></span><span class="skel"></span><span class="skel"></span></div>
         <div class="skel-bars"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-        <p class="state__text">Сервер считает 9 сценариев спроса. Обычно это меньше секунды.</p>
+        <p class="state__text">Сервер считает 9&nbsp;сценариев спроса. Обычно это меньше секунды.</p>
       </div>
 
       <div class="state" data-panel="error" hidden>
@@ -142,7 +129,7 @@
           <div class="metric"><dt class="metric__label">Купят</dt><dd class="metric__value metric__value--acc" data-out="buy"></dd></div>
           <div class="metric"><dt class="metric__label">Загрузка</dt><dd class="metric__value"><span data-out="load"></span><span class="metric__unit">%</span></dd><div class="meter"><div class="meter__fill" id="load-meter"></div></div></div>
         </dl>
-        <div class="note" id="note"><span class="tag" id="note-tag"></span><span class="note__text" id="note-text"></span></div>
+        <div class="note" id="note" aria-live="polite"><span class="tag" id="note-tag"></span><span class="note__text" id="note-text"></span></div>
         <p class="formula" id="formula"></p>
         <div class="chart-block">
           <div class="chart-block__head">
@@ -175,7 +162,7 @@
     </section>
 
     <!-- Салон -->
-    <section class="card tabpanel" data-tabpanel="salon" role="tabpanel" hidden>
+    <section class="card tabpanel" id="panel-salon" data-tabpanel="salon" role="tabpanel" aria-labelledby="tab-salon" hidden>
       <div class="panel-head">
         <div class="scen" id="scen" role="group" aria-label="Сценарий спроса"><span class="scen__label">Сценарий</span></div>
       </div>
@@ -213,7 +200,7 @@
     </section>
 
     <!-- Календарь -->
-    <section class="card tabpanel" data-tabpanel="calendar" role="tabpanel" hidden>
+    <section class="card tabpanel" id="panel-calendar" data-tabpanel="calendar" role="tabpanel" aria-labelledby="tab-calendar" hidden>
       <div class="panel-head">
         <p class="result__route" id="cal-title"></p>
       </div>
@@ -231,7 +218,7 @@
     </section>
 
     <!-- Талон -->
-    <section class="card tabpanel" data-tabpanel="ticket" role="tabpanel" hidden>
+    <section class="card tabpanel" id="panel-ticket" data-tabpanel="ticket" role="tabpanel" aria-labelledby="tab-ticket" hidden>
       <p class="panel-empty" data-needs-empty>Сначала рассчитайте прогноз.</p>
       <div class="tabpanel" data-needs-result hidden>
         <article class="ticket" id="ticket">
@@ -276,6 +263,22 @@
       </div>
     </section>
   </div>
+
+  <section class="card best" id="best" hidden>
+    <p class="label">Лучшая цена</p>
+    <div class="best__head">
+      <p class="best__price"><span id="best-price"></span><small>₽</small></p>
+      <p class="best__text" id="best-text"></p>
+    </div>
+    <div class="profit-chart" id="profit-chart" role="img" aria-label="Ожидаемая прибыль в зависимости от цены"></div>
+    <ul class="legend">
+      <li><span class="legend__sw legend__sw--line"></span>Ожидаемая прибыль</li>
+      <li><span class="legend__sw legend__sw--best"></span>Лучшая цена</li>
+      <li><span class="legend__sw legend__sw--dot"></span>Ваша цена</li>
+    </ul>
+    <button class="btn btn--outline" type="button" id="apply-best"><span>Поставить лучшую цену</span><span class="btn__small" id="apply-best-price"></span></button>
+    <p class="small-note" id="best-note">Ожидаемая прибыль — среднее по 9&nbsp;сценариям от (цена − расходы на пассажира) × купят. Кривую и максимум считает сервер.</p>
+  </section>
 </main>
 
 <div class="history-wrap">
