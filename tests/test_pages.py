@@ -166,9 +166,9 @@ def test_landing_buttons_lead_into_the_tool(client):
     # «Войти как гость» только на /login, куда ведёт «Войти» в шапке
     html = page(client, "/")
 
-    assert "data-guest" not in html.replace("data-guest-error", "")
-    assert len(re.findall(r'<a[^>]*data-open-story[^>]*>Открыть расчёт 12 июня</a>', html)) == 2
-    assert "Москва → Санкт-Петербург, пятница, День России. Без регистрации" in plain(html)
+    assert "data-guest" not in html and "data-open-story" not in html
+    assert len(re.findall(r'<a[^>]*href="/app\?destination=[^"]*"[^>]*>Открыть расчёт 12 июня</a>', html)) == 2
+    assert "Москва → Санкт-Петербург, пятница, День России. Для жюри вход уже заполнен" in plain(html)
     assert 'href="/login"' in html
 
 
@@ -225,12 +225,48 @@ def test_tools_line_names_claude_code_and_claude_design(client):
     assert "Claude Design" in html
 
 
-def test_login_page_has_login_register_and_guest(client):
+def test_login_page_without_demo_account_opens_on_the_login_form(client):
+    # пароля демо-аккаунта нет (свой компьютер) — вкладки «Вход для жюри» нет, открыт обычный вход
     html = page(client, "/login")
 
-    assert 'data-form="login"' in html and 'data-form="register"' in html
-    assert 'name="password2"' in html
-    assert "data-guest" in html
+    assert 'data-form="jury"' not in html and 'data-tab="jury"' not in html
+    assert re.search(r'<button(?=[^>]*data-tab="login")(?=[^>]*aria-selected="true")', html)
+    assert re.search(r'<form[^>]*data-form="login"(?![^>]*hidden)[^>]*>', html)
+    assert 'data-form="register"' in html and 'name="password2"' in html
+
+
+def demo_client(settings, password):
+    return TestClient(create_app(Settings(**{**settings.__dict__, "demo_password": password})), follow_redirects=False)
+
+
+def test_login_page_opens_on_a_prefilled_jury_login(settings):
+    with demo_client(settings, "jury-pass-1") as client:
+        html = page(client, "/login")
+
+    tabs = re.findall(r'<button[^>]*role="tab"[^>]*>([^<]*)</button>', html)
+    jury = re.search(r'<form[^>]*data-form="jury"[^>]*>(.*?)</form>', html, re.S)
+    assert tabs == ["Вход для жюри", "Вход"]
+    assert re.search(r'<button(?=[^>]*data-tab="jury")(?=[^>]*aria-selected="true")', html)
+    assert jury and 'action="/api/login"' in jury.group(0)
+    assert 'value="jury"' in jury.group(1) and 'value="jury-pass-1"' in jury.group(1)
+    assert "Демо-аккаунт для проверки, данные уже введены." in jury.group(1)
+    assert re.search(r'<form[^>]*data-form="login"[^>]*hidden', html)
+
+
+def test_jury_password_is_escaped_in_the_page(settings):
+    with demo_client(settings, 'a"<b>&c') as client:
+        html = page(client, "/login")
+
+    assert 'value="a&quot;&lt;b&gt;&amp;c"' in html
+
+
+def test_login_page_keeps_registration_as_a_grey_line_and_drops_guest_and_facts(client):
+    html = page(client, "/login")
+
+    assert "data-guest" not in html and "Войти как гость" not in html
+    assert 'class="facts"' not in html and "Гостю" not in html
+    assert 'data-tab="register"' in html and 'role="tab" id="tab-register"' not in html
+    assert re.search(r'<p class="auth__switch auth__switch--muted"[^>]*>Нет аккаунта\? <button[^>]*data-tab="register"', html)
 
 
 def test_tool_needs_a_session(client):

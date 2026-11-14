@@ -557,7 +557,6 @@ a.btn:hover { color: var(--acc-ink); }
 .lp-cta { align-items: flex-start; }
 .lp-cta__item { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .lp-cta__hint { font-size: 13px; line-height: 1.4; color: var(--mute); margin: 0; max-width: 300px; }
-.lp-error { font-size: 14px; color: var(--err); margin: 0; }
 .fri { display: flex; flex-direction: column; gap: 10px; }
 .fri__empty { font-size: 14px; color: var(--mute); margin: 0; }
 .fri__row { display: grid; grid-template-columns: 76px minmax(0, 1fr) 52px; gap: 12px; align-items: center; font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -583,9 +582,9 @@ a.btn:hover { color: var(--acc-ink); }
   .lp-numbers--6 .lp-num:nth-child(n+4) { border-top: 1px solid var(--line); }
 }
 
-/* вход: гостевой вход под формами */
-.auth__guest { display: flex; flex-direction: column; gap: 10px; padding-top: 20px; border-top: 1px solid var(--line); }
-.auth__or { font-size: 13px; color: var(--mute); }
+/* вход: регистрация — серой строкой под формой, ссылка тоже серая */
+.auth__switch--muted { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; }
+.auth__switch--muted .link-btn { color: var(--mute); font-size: 13px; text-decoration: underline; }
 .btn--wide { width: 100%; }
 
 /* расчёт: формула, сравнение прогнозов, история */

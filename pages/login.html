@@ -19,23 +19,35 @@
     <a class="brand" href="/">Решись Авиа</a>
     <div class="auth__body">
       <h1 class="auth__title">Прогноз <span class="accent">продаж</span> для каждого рейса</h1>
-      <ul class="facts">
-        <li>5 маршрутов из Москвы</li>
-        <li><span data-dates>Вылеты с 01.06 по 01.07.2026</span></li>
-        <li>9 сценариев спроса на рейс</li>
-      </ul>
     </div>
-    <p class="label">Гостю — своя история расчётов</p>
   </aside>
 
   <main class="auth__main">
     <div class="card auth__card">
-      <div class="tabs" role="tablist" aria-label="Вход или регистрация">
-        <button class="tabs__btn" type="button" role="tab" id="tab-login" aria-controls="login-form" aria-selected="true" data-tab="login">Вход</button>
-        <button class="tabs__btn" type="button" role="tab" id="tab-register" aria-controls="register-form" aria-selected="false" data-tab="register">Регистрация</button>
+      <div class="tabs" role="tablist" aria-label="Способ входа">
+        <!-- jury:start --><button class="tabs__btn" type="button" role="tab" id="tab-jury" aria-controls="jury-form" aria-selected="true" data-tab="jury">Вход для жюри</button><!-- jury:end -->
+        <button class="tabs__btn" type="button" role="tab" id="tab-login" aria-controls="login-form" aria-selected="false" data-tab="login">Вход</button>
       </div>
 
-      <form class="auth__form" id="login-form" role="tabpanel" aria-labelledby="tab-login" data-form="login" action="/api/login" method="post" novalidate>
+      <!-- jury:start -->
+      <form class="auth__form" id="jury-form" role="tabpanel" aria-labelledby="tab-jury" data-form="jury" action="/api/login" method="post" novalidate>
+        <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">Ошибка</span><span data-error-text></span></div>
+        <div class="field" data-field="login">
+          <label class="field__label" for="jury-login">Логин</label>
+          <div class="field__box"><input class="field__control" type="text" id="jury-login" name="login" value="{{demo_login}}" readonly autocomplete="off"></div>
+          <p class="field__error" data-error-for="login" hidden></p>
+        </div>
+        <div class="field" data-field="password">
+          <label class="field__label" for="jury-password">Пароль</label>
+          <div class="field__box"><input class="field__control" type="password" id="jury-password" name="password" value="{{demo_password}}" readonly autocomplete="off"><button class="field__toggle" type="button" data-toggle-password>Показать</button></div>
+          <p class="field__error" data-error-for="password" hidden></p>
+        </div>
+        <button class="btn" type="submit">Войти</button>
+        <p class="field__hint">Демо-аккаунт для проверки, данные уже введены.</p>
+      </form>
+      <!-- jury:end -->
+
+      <form class="auth__form" id="login-form" role="tabpanel" aria-labelledby="tab-login" data-form="login" action="/api/login" method="post" novalidate hidden>
         <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">Ошибка</span><span data-error-text></span></div>
         <div class="field" data-field="login">
           <label class="field__label" for="login-login">Логин или email</label>
@@ -48,10 +60,9 @@
           <p class="field__error" data-error-for="password" hidden></p>
         </div>
         <button class="btn" type="submit">Войти</button>
-        <p class="auth__switch">Нет аккаунта? <button class="link-btn" type="button" data-tab="register">Зарегистрироваться</button></p>
       </form>
 
-      <form class="auth__form" id="register-form" role="tabpanel" aria-labelledby="tab-register" data-form="register" action="/api/register" method="post" novalidate hidden>
+      <form class="auth__form" id="register-form" aria-label="Регистрация" data-form="register" action="/api/register" method="post" novalidate hidden>
         <div class="alert" data-error="general" role="alert" hidden><span class="tag tag--err">Ошибка</span><span data-error-text></span></div>
         <div class="field" data-field="login">
           <label class="field__label" for="reg-login">Логин или email</label>
@@ -74,12 +85,7 @@
         <p class="auth__switch">Уже есть аккаунт? <button class="link-btn" type="button" data-tab="login">Войти</button></p>
       </form>
 
-      <div class="auth__guest">
-        <span class="auth__or">или</span>
-        <button class="btn btn--ghost-lg btn--wide" type="button" data-guest>Войти как гость</button>
-        <p class="field__hint">Без регистрации, у каждого гостя своя история</p>
-        <p class="field__error" data-guest-error role="alert" hidden></p>
-      </div>
+      <p class="auth__switch auth__switch--muted" data-register-line>Нет аккаунта? <button class="link-btn" type="button" data-tab="register">Зарегистрироваться</button></p>
     </div>
   </main>
 </div>

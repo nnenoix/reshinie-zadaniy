@@ -17,6 +17,16 @@ from app.main import create_app
 sync_api = pytest.importorskip("playwright.sync_api")
 
 
+JURY_PASSWORD = "smoke-jury-pass"
+BECOME_GUEST = "async () => { await (await import('/static/js/guest.js')).enterAsGuest(); }"
+
+
+def become_guest(tab, base_url):
+    """Свой гость у каждого теста: кнопки гостя на страницах нет, гостя создаёт API (как раньше кнопка)."""
+    tab.goto(base_url + "/login")
+    tab.evaluate(BECOME_GUEST)
+
+
 def free_port() -> int:
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
@@ -28,7 +38,7 @@ def base_url(tmp_path_factory):
     port = free_port()
     # гостей здесь больше 20 за час: лимит регистраций с одного адреса проверяют другие тесты
     app = create_app(Settings(db_path=tmp_path_factory.mktemp("smoke") / "app.db", signup_limit=1000,
-                              guest_limit=1000, guest_minute_limit=1000))
+                              guest_limit=1000, guest_minute_limit=1000, demo_password=JURY_PASSWORD))
     server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning"))
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
@@ -57,9 +67,8 @@ def open_tool(browser, base_url, width=1440):
     """Новый гость в чистом браузере шириной width, расчёт 12 июня уже на экране."""
     context = browser.new_context(accept_downloads=True, viewport={"width": width, "height": 900})
     tab = context.new_page()
-    tab.goto(base_url + "/login")
-    tab.click("[data-guest]")
-    tab.wait_for_url("**/app")
+    become_guest(tab, base_url)
+    tab.goto(base_url + "/app")
     wait_for_result(tab)
     return context, tab
 
@@ -97,9 +106,8 @@ def test_page_is_drawn_with_the_two_design_fonts(page):
 def test_phone_header_of_a_guest_keeps_the_brand_on_one_line(browser, base_url):
     context = browser.new_context(viewport={"width": 375, "height": 812})
     tab = context.new_page()
-    tab.goto(base_url + "/login")
-    tab.click("[data-guest]")
-    tab.wait_for_url("**/app")
+    become_guest(tab, base_url)
+    tab.goto(base_url + "/app")
     lines, overflow, fonts = tab.evaluate("""async () => {
         await document.fonts.ready;
         const text = document.createRange();
@@ -222,32 +230,49 @@ def test_ticket_png_contains_the_barcode(page, tmp_path):
     assert dark > total * 0.2  # полосы штрихкода есть на снимке талона
 
 
-def test_opening_the_story_without_login_leaves_no_errors_in_the_console(browser, base_url):
-    # Раньше кнопка спрашивала GET /api/me, и в консоли гостя краснело «401 (Unauthorized)».
+def test_story_button_leads_the_jury_through_the_prefilled_login(browser, base_url):
+    # витрина → «Открыть расчёт 12 июня» → /login, где логин и пароль жюри уже введены → расчёт 12 июня
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
     errors = []
     tab.on("console", lambda message: errors.append(message.text) if message.type == "error" else None)
     tab.goto(base_url + "/")
-    tab.click(".lp-cta [data-open-story]")
-    tab.wait_for_url("**/app**")
+    tab.click(".lp-cta a >> nth=0")
+    tab.wait_for_url("**/login")
+    filled = [tab.input_value("#jury-login"), tab.input_value("#jury-password") == JURY_PASSWORD,
+              tab.is_visible("#jury-form"), tab.is_visible("#login-form")]
+    tab.click("#jury-form button[type=submit]")
+    tab.wait_for_url("**/app")
     wait_for_result(tab)
+    shown = tab.inner_text("#result-route").replace("\xa0", " ")
     context.close()
 
+    assert filled == ["jury", True, True, False]
+    assert shown == "Москва → Санкт-Петербург · 12.06.2026 · 5 500 ₽"
     assert errors == []
 
 
-@pytest.mark.parametrize("start", ["/login"])
-def test_guest_sees_the_story_flight_while_routes_are_still_loading(browser, base_url, start):
-    # «Войти как гость» открывает /app без параметров. Пока сервер отвечает на /api/routes,
+def test_grey_register_line_opens_the_registration_form(browser, base_url):
+    context = browser.new_context(viewport={"width": 1440, "height": 900})
+    tab = context.new_page()
+    tab.goto(base_url + "/login")
+    tab.click(".auth__switch--muted [data-tab=register]")
+    shown = [tab.is_visible("#register-form"), tab.is_visible("#jury-form"), tab.is_visible(".auth__switch--muted")]
+    context.close()
+
+    assert shown == [True, False, False]
+
+
+def test_guest_sees_the_story_flight_while_routes_are_still_loading(browser, base_url):
+    # /app без параметров: пока сервер отвечает на /api/routes,
     # поля «Куда» и «Дата» уже заполнены, а вместо «Здесь появится прогноз» идёт расчёт.
     context = browser.new_context(viewport={"width": 1024, "height": 900})
     tab = context.new_page()
+    become_guest(tab, base_url)
     held = []
     tab.route("**/api/routes*", lambda route: held.append(route))
-    tab.goto(base_url + start)
     with tab.expect_request("**/api/routes*"):
-        tab.click("[data-guest] >> nth=0")
+        tab.goto(base_url + "/app", wait_until="commit")
     while_loading = tab.evaluate("""() => [document.querySelector('#destination').value, document.querySelector('#date').value,
         [...document.querySelectorAll('[data-panel]')].filter((p) => !p.hidden).map((p) => p.dataset.panel)]""")
     held[0].continue_()
@@ -457,9 +482,8 @@ def guest_tab(browser, base_url, width, height=900):
     """Гость на /app без ожидания расчёта: для страниц, где нужно поймать момент загрузки."""
     context = browser.new_context(viewport={"width": width, "height": height})
     tab = context.new_page()
-    tab.goto(base_url + "/login")
-    tab.click("[data-guest]")
-    tab.wait_for_url("**/app")
+    become_guest(tab, base_url)
+    tab.goto(base_url + "/app")
     return context, tab
 
 
@@ -580,15 +604,15 @@ def test_story_chart_card_is_as_tall_as_its_content(browser, base_url):
 
 
 @pytest.mark.parametrize("width", [360, 375])
-def test_login_form_and_guest_button_are_on_the_first_phone_screen(browser, base_url, width):
+def test_jury_login_button_is_on_the_first_phone_screen(browser, base_url, width):
     context = browser.new_context(viewport={"width": width, "height": 800})
     tab = context.new_page()
     tab.goto(base_url + "/login")
-    form, guest = tab.evaluate("""() => [document.querySelector('#login-form').getBoundingClientRect().top,
-        document.querySelector('[data-guest]').getBoundingClientRect().bottom]""")
+    form, button = tab.evaluate("""() => [document.querySelector('#jury-form').getBoundingClientRect().top,
+        document.querySelector('#jury-form button[type=submit]').getBoundingClientRect().bottom]""")
     context.close()
 
-    assert form < 250 and guest <= 800, (form, guest)
+    assert form < 250 and button <= 800, (form, button)
 
 
 NUMBER_SPACES = r"""() => {
@@ -685,11 +709,11 @@ def test_login_tabs_follow_the_tabs_pattern(browser, base_url):
     wired = tab.evaluate(TABS_WIRED, ".auth__card")
     tab.focus('.tabs [aria-selected="true"]')
     tab.keyboard.press("ArrowRight")
-    after = [tab.evaluate(FOCUSED_TAB), tab.is_visible("#register-form")]
+    after = [tab.evaluate(FOCUSED_TAB), tab.is_visible("#login-form")]
     context.close()
 
     assert wired == [[True, "tabpanel", True, True]] * 2
-    assert after == [["tab", "Регистрация", "true"], True]
+    assert after == [["tab", "Вход", "true"], True]
 
 
 def test_phone_focus_order_matches_the_screen(browser, base_url):

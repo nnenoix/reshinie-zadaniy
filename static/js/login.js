@@ -1,13 +1,13 @@
-// Страница /login: вход, регистрация, гостевой вход. После входа — инструмент /app.
+// Страница /login: «Вход для жюри» (логин и пароль демо-аккаунта уже введены сервером), обычный вход
+// и регистрация серой строкой внизу. После входа — инструмент /app.
 // Гость тоже попадает сюда (ссылка «Зарегистрироваться» в /app): при регистрации его история переходит в аккаунт.
 import { get, post, whileBusy } from "./api.js";
-import { enterAsGuest } from "./guest.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
 const EMPTY = { login: "Введите логин или email.", password: "Введите пароль.", password2: "Повторите пароль." };
-const BUSY = { login: "Входим…", register: "Создаём…" };
+const BUSY = { jury: "Входим…", login: "Входим…", register: "Создаём…" };
 const GUEST_TRANSFER = "История расчётов гостя перейдёт в новый аккаунт";
 
 function clearField(form, name) {
@@ -51,6 +51,7 @@ function switchTo(tab) {
     form.hidden = form.dataset.form !== tab;
     clearErrors(form);
   });
+  $("[data-register-line]").hidden = tab === "register"; // в регистрации своя строка «Уже есть аккаунт?»
   $(`[data-form="${tab}"] input`).focus();
 }
 
@@ -77,19 +78,10 @@ $$("[data-form]").forEach((form) => {
     }
     const body = Object.fromEntries(new FormData(form).entries());
     const submit = $('button[type="submit"]', form);
-    const response = await whileBusy(submit, BUSY[form.dataset.form], () => post(`/api/${form.dataset.form}`, body));
+    const response = await whileBusy(submit, BUSY[form.dataset.form], () => post(form.getAttribute("action"), body));
     if (response.ok) return location.assign("/app");
     showError(form, response.data);
   });
-});
-
-$("[data-guest]").addEventListener("click", async (event) => {
-  const error = $("[data-guest-error]");
-  error.hidden = true;
-  const response = await whileBusy(event.currentTarget, "Входим…", enterAsGuest);
-  if (response.ok) return location.assign("/app");
-  error.textContent = response.data.detail;
-  error.hidden = false;
 });
 
 async function noteGuestTransfer() {

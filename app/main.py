@@ -29,6 +29,7 @@ from app.db import open_database
 from app.errors import InputError
 from app.history import HistoryEntry, HistoryStore, history_csv
 from app.landing import fill_tests
+from app.login_page import render_login
 from app.pricing import CURVE_STEP, advise, make_forecast, profit_curve
 from app.queries import parse_flight_query, parse_forecast_query, parse_route_price_query, parse_source
 from app.ratelimit import RateLimiter
@@ -117,6 +118,8 @@ def create_app(settings: Settings | None = None, now: Callable[[], datetime] | N
     _require_organizers_forecast(app.state.sources)
     app.state.database = database
     app.state.landing_html = render_landing(settings)
+    app.state.login_html = render_login((PAGES_DIR / "login.html").read_text(encoding="utf-8"),
+                                        settings.demo_login, settings.demo_password)
     app.state.auth = AuthStore(database, session_ttl=timedelta(days=settings.session_days), now=clock)
     app.state.history = HistoryStore(database)
     app.state.login_limiter = RateLimiter(settings.login_limit, timedelta(minutes=settings.login_window_minutes), clock)
@@ -286,7 +289,8 @@ def login_page(request: Request) -> Response:
     user = session_user(request)
     if user is not None and not is_guest(user.login):  # гость приходит сюда зарегистрироваться
         return RedirectResponse("/app", status_code=303)
-    return FileResponse(PAGES_DIR / "login.html")
+    # в странице пароль демо-аккаунта: не кэшировать
+    return HTMLResponse(request.app.state.login_html, headers={"Cache-Control": "no-store"})
 
 
 @router.get("/app", include_in_schema=False, response_model=None)
