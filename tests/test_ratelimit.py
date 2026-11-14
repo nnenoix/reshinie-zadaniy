@@ -34,3 +34,25 @@ def test_keys_are_independent_and_reset_clears():
     assert limiter.retry_after("boris") == 0
     limiter.reset("anna")
     assert limiter.retry_after("anna") == 0
+
+
+def test_keys_without_fresh_hits_are_forgotten():
+    clock = Clock()
+    limiter = RateLimiter(limit=5, window=timedelta(minutes=5), now=clock)
+    limiter.hit("anna")
+    clock.now += timedelta(minutes=5, seconds=1)
+
+    assert limiter.retry_after("anna") == 0
+    assert len(limiter) == 0
+
+
+def test_stale_keys_nobody_asks_about_again_are_swept():
+    clock = Clock()
+    limiter = RateLimiter(limit=5, window=timedelta(minutes=5), now=clock)
+    for i in range(100):
+        limiter.hit(f"random-login-{i}")
+    clock.now += timedelta(minutes=5, seconds=1)
+
+    limiter.hit("anna")
+
+    assert len(limiter) == 1

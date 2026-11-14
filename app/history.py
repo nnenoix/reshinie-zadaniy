@@ -62,6 +62,11 @@ class HistoryStore:
             )
         return replace(entry, id=entry_id)
 
+    def move(self, from_user_id: int, to_user_id: int) -> None:
+        """Все расчёты одного пользователя переходят другому: гость зарегистрировался."""
+        with self.database.transaction() as db:
+            db.execute("update calculations set user_id = ? where user_id = ?", (to_user_id, from_user_id))
+
     def latest(self, user_id: int, limit: int = 10) -> list[HistoryEntry]:
         return self._select(user_id, "limit ?", (limit,))
 

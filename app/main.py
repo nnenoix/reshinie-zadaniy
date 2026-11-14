@@ -2,6 +2,7 @@
 
 Запуск: uvicorn app.main:create_app --factory
 """
+import asyncio
 import logging
 import math
 from contextlib import asynccontextmanager
@@ -16,10 +17,11 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.security import APIKeyCookie, APIKeyHeader
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import schemas, views
-from app.auth import AuthStore, LoginTaken, User, parse_credentials
+from app.auth import AuthStore, LoginTaken, User, is_guest, parse_credentials, parse_login_attempt
 from app.calendar import month_calendar
 from app.catalog import CatalogError
 from app.config import PROJECT_DIR, Settings
@@ -33,8 +35,8 @@ from app.ratelimit import RateLimiter
 from app.seatmap import seat_map
 from app.solution_files import files_html
 from app.story import STORY_DAY, STORY_ROUTE, friday_story
-from app.security import (CSRF_COOKIE, CSRF_HEADER, client_address, csrf_problem, new_csrf_token,
-                          security_headers)
+from app.security import (CSRF_COOKIE, CSRF_HEADER, CSRF_MESSAGES, BodyLimit, client_address, csrf_problem,
+                          new_csrf_token, security_headers)
 from app.sources import ML, ORGANIZERS, ForecastSources
 
 VERSION = "2.0"
@@ -70,7 +72,12 @@ TAGS = [
     {"name": "Справочники", "description": "Маршруты и источники прогноза"},
     {"name": "Служебное", "description": "Проверка сервера и токен CSRF"},
 ]
-ERRORS = {code: {"model": schemas.ErrorOut} for code in (401, 403, 422, 429)}
+REQUIRED = "x-required"  # метка обязательного параметра для /docs, см. _mark_required
+
+
+def errors(*codes: int) -> dict:
+    """Ответы с ошибкой для /docs: только те, что этот адрес действительно возвращает."""
+    return {code: {"model": schemas.ErrorOut} for code in codes}
 
 csrf_scheme = APIKeyHeader(name=CSRF_HEADER, auto_error=False,
                            description="Значение cookie csrf_token (его возвращает GET /api/csrf)")
@@ -116,6 +123,8 @@ def create_app(settings: Settings | None = None, now: Callable[[], datetime] | N
     app.state.account_limiter = RateLimiter(settings.account_login_limit,
                                             timedelta(minutes=settings.account_login_window_minutes), clock)
     app.state.signup_limiter = RateLimiter(settings.signup_limit, timedelta(hours=1), clock)
+    app.state.guest_limiters = (RateLimiter(settings.guest_limit, timedelta(hours=1), clock),
+                                RateLimiter(settings.guest_minute_limit, timedelta(minutes=1), clock))
     if settings.demo_login and settings.demo_password:
         app.state.auth.ensure_user(settings.demo_login, settings.demo_password)
 
@@ -125,10 +134,42 @@ def create_app(settings: Settings | None = None, now: Callable[[], datetime] | N
     app.add_exception_handler(TooManyAttempts, _too_many)
     app.add_exception_handler(StarletteHTTPException, _framework_error)
     app.add_exception_handler(Exception, _server_error)
+    app.add_middleware(BodyLimit)  # внутри _guard: ответ 413 тоже получает заголовки безопасности
     app.middleware("http")(_guard)
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     app.include_router(router)
+    _mark_required(app)
     return app
+
+
+def _mark_required(app: FastAPI) -> None:
+    """Обязательные параметры запроса — обязательные и в /docs.
+
+    В коде они Query(None): пропуск проверяет parse_*_query и отвечает своим русским текстом
+    («Укажите город отправления.»), а не общей ошибкой FastAPI. Метку REQUIRED здесь
+    переносим из схемы параметра в его флаг required."""
+    build = app.openapi
+
+    def openapi() -> dict:
+        fresh = app.openapi_schema is None
+        schema = build()
+        if fresh:
+            for operation in (op for item in schema["paths"].values() for op in item.values()):
+                for parameter in operation.get("parameters", []):
+                    _require(parameter)
+        return schema
+
+    app.openapi = openapi
+
+
+def _require(parameter: dict) -> None:
+    schema = parameter.get("schema", {})
+    if not schema.pop(REQUIRED, False):
+        return
+    parameter["required"] = True
+    options = [option for option in schema.pop("anyOf", []) if option.get("type") != "null"]
+    for option in options:
+        schema.update(option)
 
 
 def render_landing(settings: Settings) -> str:
@@ -167,7 +208,8 @@ async def _guard(request: Request, call_next):
     )
     if problem:
         log.warning("отклонён запрос %s %s: %s", request.method, request.url.path, problem)
-        response = JSONResponse({"detail": problem, "field": None}, status_code=403)
+        response = JSONResponse({"detail": CSRF_MESSAGES[problem], "field": None, "code": problem},
+                                status_code=403)
     else:
         response = await call_next(request)
     if not cookie_token:
@@ -212,9 +254,15 @@ def body_doc(model: type[BaseModel]) -> dict:
     return {"requestBody": {"required": True, "content": {"application/json": {"schema": model.model_json_schema()}}}}
 
 
-Q_ORIGIN = Query(None, description="Город вылета", examples=["Москва"])
-Q_DESTINATION = Query(None, description="Город прилёта", examples=["Санкт-Петербург"])
-Q_DATE = Query(None, description="Дата вылета, ГГГГ-ММ-ДД", examples=["2026-06-12"])
+def required_query(description: str, example: Any) -> Any:
+    """Обязательный параметр: в /docs помечен обязательным, а пропуск объясняет parse_*_query."""
+    return Query(None, description=description, examples=[example], json_schema_extra={REQUIRED: True})
+
+
+Q_ORIGIN = required_query("Город вылета", "Москва")
+Q_DESTINATION = required_query("Город прилёта", "Санкт-Петербург")
+Q_DATE = required_query("Дата вылета, ГГГГ-ММ-ДД", "2026-06-12")
+Q_PRICE = required_query("Цена билета, ₽", 5500)
 Q_SOURCE = Query(None, description="Источник прогноза: organizers или ml. По умолчанию — ml, если файл "
                                    "нашей модели есть, иначе organizers")
 
@@ -224,8 +272,8 @@ csrf_protected = [Security(csrf_scheme)]
 
 # --- страницы ---
 
-def signed_in(request: Request) -> bool:
-    return request.app.state.auth.user_for_session(request.cookies.get(SESSION_COOKIE)) is not None
+def session_user(request: Request) -> User | None:
+    return request.app.state.auth.user_for_session(request.cookies.get(SESSION_COOKIE))
 
 
 @router.get("/", include_in_schema=False)
@@ -235,14 +283,15 @@ def landing_page(request: Request) -> HTMLResponse:
 
 @router.get("/login", include_in_schema=False, response_model=None)
 def login_page(request: Request) -> Response:
-    if signed_in(request):
+    user = session_user(request)
+    if user is not None and not is_guest(user.login):  # гость приходит сюда зарегистрироваться
         return RedirectResponse("/app", status_code=303)
     return FileResponse(PAGES_DIR / "login.html")
 
 
 @router.get("/app", include_in_schema=False, response_model=None)
 def tool_page(request: Request) -> Response:
-    if not signed_in(request):
+    if session_user(request) is None:
         return RedirectResponse("/login", status_code=303)
     return FileResponse(PAGES_DIR / "app.html")
 
@@ -271,7 +320,7 @@ def sources_list(sources: ForecastSources = Depends(get_sources)) -> dict:
     return {"sources": [asdict(s) for s in sources.describe()]}
 
 
-@router.get("/api/routes", tags=["Справочники"], response_model=schemas.RoutesOut, responses=ERRORS,
+@router.get("/api/routes", tags=["Справочники"], response_model=schemas.RoutesOut, responses=errors(422),
             summary="Города, направления, цены и даты для формы")
 def routes(source: str | None = Q_SOURCE, sources: ForecastSources = Depends(get_sources)) -> dict:
     source_id = parse_source({"source": source}, sources.default_source())
@@ -281,68 +330,87 @@ def routes(source: str | None = Q_SOURCE, sources: ForecastSources = Depends(get
 # --- вход ---
 
 @router.post("/api/register", tags=["Вход"], status_code=201, response_model=schemas.UserOut,
-             responses={409: {"model": schemas.ErrorOut}, **ERRORS}, dependencies=csrf_protected,
+             responses=errors(403, 409, 413, 422, 429), dependencies=csrf_protected,
              openapi_extra=body_doc(schemas.CredentialsIn), summary="Регистрация",
-             description="Создаёт аккаунт и сразу входит. С одного адреса — не больше 20 новых аккаунтов в час.")
+             description="Создаёт аккаунт и сразу входит. Если регистрируется гость, его история расчётов "
+                         "переходит в новый аккаунт, а гостевая сессия закрывается. С одного адреса — "
+                         "не больше 30 попыток регистрации в час, считая попытки с занятым логином.")
 def register(request: Request, response: Response, payload: Any = Body(None),
-             auth: AuthStore = Depends(get_auth)) -> dict:
-    _check_signup_limit(request)
+             auth: AuthStore = Depends(get_auth), history: HistoryStore = Depends(get_history)) -> dict:
+    limiter: RateLimiter = request.app.state.signup_limiter
+    _check_limits(request, [limiter], "Слишком много регистраций с одного адреса.")
     login, password = parse_credentials(payload)
+    limiter.hit(client_ip(request))
     try:
         user = auth.register(login, password)
     except LoginTaken:
         return JSONResponse({"detail": f"Логин «{login}» уже занят.", "field": "login"}, status_code=409)
-    request.app.state.signup_limiter.hit(client_ip(request))
+    previous = session_user(request)
+    if previous is not None and is_guest(previous.login):
+        history.move(previous.id, user.id)
     _start_session(request, response, user)
     return {"login": user.login}
 
 
-@router.post("/api/login", tags=["Вход"], response_model=schemas.UserOut, responses=ERRORS,
-             dependencies=csrf_protected, openapi_extra=body_doc(schemas.CredentialsIn), summary="Вход",
+@router.post("/api/login", tags=["Вход"], response_model=schemas.UserOut,
+             responses=errors(401, 403, 413, 422, 429), dependencies=csrf_protected,
+             openapi_extra=body_doc(schemas.CredentialsIn), summary="Вход",
              description="После 5 неудачных попыток за 5 минут вход для этого логина с этого адреса "
-                         "закрывается на 5 минут, после 10 неудачных попыток с любых адресов за 15 минут — "
-                         "вход в этот аккаунт (ответ 429).")
-def login(request: Request, response: Response, payload: Any = Body(None),
-          auth: AuthStore = Depends(get_auth)) -> dict:
-    data = payload if isinstance(payload, dict) else {}
-    login_text = str(data.get("login") or "").strip()
+                         "закрывается на 5 минут (ответ 429). После 10 неудачных попыток с любых адресов "
+                         "за 15 минут каждая попытка входа в этот аккаунт ждёт 2 секунды, но верный пароль "
+                         "по-прежнему пускает. Логин длиннее 64 символов и пароль длиннее 128 — ответ 422.")
+async def login(request: Request, response: Response, payload: Any = Body(None),
+                auth: AuthStore = Depends(get_auth)) -> dict:
+    login_text, password = parse_login_attempt(payload)
+    settings: Settings = request.app.state.settings
     limiter: RateLimiter = request.app.state.login_limiter
     account_limiter: RateLimiter = request.app.state.account_limiter
+    address = client_ip(request)
     account = login_text.casefold()
-    key = f"{client_ip(request)}|{account}"
+    key = f"{address}|{account}"
     wait = limiter.retry_after(key)
     if wait:
-        log.warning("вход закрыт на %d с: логин=%r, адрес=%s", wait, login_text, client_ip(request))
+        log.warning("вход закрыт на %d с: логин=%r, адрес=%s", wait, login_text, address)
         raise TooManyAttempts("Слишком много неудачных попыток входа.", wait)
-    wait = account_limiter.retry_after(account)
-    if wait:
-        log.warning("аккаунт закрыт на %d с: логин=%r, адрес=%s", wait, login_text, client_ip(request))
-        raise TooManyAttempts("Слишком много неудачных попыток входа в этот аккаунт.", wait)
-    user = auth.authenticate(login_text, str(data.get("password") or ""))
+    if account_limiter.retry_after(account):
+        # Подбор с многих адресов: попытки медленнее, но владельца с верным паролем не закрываем.
+        # asyncio.sleep не держит поток сервера, пока ждёт.
+        log.warning("вход в аккаунт под подбором, задержка: логин=%r, адрес=%s", login_text, address)
+        await asyncio.sleep(settings.account_login_delay_seconds)
+    user = await run_in_threadpool(auth.authenticate, login_text, password)
     if user is None:
         limiter.hit(key)
         account_limiter.hit(account)
-        log.warning("неудачный вход: логин=%r, адрес=%s", login_text, client_ip(request))
+        log.warning("неудачный вход: логин=%r, адрес=%s", login_text, address)
         return JSONResponse({"detail": "Неверный логин или пароль.", "field": None}, status_code=401)
     limiter.reset(key)
     account_limiter.reset(account)
-    _start_session(request, response, user)
+    await run_in_threadpool(_start_session, request, response, user)
     return {"login": user.login}
 
 
-@router.post("/api/guest", tags=["Вход"], status_code=201, response_model=schemas.UserOut, responses=ERRORS,
+@router.post("/api/guest", tags=["Вход"], status_code=201, response_model=schemas.UserOut,
+             responses={200: {"model": schemas.UserOut, "description": "Гость уже вошёл: та же сессия"},
+                        **errors(403, 429)},
              dependencies=csrf_protected, summary="Войти как гость",
-             description="Создаёт временный аккаунт «гость-…» без пароля и входит в него. "
-                         "У каждого гостя своя история.")
-def guest(request: Request, response: Response, auth: AuthStore = Depends(get_auth)) -> dict:
-    _check_signup_limit(request)
+             description="Создаёт временный аккаунт «гость-…» без пароля и входит в него. У каждого гостя "
+                         "своя история. Если гость уже вошёл (двойной клик), возвращает его же с ответом 200. "
+                         "С одного адреса — не больше 300 гостей в час и 20 в минуту.")
+def guest(request: Request, response: Response, auth: AuthStore = Depends(get_auth)) -> Any:
+    current = session_user(request)
+    if current is not None and is_guest(current.login):
+        return JSONResponse({"login": current.login}, status_code=200)
+    limiters = request.app.state.guest_limiters
+    _check_limits(request, limiters, "Слишком много гостевых входов с одного адреса.")
     user = auth.create_guest()
-    request.app.state.signup_limiter.hit(client_ip(request))
+    for limiter in limiters:
+        limiter.hit(client_ip(request))
     _start_session(request, response, user)
     return {"login": user.login}
 
 
-@router.post("/api/logout", tags=["Вход"], status_code=204, dependencies=csrf_protected, summary="Выход")
+@router.post("/api/logout", tags=["Вход"], status_code=204, dependencies=csrf_protected,
+             responses=errors(403), summary="Выход")
 def logout(request: Request, auth: AuthStore = Depends(get_auth)) -> Response:
     auth.close_session(request.cookies.get(SESSION_COOKIE))
     response = Response(status_code=204)
@@ -350,7 +418,7 @@ def logout(request: Request, auth: AuthStore = Depends(get_auth)) -> Response:
     return response
 
 
-@router.get("/api/me", tags=["Вход"], response_model=schemas.MeOut, responses=ERRORS, summary="Кто вошёл")
+@router.get("/api/me", tags=["Вход"], response_model=schemas.MeOut, responses=errors(401), summary="Кто вошёл")
 def me(user: User = Depends(current_user)) -> dict:
     return views.me_json(user)
 
@@ -365,7 +433,8 @@ def session(request: Request, auth: AuthStore = Depends(get_auth)) -> dict:
 
 # --- прогноз ---
 
-@router.post("/api/forecast", tags=["Прогноз"], response_model=schemas.ForecastOut, responses=ERRORS,
+@router.post("/api/forecast", tags=["Прогноз"], response_model=schemas.ForecastOut,
+             responses=errors(401, 403, 413, 422),
              dependencies=csrf_protected, openapi_extra=body_doc(schemas.ForecastIn),
              summary="Прогноз продаж рейса",
              description="Число мест и прогноз продаж: желают = 0.5_base_demand − price_sensitivity × "
@@ -389,7 +458,7 @@ def forecast(request: Request, payload: Any = Body(None), user: User = Depends(c
     return views.forecast_json(source, route, flight, result, advise(route, flight, query.price), cabin, save)
 
 
-@router.get("/api/best-price", tags=["Прогноз"], response_model=schemas.BestPriceOut, responses=ERRORS,
+@router.get("/api/best-price", tags=["Прогноз"], response_model=schemas.BestPriceOut, responses=errors(401, 422),
             summary="Лучшая цена и кривая прибыли",
             description="Ожидаемая прибыль = среднее по 9 сценариям от (цена − cost_per_passenger) × "
                         "min(seats, max(0, спрос сценария)). Кривая — от price_min до price_max с шагом 10 ₽; "
@@ -408,12 +477,12 @@ def get_best_price(origin: str | None = Q_ORIGIN, destination: str | None = Q_DE
     return views.best_price_json(source_id, query.route, query.flight, advice, curve, CURVE_STEP)
 
 
-@router.get("/api/calendar", tags=["Прогноз"], response_model=schemas.CalendarOut, responses=ERRORS,
+@router.get("/api/calendar", tags=["Прогноз"], response_model=schemas.CalendarOut, responses=errors(401, 422),
             summary="Загрузка по дням месяца",
             description="Для выбранного маршрута и цены — прогноз на каждый день из файла прогноза: "
                         "загрузка, упор в места, пятницы и праздник 12 июня.")
 def get_calendar(origin: str | None = Q_ORIGIN, destination: str | None = Q_DESTINATION,
-                 price: str | None = Query(None, description="Цена билета, ₽", examples=[5500]),
+                 price: str | None = Q_PRICE,
                  source: str | None = Q_SOURCE, user: User = Depends(current_user),
                  sources: ForecastSources = Depends(get_sources)) -> dict:
     data = {"origin": origin, "destination": destination, "price": price, "source": source}
@@ -424,10 +493,10 @@ def get_calendar(origin: str | None = Q_ORIGIN, destination: str | None = Q_DEST
     return views.calendar_json(source_id, query.route, query.price, days)
 
 
-@router.get("/api/compare", tags=["Прогноз"], response_model=schemas.CompareOut, responses=ERRORS,
+@router.get("/api/compare", tags=["Прогноз"], response_model=schemas.CompareOut, responses=errors(401, 422),
             summary="Сравнить прогноз организаторов и нашей ML-модели на одном рейсе")
 def compare(origin: str | None = Q_ORIGIN, destination: str | None = Q_DESTINATION, date: str | None = Q_DATE,
-            price: str | None = Query(None, description="Цена билета, ₽", examples=[5500]),
+            price: str | None = Q_PRICE,
             user: User = Depends(current_user), sources: ForecastSources = Depends(get_sources)) -> dict:
     data = {"origin": origin, "destination": destination, "date": date, "price": price}
     checked = parse_forecast_query(sources.catalog(ORGANIZERS), data)
@@ -447,7 +516,7 @@ def compare(origin: str | None = Q_ORIGIN, destination: str | None = Q_DESTINATI
     return {"date": checked.flight.date.isoformat(), "price": checked.price, "sources": rows}
 
 
-@router.get("/api/story", tags=["Прогноз"], response_model=schemas.StoryOut, responses=ERRORS,
+@router.get("/api/story", tags=["Прогноз"], response_model=schemas.StoryOut, responses=errors(422),
             summary="Сквозная история: пятница 12 июня на рейсе Москва → Санкт-Петербург",
             description="Публичный адрес для витрины. Медиана спроса 12 июня, коридор 10–90 %, все пятницы "
                         "июня и на сколько 12 июня ниже остальных; 9 сценариев и лучшая цена при базовой цене.")
@@ -466,14 +535,14 @@ def story(source: str | None = Q_SOURCE, sources: ForecastSources = Depends(get_
 
 # --- история ---
 
-@router.get("/api/history", tags=["История"], response_model=schemas.HistoryOut, responses=ERRORS,
+@router.get("/api/history", tags=["История"], response_model=schemas.HistoryOut, responses=errors(401, 422),
             summary="Последние расчёты")
 def history_latest(limit: int = Query(10, ge=1, le=50, description="Сколько расчётов вернуть, 1–50"),
                    user: User = Depends(current_user), history: HistoryStore = Depends(get_history)) -> dict:
     return {"items": [views.history_item_json(e) for e in history.latest(user.id, limit)]}
 
 
-@router.get("/api/history.csv", tags=["История"], responses=ERRORS, summary="Вся история в CSV",
+@router.get("/api/history.csv", tags=["История"], responses=errors(401), summary="Вся история в CSV",
             description="CSV для Excel: кодировка UTF-8 с BOM, разделитель «;», десятичная запятая.",
             response_class=Response)
 def history_export(user: User = Depends(current_user), history: HistoryStore = Depends(get_history)) -> Response:
@@ -486,14 +555,17 @@ def history_export(user: User = Depends(current_user), history: HistoryStore = D
 
 # --- сессии и ошибки ---
 
-def _check_signup_limit(request: Request) -> None:
-    wait = request.app.state.signup_limiter.retry_after(client_ip(request))
-    if wait:
-        raise TooManyAttempts("Слишком много новых аккаунтов с одного адреса.", wait)
+def _check_limits(request: Request, limiters: Any, message: str) -> None:
+    for limiter in limiters:
+        wait = limiter.retry_after(client_ip(request))
+        if wait:
+            raise TooManyAttempts(message, wait)
 
 
 def _start_session(request: Request, response: Response, user: User) -> None:
+    """Новая сессия вместо прежней: прежняя (например, гостевая) закрывается."""
     settings: Settings = request.app.state.settings
+    request.app.state.auth.close_session(request.cookies.get(SESSION_COOKIE))
     response.set_cookie(
         SESSION_COOKIE,
         request.app.state.auth.open_session(user),

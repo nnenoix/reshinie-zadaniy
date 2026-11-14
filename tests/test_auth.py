@@ -155,3 +155,10 @@ def test_repeated_password_must_match():
 
 def test_repeated_password_is_optional_for_api_clients():
     assert parse_credentials({"login": "anna", "password": "password1", "password2": "password1"}) == ("anna", "password1")
+
+
+def test_login_rule_names_russian_and_latin_letters():
+    with pytest.raises(InputError) as caught:
+        parse_credentials({"login": "a!", "password": "password1"})
+
+    assert "русские и латинские буквы" in caught.value.message

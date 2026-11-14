@@ -43,7 +43,7 @@ def test_post_without_csrf_token_is_rejected(raw_client):
     response = raw_client.post("/api/register", json=LOGIN)
 
     assert response.status_code == 403
-    assert response.json() == {"detail": CSRF_ERROR, "field": None}
+    assert response.json() == {"detail": CSRF_ERROR, "field": None, "code": "NO_TOKEN"}
 
 
 def test_post_with_wrong_csrf_token_is_rejected(raw_client):
@@ -161,18 +161,16 @@ def test_successful_login_resets_the_counter(client):
     assert client.post("/api/login", json=LOGIN).status_code == 200
 
 
-def test_signups_from_one_address_are_limited(settings):
-    limited = Settings(**{**settings.__dict__, "signup_limit": 2})
+def test_guests_from_one_address_are_limited(settings):
+    limited = Settings(**{**settings.__dict__, "guest_limit": 2})
     with TestClient(create_app(limited)) as client:
         client.headers["X-CSRF-Token"] = client.get("/api/csrf").json()["token"]
-        assert client.post("/api/guest").status_code == 201
-        assert client.post("/api/register", json=LOGIN).status_code == 201
+        codes = []
+        for _ in range(3):
+            client.cookies.delete("session")
+            codes.append(client.post("/api/guest").status_code)
 
-        response = client.post("/api/guest")
-
-    assert response.status_code == 429
-    assert response.json()["detail"].startswith("Слишком много новых аккаунтов с одного адреса.")
-
+    assert codes == [201, 201, 429]
 
 
 # --- адрес клиента: подменённый X-Forwarded-For не помогает обойти лимиты ---
@@ -209,12 +207,14 @@ def test_spoofed_forwarded_for_does_not_reset_the_login_limit(client):
     assert response.status_code == 429
 
 
-def test_spoofed_forwarded_for_does_not_reset_the_signup_limit(settings):
-    limited = Settings(**{**settings.__dict__, "signup_limit": 2})
+def test_spoofed_forwarded_for_does_not_reset_the_guest_limit(settings):
+    limited = Settings(**{**settings.__dict__, "guest_limit": 2})
     with TestClient(create_app(limited)) as client:
         client.headers["X-CSRF-Token"] = client.get("/api/csrf").json()["token"]
-        codes = [client.post("/api/guest", headers={"X-Forwarded-For": f"203.0.113.{i}"}).status_code
-                 for i in range(3)]
+        codes = []
+        for i in range(3):
+            client.cookies.delete("session")
+            codes.append(client.post("/api/guest", headers={"X-Forwarded-For": f"203.0.113.{i}"}).status_code)
 
     assert codes == [201, 201, 429]
 
@@ -235,22 +235,6 @@ def test_different_clients_behind_cloudflare_have_separate_limits(behind_cloudfl
     response = behind_cloudflare.post("/api/login", json=LOGIN, headers={"CF-Connecting-IP": "198.51.100.2"})
 
     assert response.status_code == 200
-
-
-def test_account_is_locked_after_ten_failures_from_different_addresses(behind_cloudflare, clock):
-    register_and_logout(behind_cloudflare)
-    for i in range(10):
-        assert behind_cloudflare.post("/api/login", json=WRONG,
-                                      headers={"CF-Connecting-IP": f"203.0.113.{i}"}).status_code == 401
-
-    response = behind_cloudflare.post("/api/login", json=LOGIN, headers={"CF-Connecting-IP": "198.51.100.2"})
-
-    assert response.status_code == 429
-    assert response.json()["detail"] == ("Слишком много неудачных попыток входа в этот аккаунт. "
-                                         "Попробуйте через 15 мин.")
-    clock.now += timedelta(minutes=15, seconds=1)
-    assert behind_cloudflare.post("/api/login", json=LOGIN,
-                                  headers={"CF-Connecting-IP": "198.51.100.2"}).status_code == 200
 
 
 def test_static_files_are_revalidated_after_a_deploy(raw_client):

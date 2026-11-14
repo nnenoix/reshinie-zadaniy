@@ -12,11 +12,15 @@ DEMO_LOGIN       демо-аккаунт для жюри; по умолчани�
 DEMO_PASSWORD    пароль демо-аккаунта; не задан — демо-аккаунта нет (в репозитории пароля нет)
 LOGIN_LIMIT      сколько неудачных входов подряд разрешено с одного адреса; по умолчанию 5
 LOGIN_WINDOW_MINUTES  за какое окно они считаются; по умолчанию 5
-ACCOUNT_LOGIN_LIMIT   сколько неудачных входов в один аккаунт с любых адресов; по умолчанию 10
+ACCOUNT_LOGIN_LIMIT   после скольких неудачных входов в один аккаунт с любых адресов каждая следующая
+                      попытка ждёт ACCOUNT_LOGIN_DELAY_SECONDS; по умолчанию 10 (верный пароль всё равно пускает)
 ACCOUNT_LOGIN_WINDOW_MINUTES  за какое окно; по умолчанию 15
+ACCOUNT_LOGIN_DELAY_SECONDS   задержка попытки входа в такой аккаунт; по умолчанию 2
 CLIENT_IP_HEADER заголовок с адресом клиента, который ставит прокси (на Render — cf-connecting-ip);
                  пусто — адрес соединения, X-Forwarded-For не читается
-SIGNUP_LIMIT     сколько новых аккаунтов и гостей в час с одного адреса; по умолчанию 20
+SIGNUP_LIMIT     сколько попыток регистрации в час с одного адреса (и удачных, и с занятым логином); по умолчанию 30
+GUEST_LIMIT      сколько гостей в час с одного адреса; по умолчанию 300 (офис жюри за одним NAT)
+GUEST_MINUTE_LIMIT  сколько гостей в минуту с одного адреса; по умолчанию 20
 LINK_*           адреса «Файлов решения» на витрине (список — в app/solution_files.py)
 
 Относительные пути считаются от папки проекта.
@@ -45,10 +49,13 @@ class Settings:
     demo_password: str = ""  # пароль только из окружения: в репозитории его нет
     login_limit: int = 5
     login_window_minutes: int = 5
-    account_login_limit: int = 10  # неудачных входов в один аккаунт с любых адресов
+    account_login_limit: int = 10  # неудачных входов в один аккаунт с любых адресов, после них — задержка
     account_login_window_minutes: int = 15
+    account_login_delay_seconds: float = 2.0
     client_ip_header: str | None = None
-    signup_limit: int = 20  # новых аккаунтов (и гостей) с одного адреса в час
+    signup_limit: int = 30  # попыток регистрации с одного адреса в час
+    guest_limit: int = 300  # гостей с одного адреса в час
+    guest_minute_limit: int = 20  # гостей с одного адреса в минуту
     file_links: Mapping[str, str] = field(default_factory=lambda: file_links({}))  # «Файлы решения» на витрине
 
     @classmethod
@@ -64,6 +71,9 @@ def from_environment(env: Mapping[str, str]) -> Settings:
 
     def number(name: str, default: int) -> int:
         return int(text(name) or default)
+
+    def seconds(name: str, default: float) -> float:
+        return float(text(name) or default)
 
     def path(name: str, default: Path) -> Path:
         raw = text(name)
@@ -86,7 +96,10 @@ def from_environment(env: Mapping[str, str]) -> Settings:
         login_window_minutes=number("LOGIN_WINDOW_MINUTES", defaults.login_window_minutes),
         account_login_limit=number("ACCOUNT_LOGIN_LIMIT", defaults.account_login_limit),
         account_login_window_minutes=number("ACCOUNT_LOGIN_WINDOW_MINUTES", defaults.account_login_window_minutes),
+        account_login_delay_seconds=seconds("ACCOUNT_LOGIN_DELAY_SECONDS", defaults.account_login_delay_seconds),
         client_ip_header=text("CLIENT_IP_HEADER").lower() or None,
         signup_limit=number("SIGNUP_LIMIT", defaults.signup_limit),
+        guest_limit=number("GUEST_LIMIT", defaults.guest_limit),
+        guest_minute_limit=number("GUEST_MINUTE_LIMIT", defaults.guest_minute_limit),
         file_links=file_links(env),
     )

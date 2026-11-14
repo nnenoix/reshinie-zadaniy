@@ -3,10 +3,16 @@
 Пароли хранятся как scrypt-хеш с солью. В браузер уходит случайный токен сессии
 (в httpOnly-cookie), а в базе лежит только его SHA-256, поэтому утечка базы
 не даёт войти ни по паролю, ни по сессии.
+
+Параметры scrypt (N=2^14, r=8, p=1) — сознательный выбор: каждая проверка берёт 16 МБ памяти,
+а у бесплатного сервиса Render всего 512 МБ, так что N=2^15 и выше при нескольких входах
+сразу рискуют уронить процесс. Проверка занимает около 50 мс.
 """
 import base64
+import functools
 import hashlib
 import hmac
+import logging
 import re
 import secrets
 from dataclasses import dataclass
@@ -17,9 +23,12 @@ from app.db import Database, Duplicate, prepare
 from app.errors import InputError
 
 SCRYPT_N, SCRYPT_R, SCRYPT_P, SCRYPT_LEN = 2**14, 8, 1, 32
-LOGIN_PATTERN = re.compile(r"[A-Za-zА-Яа-яЁё0-9_.@+\-]{3,64}")  # логин или email
+LOGIN_MIN, LOGIN_MAX = 3, 64
+LOGIN_PATTERN = re.compile(rf"[A-Za-zА-Яа-яЁё0-9_.@+\-]{{{LOGIN_MIN},{LOGIN_MAX}}}")  # логин или email
 PASSWORD_MIN, PASSWORD_MAX = 8, 128
 GUEST_PREFIX = "гость-"
+GUEST_HASH = "guest"  # не scrypt: под гостем по паролю не войти, и создание гостя не тратит scrypt
+log = logging.getLogger("aviaprognoz.auth")
 
 SCHEMA = """
 create table if not exists users (
@@ -63,6 +72,13 @@ def verify_password(password: str, stored: str) -> bool:
         return False
 
 
+@functools.cache
+def _dummy_hash() -> str:
+    """Хеш, с которым сверяется пароль несуществующего логина: ответ идёт столько же, сколько с настоящим.
+    Случайные соль и результат: ни один пароль к нему не подходит."""
+    return "$".join(["scrypt", _b64(secrets.token_bytes(16)), _b64(secrets.token_bytes(SCRYPT_LEN))])
+
+
 def is_guest(login: str) -> bool:
     return login.casefold().startswith(GUEST_PREFIX)
 
@@ -76,7 +92,8 @@ def parse_credentials(data: Any) -> tuple[str, str]:
     if not LOGIN_PATTERN.fullmatch(login):
         raise InputError(
             "login",
-            "Логин или email: от 3 до 64 символов — буквы, цифры, точка, дефис, подчёркивание, @ или +.",
+            f"Логин или email: от {LOGIN_MIN} до {LOGIN_MAX} символов — русские и латинские буквы, цифры, "
+            "точка, дефис, подчёркивание, @ или +.",
         )
     if is_guest(login):
         raise InputError("login", f"Логины «{GUEST_PREFIX}…» заняты под гостевой вход.")
@@ -84,6 +101,19 @@ def parse_credentials(data: Any) -> tuple[str, str]:
         raise InputError("password", f"Пароль: от {PASSWORD_MIN} до {PASSWORD_MAX} символов.")
     if "password2" in data and data.get("password2") != password:
         raise InputError("password2", "Пароли не совпадают.")
+    return login, password
+
+
+def parse_login_attempt(data: Any) -> tuple[str, str]:
+    """Логин и пароль для входа. Слишком длинные отклоняются сразу: такой логин не может
+    существовать, и его незачем держать в лимитере и писать в журнал."""
+    data = data if isinstance(data, dict) else {}
+    login = str(data.get("login") or "").strip()
+    password = str(data.get("password") or "")
+    if len(login) > LOGIN_MAX:
+        raise InputError("login", f"Логин или email — не длиннее {LOGIN_MAX} символов.")
+    if len(password) > PASSWORD_MAX:
+        raise InputError("password", f"Пароль — не длиннее {PASSWORD_MAX} символов.")
     return login, password
 
 
@@ -103,38 +133,56 @@ class AuthStore:
         prepare(database, SCHEMA)
 
     def register(self, login: str, password: str) -> User:
+        """Занятость логина проверяется до scrypt: занятый логин не тратит процессор сервера."""
+        if self._stored_hash(login) is not None:
+            raise LoginTaken(login)
+        return self._insert(login, hash_password(password))
+
+    def create_guest(self) -> User:
+        """Гостевой аккаунт для жюри: случайный логин, войти по паролю нельзя."""
+        while True:
+            try:
+                return self._insert(f"{GUEST_PREFIX}{secrets.token_hex(3)}", GUEST_HASH)
+            except LoginTaken:
+                continue
+
+    def ensure_user(self, login: str, password: str) -> None:
+        """Демо-аккаунт: создаёт его или, если пароль в окружении сменили, обновляет хеш."""
+        stored = self._stored_hash(login)
+        if stored is None:
+            self.register(login, password)
+        elif not verify_password(password, stored):
+            with self.database.transaction() as db:
+                db.execute("update users set password_hash = ? where login_key = ?",
+                           (hash_password(password), login.casefold()))
+            log.warning("пароль аккаунта %r не совпадал с DEMO_PASSWORD и заменён на него", login)
+
+    def authenticate(self, login: str, password: str) -> User | None:
+        with self.database.transaction() as db:
+            row = db.one("select id, login, password_hash from users where login_key = ?", (login.casefold(),))
+        if row is None or row[2] == GUEST_HASH:
+            verify_password(password, _dummy_hash())  # столько же времени, сколько у настоящего логина
+            return None
+        if not verify_password(password, row[2]):
+            return None
+        return User(id=row[0], login=row[1])
+
+    def _stored_hash(self, login: str) -> str | None:
+        with self.database.transaction() as db:
+            row = db.one("select password_hash from users where login_key = ?", (login.casefold(),))
+        return row[0] if row else None
+
+    def _insert(self, login: str, password_hash: str) -> User:
         try:
             with self.database.transaction() as db:
                 (user_id,) = db.one(
                     "insert into users (login, login_key, password_hash, created_at) values (?, ?, ?, ?) "
                     "returning id",
-                    (login, login.casefold(), hash_password(password), self._timestamp()),
+                    (login, login.casefold(), password_hash, self._timestamp()),
                 )
-        except Duplicate:
+        except Duplicate:  # логин заняли между проверкой и записью
             raise LoginTaken(login) from None
         return User(id=user_id, login=login)
-
-    def create_guest(self) -> User:
-        """Гостевой аккаунт для жюри: случайный логин и пароль, который никто не знает."""
-        while True:
-            try:
-                return self.register(f"{GUEST_PREFIX}{secrets.token_hex(3)}", secrets.token_urlsafe(32))
-            except LoginTaken:
-                continue
-
-    def ensure_user(self, login: str, password: str) -> None:
-        """Создаёт аккаунт, если его ещё нет (демо-вход). Повторный вызов ничего не меняет."""
-        try:
-            self.register(login, password)
-        except LoginTaken:
-            pass
-
-    def authenticate(self, login: str, password: str) -> User | None:
-        with self.database.transaction() as db:
-            row = db.one("select id, login, password_hash from users where login_key = ?", (login.casefold(),))
-        if row is None or not verify_password(password, row[2]):
-            return None
-        return User(id=row[0], login=row[1])
 
     def open_session(self, user: User) -> str:
         token = secrets.token_urlsafe(32)
