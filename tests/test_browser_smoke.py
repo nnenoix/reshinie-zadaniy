@@ -236,6 +236,28 @@ def test_opening_the_story_without_login_leaves_no_errors_in_the_console(browser
     assert errors == []
 
 
+@pytest.mark.parametrize("start", ["/", "/login"])
+def test_guest_sees_the_story_flight_while_routes_are_still_loading(browser, base_url, start):
+    # «Войти как гость» открывает /app без параметров. Пока сервер отвечает на /api/routes,
+    # поля «Куда» и «Дата» уже заполнены, а вместо «Здесь появится прогноз» идёт расчёт.
+    context = browser.new_context(viewport={"width": 1024, "height": 900})
+    tab = context.new_page()
+    held = []
+    tab.route("**/api/routes*", lambda route: held.append(route))
+    tab.goto(base_url + start)
+    with tab.expect_request("**/api/routes*"):
+        tab.click("[data-guest] >> nth=0")
+    while_loading = tab.evaluate("""() => [document.querySelector('#destination').value, document.querySelector('#date').value,
+        [...document.querySelectorAll('[data-panel]')].filter((p) => !p.hidden).map((p) => p.dataset.panel)]""")
+    held[0].continue_()
+    wait_for_result(tab)
+    shown = [tab.url.removeprefix(base_url), tab.inner_text("#result-route"), tab.input_value("#source")]
+    context.close()
+
+    assert while_loading == ["Санкт-Петербург", "2026-06-12", ["loading"]]
+    assert shown == ["/app", "Москва → Санкт-Петербург · 12.06.2026 · 5 500 ₽", "ml"]
+
+
 TEXT_PERCENTS = r"""() => {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const bad = [];

@@ -8,7 +8,6 @@ import { dayMonth, dow, fmt, node, oddsText, parsePrice, percent, plural, rub, s
 import { drawProfit } from "./profit-chart.js";
 import { drawQueue, drawSeats, salonText } from "./seat-map.js";
 
-const STORY = { destination: "Санкт-Петербург", date: "2026-06-12" };
 const SLIDER_DELAY_MS = 250;
 const TABS = ["calc", "salon", "calendar", "ticket"];
 const DOWN = ["Сервер прогноза не отвечает", "Параметры рейса сохранены. Попробуйте ещё раз через минуту."];
@@ -16,6 +15,9 @@ const DOWN = ["Сервер прогноза не отвечает", "Парам
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const form = $("#forecast-form");
+// Рейс по умолчанию — Москва → Санкт-Петербург, 12 июня — записан в pages/app.html: страница
+// приходит с ним и с «Сервер считает…», не дожидаясь маршрутов. Параметры из адреса важнее.
+const STORY = { destination: form.elements.destination.value, date: form.elements.date.value };
 const range = $("#price-range");
 const priceInput = $("#price");
 const result = $("#result");

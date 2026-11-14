@@ -60,14 +60,14 @@
       <div class="field" data-field="destination">
         <label class="field__label" for="destination">Куда</label>
         <div class="field__box">
-          <select class="field__control" id="destination" name="destination"></select>
+          <select class="field__control" id="destination" name="destination"><option selected>Санкт-Петербург</option></select>
           <span class="field__suffix">▾</span>
         </div>
         <p class="field__error" data-error-for="destination" hidden></p>
       </div>
       <div class="field" data-field="date">
         <label class="field__label" for="date">Дата вылета</label>
-        <div class="field__box"><input class="field__control" type="date" id="date" name="date" required></div>
+        <div class="field__box"><input class="field__control" type="date" id="date" name="date" value="2026-06-12" required></div>
         <p class="field__hint" id="date-hint"></p>
         <p class="field__error" data-error-for="date" hidden></p>
       </div>
@@ -116,12 +116,12 @@
 
     <!-- Расчёт -->
     <section class="card tabpanel" data-tabpanel="calc" role="tabpanel" aria-live="polite">
-      <div class="empty" data-panel="empty">
+      <div class="empty" data-panel="empty" hidden>
         <h2 class="state__title">Здесь появится прогноз</h2>
         <p class="state__text">Выберите город, дату и цену билета — и нажмите «Рассчитать».</p>
       </div>
 
-      <div class="state" data-panel="loading" hidden>
+      <div class="state" data-panel="loading">
         <div class="progress"></div>
         <div class="skel-row"><span class="skel"></span><span class="skel"></span><span class="skel"></span><span class="skel"></span></div>
         <div class="skel-bars"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>

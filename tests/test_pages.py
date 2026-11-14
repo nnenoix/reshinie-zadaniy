@@ -217,6 +217,19 @@ def test_tool_opens_after_guest_login(guest):
         assert f'data-tab="{tab}"' in html
 
 
+def test_tool_opens_on_the_story_flight_before_its_script_runs(guest):
+    # На медленном сервере гость секунды смотрел на пустые «Куда» и «Дата» и «Здесь появится прогноз»,
+    # пока скрипт грузил маршруты. Страница сразу приходит с рейсом истории и «Сервер считает…».
+    story = guest.get("/api/story").json()
+    html = page(guest, "/app")
+
+    destination = re.search(r'<select[^>]*id="destination"[^>]*>(.*?)</select>', html, re.S).group(1)
+    assert destination.strip() == f'<option selected>{story["route"]["destination"]}</option>'
+    assert re.search(r'<input[^>]*id="date"[^>]*>', html).group(0).count(f'value="{story["date"]}"') == 1
+    assert re.search(r'data-panel="empty"[^>]*>', html).group(0).endswith(" hidden>")
+    assert "hidden" not in re.search(r'data-panel="loading"[^>]*>', html).group(0)
+
+
 def test_login_page_sends_signed_in_user_to_the_tool(guest):
     response = guest.get("/login")
 
