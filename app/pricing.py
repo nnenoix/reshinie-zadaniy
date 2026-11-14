@@ -69,6 +69,7 @@ def make_forecast(route: Route, flight: Flight, price: float) -> Forecast:
 # точек даёт точный ответ; тесты сверяют его с перебором каждого рубля.
 
 CURVE_STEP = 10  # шаг кривой прибыли, ₽
+PROFIT_TIE = 1e-6  # ₽: прибыли ближе этого считаются равными
 
 
 @dataclass(frozen=True)
@@ -113,7 +114,11 @@ def best_price(route: Route, flight: Flight) -> BestPrice:
         if top is not None and left < top < right:
             candidates.add(top)
     prices = {min(high, max(low, rounded)) for c in candidates for rounded in (math.floor(c), math.ceil(c))}
-    price = min(prices, key=lambda p: (-expected(route, flight, p).profit, p))
+    profits = {p: expected(route, flight, p).profit for p in prices}
+    top = max(profits.values())
+    # Ничья — меньшая цена. Разница меньше PROFIT_TIE — это шум float: sum() в Python 3.12
+    # складывает точнее, чем в 3.11, и без допуска версии выбирали бы разные цены.
+    price = min(p for p, profit in profits.items() if profit >= top - PROFIT_TIE)
     return BestPrice(price=price, expected=expected(route, flight, price))
 
 

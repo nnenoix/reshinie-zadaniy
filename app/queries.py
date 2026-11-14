@@ -16,6 +16,9 @@ from app.sources import ORGANIZERS
 
 NOT_A_NUMBER = "Цена должна быть числом, например 9500."
 BAD_DATE = "Дата должна быть в формате ГГГГ-ММ-ДД, например 2026-06-15."
+NO_SUCH_DATE = "Такой даты нет."
+PRICE_MAX = 1_000_000  # ₽: дороже билетов не бывает, а такое число испортит историю и график
+TOO_EXPENSIVE = f"Цена не больше {PRICE_MAX:,} ₽.".replace(",", " ")
 ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
@@ -105,7 +108,7 @@ def _parse_flight(catalog: Catalog, route: Route, raw: Any) -> Flight:
     try:
         day = date.fromisoformat(text)
     except ValueError:
-        raise InputError("date", BAD_DATE) from None
+        raise InputError("date", NO_SUCH_DATE) from None
     flight = catalog.find_flight(route.code, day)
     if flight is None:
         first, last = catalog.date_range(route.code)
@@ -131,6 +134,8 @@ def _parse_price(raw: Any) -> float:
         raise InputError("price", NOT_A_NUMBER)
     if price <= 0:
         raise InputError("price", "Цена должна быть больше нуля.")
+    if price > PRICE_MAX:
+        raise InputError("price", TOO_EXPENSIVE)
     return price
 
 

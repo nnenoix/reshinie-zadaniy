@@ -23,7 +23,7 @@ class ForecastIn(BaseModel):
     price: float | str = Field(description="Цена билета, ₽. Можно строкой: «9 500», «9500,5»", examples=[5500])
     source: str | None = Field(None, description="Источник прогноза: organizers или ml. По умолчанию — ml, "
                                                  "если файл нашей модели есть, иначе organizers")
-    save: bool = Field(False, description="true — записать расчёт в историю (кнопка «Посчитать»); "
+    save: bool = Field(False, description="true — записать расчёт в историю (кнопка «Рассчитать»); "
                                           "false — предпросмотр ползунка")
 
 
