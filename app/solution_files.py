@@ -4,6 +4,7 @@
 вёрстку при этом трогать не нужно. Строка без адреса не кликается и говорит,
 что файл лежит в папке сдачи.
 """
+import re
 from dataclasses import dataclass
 from html import escape
 from typing import Mapping
@@ -61,11 +62,19 @@ def breakable(name: str) -> str:
     return escape(name).replace("_", "_<wbr>")
 
 
+SHORT_WORD = re.compile(r"(?<![А-Яа-яЁё])([вксуоиаВКСУОИА]) ")
+
+
+def text_html(text: str) -> str:
+    """Подпись в HTML: однобуквенный предлог или союз не висит в конце строки — «и&nbsp;проверка»."""
+    return SHORT_WORD.sub(r"\1&nbsp;", escape(text))
+
+
 def files_html(links: Mapping[str, str]) -> str:
     rows = []
     for file in FILES:
         cells = (f'<span class="file__name">{breakable(file.name)}</span>'
-                 f'<span class="file__desc">{escape(file.description)}</span>'
+                 f'<span class="file__desc">{text_html(file.description)}</span>'
                  f'<span class="tag">{escape(file.tag)}</span>')
         url = safe_url(links.get(file.key, ""))
         if url:
@@ -73,5 +82,5 @@ def files_html(links: Mapping[str, str]) -> str:
             rows.append(f'<a class="file" href="{escape(url, quote=True)}"{new_tab}>{cells}'
                         '<span class="file__open">Открыть</span></a>')
         else:
-            rows.append(f'<div class="file is-pending">{cells}<span class="file__open">{NO_LINK}</span></div>')
+            rows.append(f'<div class="file is-pending">{cells}<span class="file__open">{text_html(NO_LINK)}</span></div>')
     return "\n    ".join(rows)

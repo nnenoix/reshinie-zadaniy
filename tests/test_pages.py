@@ -173,7 +173,7 @@ def test_files_without_a_link_say_where_they_are(client):
     assert links["Сайт"].group(1) == "/"
     for tag, attrs, body in rows:
         if tag == "div":
-            assert "href" not in attrs and "в папке сдачи" in body and "Открыть" not in body
+            assert "href" not in attrs and "в&nbsp;папке сдачи" in body and "Открыть" not in body
 
 
 def test_file_links_come_from_settings_without_touching_the_markup(settings):
@@ -415,10 +415,8 @@ HANGING = re.compile(r"(?<![А-Яа-яЁё])[вксуоиаВКСУОИА] ")
 
 
 def test_landing_keeps_numbers_rubles_and_short_words_together(client):
-    html = page(client, "/")
-    # «Файлы решения» собирает сервер из app/solution_files.py — их подписи проверяются не здесь
-    files = html.split('<div class="card files">', 1)[1].split("</section>", 1)[0]
-    text = visible_text(html.replace(files, ""))
+    # вся витрина, вместе с «Файлами решения» из app/solution_files.py
+    text = visible_text(page(client, "/"))
 
     assert re.findall(r"\d \d|.. ₽|\d сценари|День России", text) == []
     assert HANGING.findall(text) == []

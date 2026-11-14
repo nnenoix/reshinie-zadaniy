@@ -937,3 +937,27 @@ def test_landing_has_grey_page_white_cards_and_dark_headings(browser, base_url):
     assert found["page"] == "rgb(245, 246, 248)"  # --bg #F5F6F8
     assert (found["topbar"], found["card"], found["numbers"]) == (white, [white, "12px", True], [white, "12px"])
     assert len(found["headings"]) >= 6 and set(found["headings"]) == {found["ink"]}
+
+
+# Висячие однобуквенные предлоги и союзы и тире, оторванное от числа: «в / другие пятницы», «— / 5 605 ₽».
+LOOSE_WORDS = r"""() => {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const bad = [];
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (node.parentElement.closest('[hidden]')) continue;
+        const text = node.textContent;
+        if (/(^|[^А-Яа-яЁё])[вксуоиаВКСУОИА] |— \d/.test(text)) bad.push(text.trim());
+    }
+    return bad;
+}"""
+
+
+def test_texts_written_by_the_landing_script_keep_short_words_together(browser, base_url):
+    context = browser.new_context(viewport={"width": 1440, "height": 900})
+    tab = context.new_page()
+    tab.goto(base_url + "/")
+    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
+    bad = tab.evaluate(LOOSE_WORDS)
+    context.close()
+
+    assert bad == []

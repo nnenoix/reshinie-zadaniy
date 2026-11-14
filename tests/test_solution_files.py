@@ -43,7 +43,7 @@ def test_row_without_a_link_is_not_clickable():
     html = files_html(file_links({}))
 
     assert html.count('<div class="file is-pending">') == 5
-    assert html.count("в папке сдачи") == 5
+    assert html.count("в&nbsp;папке сдачи") == 5
     assert 'href="#"' not in html
 
 

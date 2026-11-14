@@ -46,13 +46,13 @@ async function loadStory() {
   story = response.data;
   setStory("source", story.source_name);
   setStory("drop", `−${percent(story.drop)}`);
-  setStory("summary", `медиана ${whole(story.median)} против ${whole(story.others_mean)} в другие пятницы`);
+  setStory("summary", `медиана ${whole(story.median)} против ${whole(story.others_mean)} в\u00A0другие пятницы`);
   setStory("chart-title", `${story.route.origin} → ${story.route.destination} · ${dayMonth(story.date)} · ${rub(story.price)}`);
   // в середине фразы строчная только первая буква: «наша ML-модель», а не «наша ml-модель»
   const source = story.source_name[0].toLowerCase() + story.source_name.slice(1);
   setStory("chart-how", `Девять сценариев спроса при базовой цене ${rub(story.price)}, источник: ` +
     `${source}. Коридор ${withPercent("10–90")}: от ${fmt(story.low)} до ${fmt(story.high)} желающих ` +
-    `при ${whole(story.seats)} местах. Лучшая цена по ожидаемой прибыли — ${rub(story.best.price)}.`);
+    `при ${whole(story.seats)} местах. Лучшая цена по ожидаемой прибыли —\u00A0${rub(story.best.price)}.`);
   drawFridays($("#story-fridays"), story);
   drawStoryChart();
 }
