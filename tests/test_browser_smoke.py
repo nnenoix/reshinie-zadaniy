@@ -83,7 +83,7 @@ def test_story_calculation_shows_numbers_and_odds(page):
     assert page.locator("#chart svg rect.ch-bar").count() == 9
 
 
-def test_page_is_drawn_with_the_three_design_fonts(page):
+def test_page_is_drawn_with_the_two_design_fonts(page):
     loaded = page.evaluate("""async () => {
         await document.fonts.ready;
         return [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family.replace(/["']/g, ''));
@@ -91,7 +91,7 @@ def test_page_is_drawn_with_the_three_design_fonts(page):
     if not loaded:
         pytest.skip("шрифты Google Fonts не загрузились: нет интернета")
 
-    assert set(loaded) == {"Unbounded", "Manrope", "Onest"}
+    assert set(loaded) == {"Manrope", "Onest"}
 
 
 def test_phone_header_of_a_guest_keeps_the_brand_on_one_line(browser, base_url):
