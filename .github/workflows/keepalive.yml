@@ -1,22 +1,67 @@
-# Пинг сайта каждые 10 минут: бесплатный сервис Render засыпает после 15 минут без запросов,
-# и первый запрос после сна ждёт около минуты. С пингом жюри открывает уже проснувшийся сайт.
-# GitHub может запускать расписание с опозданием и отключает его в репозитории без коммитов 60 дней.
+# Будильник сайта на время проверки: бесплатный Render усыпляет сервис после 15 минут без запросов,
+# и первый запрос после сна ждёт около минуты. Будильник открывает /api/health и /login каждые 10 минут.
+#
+# Расписание GitHub ненадёжно: запуск «*/10» на деле приходит раз в 3–7 часов. Поэтому один прогон
+# сам будит сайт каждые 10 минут почти 6 часов (лимит задания), а в конце запускает следующий прогон.
+# Расписание — запасной путь, если цепочка оборвётся. concurrency держит один прогон за раз.
+#
+# Работа сдана 15.11.2026, будильник нужен две недели: до UNTIL включительно (по Москве).
+# После этой даты прогон отключает workflow сам; если отключить не вышло, просто ничего не делает.
 name: keepalive
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Сколько минут будить сайт в этом прогоне (до 330)"
+        default: "330"
 
-permissions: {}
+permissions:
+  actions: write   # запустить следующий прогон и отключить workflow после срока
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+env:
+  SITE: https://reshinie-zadaniy.onrender.com
+  UNTIL: "2026-11-29"
+  MINUTES: ${{ inputs.minutes || '330' }}
 
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 355
     steps:
-      - name: GET /api/health
-        run: >
-          curl --fail --silent --show-error --max-time 90
-          --retry 4 --retry-delay 20 --retry-all-errors
-          https://reshinie-zadaniy.onrender.com/api/health
+      - name: Будить сайт каждые 10 минут
+        run: |
+          expired() { [ "$(TZ=Europe/Moscow date +%F)" \> "$UNTIL" ]; }
+          ping() {
+            curl --fail --silent --show-error --output /dev/null --write-out '%{http_code}' \
+              --max-time 90 --retry 4 --retry-delay 20 --retry-all-errors "$SITE$1"
+          }
+          end=$(( $(date +%s) + MINUTES * 60 )); fails=0
+          while ! expired; do
+            for path in /api/health /login; do
+              code=$(ping "$path") || code="${code:-нет ответа}"
+              if [ "$code" = 200 ]; then echo "$(date -u +%H:%M) $path 200"
+              else echo "::error::$path ответил $code"; fails=$((fails + 1)); fi
+            done
+            [ $(( $(date +%s) + 600 )) -lt "$end" ] || break
+            sleep 600
+          done
+          [ "$fails" -eq 0 ]
+
+      - name: Следующий прогон или отключение после срока
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(TZ=Europe/Moscow date +%F)" \> "$UNTIL" ]; then
+            echo "Срок $UNTIL прошёл, будильник отключается."
+            gh workflow disable keepalive.yml --repo "$GITHUB_REPOSITORY" || echo "Отключить не вышло, прогон ничего не делает."
+          else
+            gh workflow run keepalive.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
+          fi
