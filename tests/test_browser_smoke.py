@@ -136,7 +136,7 @@ def test_landing_chart_note_spells_the_source_as_it_is(browser, base_url):
     note = tab.inner_text('[data-story="chart-how"]')
     context.close()
 
-    assert "по прогнозу нашей ML-модели." in note  # не «наша ml-модель»
+    assert "по прогнозу моей модели." in note  # не «моя модель»
 
 
 def test_salon_scale_note_reads_as_one_paragraph(page):

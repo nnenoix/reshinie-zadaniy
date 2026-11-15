@@ -48,8 +48,8 @@ async function loadStory() {
   setStory("drop", `−${percent(story.drop)}`);
   setStory("summary", `медиана ${whole(story.median)} против ${whole(story.others_mean)} в\u00A0другие пятницы`);
   setStory("chart-title", `${story.route.origin} → ${story.route.destination} · ${dayMonth(story.date)} · ${rub(story.price)}`);
-  // источник в дательном падеже после «по прогнозу»: «нашей ML-модели», а не «наша ml-модель»
-  const source = story.source === "ml" ? "нашей ML-модели" : "организаторов";
+  // источник в дательном падеже после «по прогнозу»: «моей модели», а не «моя модель»
+  const source = story.source === "ml" ? "моей модели" : "организаторов";
   setStory("chart-how", `Девять сценариев спроса при базовой цене ${rub(story.price)} по прогнозу ${source}. ` +
     `С\u00A0вероятностью ${withPercent(80)} желающих будет от ${fmt(story.low)} до ${fmt(story.high)}, ` +
     `а\u00A0мест на всех рейсах дня ${whole(story.seats)}.`);
