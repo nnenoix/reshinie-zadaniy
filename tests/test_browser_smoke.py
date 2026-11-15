@@ -596,6 +596,31 @@ def test_landing_hero_fits_between_tablet_and_desktop(browser, base_url, width):
     assert lines <= 3 and len(set(tops)) == 1, (lines, tops)  # кнопки в ряд, а не столбиком
 
 
+CONTENT_BOXES = """(selectors) => selectors.map((selector) => {
+    const block = document.querySelector(selector), style = getComputedStyle(block), box = block.getBoundingClientRect();
+    const left = box.left + parseFloat(style.paddingLeft), right = box.right - parseFloat(style.paddingRight);
+    return [selector, Math.round(left), Math.round(document.documentElement.clientWidth - right), Math.round(right - left)];
+})"""
+PAGE_BLOCKS = {
+    "/": [".topbar", ".lp-hero", "#numbers", "#case", "#story", "#files", ".lp-foot"],
+    "/app": [".topbar", ".hero", ".layout", ".history-wrap"],
+}
+
+
+@pytest.mark.parametrize("path", PAGE_BLOCKS)
+@pytest.mark.parametrize("width, content", [(1200, 1088), (1440, 1280), (2560, 1280)])
+def test_wide_screen_keeps_content_in_a_centred_column(browser, base_url, path, width, content):
+    context = browser.new_context(viewport={"width": width, "height": 900})
+    tab = context.new_page()
+    become_guest(tab, base_url)
+    tab.goto(base_url + path)
+    boxes = tab.evaluate(CONTENT_BOXES, PAGE_BLOCKS[path])
+    context.close()
+
+    for selector, left, right, inner in boxes:
+        assert abs(inner - content) <= 1 and abs(left - right) <= 1, (selector, left, right, inner)
+
+
 def test_story_chart_card_is_as_tall_as_its_content(browser, base_url):
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
