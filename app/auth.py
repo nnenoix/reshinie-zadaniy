@@ -92,13 +92,13 @@ def parse_credentials(data: Any) -> tuple[str, str]:
     if not LOGIN_PATTERN.fullmatch(login):
         raise InputError(
             "login",
-            f"Логин или email: от {LOGIN_MIN} до {LOGIN_MAX} символов — русские и латинские буквы, цифры, "
-            "точка, дефис, подчёркивание, @ или +.",
+            f"Логин или email должен быть длиной от {LOGIN_MIN} до {LOGIN_MAX} символов и состоять из русских "
+            "и латинских букв, цифр, точки, дефиса, подчёркивания, @ или +.",
         )
     if is_guest(login):
         raise InputError("login", f"Логины «{GUEST_PREFIX}…» заняты под гостевой вход.")
     if not isinstance(password, str) or not PASSWORD_MIN <= len(password) <= PASSWORD_MAX:
-        raise InputError("password", f"Пароль: от {PASSWORD_MIN} до {PASSWORD_MAX} символов.")
+        raise InputError("password", f"Пароль должен быть длиной от {PASSWORD_MIN} до {PASSWORD_MAX} символов.")
     if "password2" in data and data.get("password2") != password:
         raise InputError("password2", "Пароли не совпадают.")
     return login, password
@@ -111,9 +111,9 @@ def parse_login_attempt(data: Any) -> tuple[str, str]:
     login = str(data.get("login") or "").strip()
     password = str(data.get("password") or "")
     if len(login) > LOGIN_MAX:
-        raise InputError("login", f"Логин или email — не длиннее {LOGIN_MAX} символов.")
+        raise InputError("login", f"Логин или email должен быть не длиннее {LOGIN_MAX} символов.")
     if len(password) > PASSWORD_MAX:
-        raise InputError("password", f"Пароль — не длиннее {PASSWORD_MAX} символов.")
+        raise InputError("password", f"Пароль должен быть не длиннее {PASSWORD_MAX} символов.")
     return login, password
 
 

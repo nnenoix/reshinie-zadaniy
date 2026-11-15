@@ -84,7 +84,7 @@
       <div class="range-scale"><span id="range-min"></span><span>Цены маршрута</span><span id="range-max"></span></div>
     </div>
     <button class="btn" type="submit" id="submit"><span data-btn-text>Рассчитать</span></button>
-    <p class="form-note">Ползунок пересчитывает прогноз сразу, в историю не пишет. В историю пишут «Рассчитать», «Поставить лучшую цену», «Повторить» в истории и клик по дню календаря.</p>
+    <p class="form-note">Ползунок пересчитывает прогноз сразу, но в&nbsp;историю не пишет. Туда попадают «Рассчитать», «Поставить лучшую цену», «Повторить» и&nbsp;клик по дню календаря.</p>
   </form>
 
   <div class="main-col" id="result">
@@ -102,14 +102,14 @@
     <section class="card tabpanel" id="panel-calc" data-tabpanel="calc" role="tabpanel" aria-labelledby="tab-calc">
       <div class="empty" data-panel="empty" hidden>
         <h2 class="state__title">Здесь появится прогноз</h2>
-        <p class="state__text">Выберите город, дату и цену билета — и нажмите «Рассчитать».</p>
+        <p class="state__text">Выберите город, дату и&nbsp;цену билета, затем нажмите «Рассчитать».</p>
       </div>
 
       <div class="state" data-panel="loading">
         <div class="progress"></div>
         <div class="skel-row"><span class="skel"></span><span class="skel"></span><span class="skel"></span><span class="skel"></span></div>
         <div class="skel-bars"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-        <p class="state__text">Сервер считает 9&nbsp;сценариев спроса. Обычно это меньше секунды.</p>
+        <p class="state__text">Сервер считает 9&nbsp;сценариев спроса, на это обычно уходит меньше секунды.</p>
       </div>
 
       <div class="state" data-panel="error" hidden>
@@ -208,9 +208,9 @@
           <li><span id="cal-min"></span><span class="legend__sw legend__sw--scale"></span><span id="cal-max"></span></li>
           <li><span class="legend__sw legend__sw--fri"></span>Пятница</li>
           <li><span class="legend__sw legend__sw--sel"></span>Выбранный день</li>
-          <li><span class="tag">Упор</span>в места</li>
+          <li><span class="tag">Мест нет</span>все билеты проданы</li>
         </ul>
-        <p class="how" id="cal-how">Нажмите на день — откроется расчёт на эту дату.</p>
+        <p class="how" id="cal-how">Нажмите на день, чтобы открыть расчёт на эту дату.</p>
       </div>
     </section>
 
@@ -256,7 +256,7 @@
           <button class="btn btn--ghost btn--small" type="button" id="dl-pdf">Скачать PDF ↓</button>
         </div>
         <p class="field__error" id="ticket-error" role="alert" hidden></p>
-        <p class="small-note">Талон собирается из текущего расчёта. PNG и PDF делаются прямо в браузере, на сервер ничего не уходит.</p>
+        <p class="small-note">Талон в&nbsp;PNG и&nbsp;PDF собирается в&nbsp;браузере из текущего расчёта и&nbsp;на сервер не отправляется.</p>
       </div>
     </section>
   </div>
@@ -274,7 +274,7 @@
       <li><span class="legend__sw legend__sw--dot"></span>Ваша цена</li>
     </ul>
     <button class="btn btn--outline" type="button" id="apply-best"><span>Поставить лучшую цену</span><span class="btn__small" id="apply-best-price"></span></button>
-    <p class="small-note" id="best-note">Ожидаемая прибыль — среднее по 9&nbsp;сценариям от (цена − расходы на пассажира) × купят. Кривую и максимум считает сервер.</p>
+    <p class="small-note" id="best-note">Ожидаемая прибыль — среднее по 9&nbsp;сценариям значение (цена − расходы на пассажира) × купят.</p>
   </section>
 </main>
 
@@ -293,7 +293,7 @@
           <th class="l">Время</th><th class="l">Маршрут</th><th class="l">Дата вылета</th><th>Цена, ₽</th><th>Мест</th><th>Желают</th><th>Купят</th><th>Загрузка</th><th></th>
         </tr></thead>
         <tbody id="history-body">
-          <tr class="history__empty"><td colspan="9">Расчётов пока нет. Нажмите «Рассчитать» — расчёт появится здесь.</td></tr>
+          <tr class="history__empty"><td colspan="9">Расчёты появятся здесь, когда вы нажмёте «Рассчитать».</td></tr>
         </tbody>
       </table>
     </div>

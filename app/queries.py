@@ -18,7 +18,7 @@ NOT_A_NUMBER = "Цена должна быть числом, например 95
 BAD_DATE = "Дата должна быть в формате ГГГГ-ММ-ДД, например 2026-06-15."
 NO_SUCH_DATE = "Такой даты нет."
 PRICE_MAX = 1_000_000  # ₽: дороже билетов не бывает, а такое число испортит историю и график
-TOO_EXPENSIVE = f"Цена не больше {PRICE_MAX:,} ₽.".replace(",", " ")
+TOO_EXPENSIVE = f"Цена должна быть не больше {PRICE_MAX:,} ₽.".replace(",", " ")
 ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
@@ -47,7 +47,7 @@ def parse_source(data: Any, default: str = ORGANIZERS) -> str:
     if raw is None or (isinstance(raw, str) and not raw.strip()):
         return default
     if not isinstance(raw, str):
-        raise InputError("source", "Источник прогноза — это слово: organizers или ml.")
+        raise InputError("source", "Источник прогноза указывается словом organizers или ml.")
     return raw.strip()
 
 
@@ -88,15 +88,15 @@ def _parse_route(catalog: Catalog, raw_origin: Any, raw_destination: Any) -> Rou
     if origin is None:
         raise InputError(
             "origin",
-            f"Из города «{origin_text}» рейсов нет. Есть рейсы из: {', '.join(catalog.origins())}.",
+            f"Из города «{origin_text}» рейсов нет. Города вылета: {', '.join(catalog.origins())}.",
         )
     destinations = catalog.destinations(origin)
     destination = _match_city(destination_text, destinations)
     if destination is None:
         raise InputError(
             "destination",
-            f"Рейсов {origin} — {destination_text} нет. "
-            f"Из города {origin} можно улететь в: {', '.join(destinations)}.",
+            f"Рейсов {origin} → {destination_text} нет. "
+            f"Направления из города {origin}: {', '.join(destinations)}.",
         )
     return catalog.find_route(origin, destination)
 

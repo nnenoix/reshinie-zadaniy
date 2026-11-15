@@ -37,7 +37,7 @@ export function drawCalendar(box, days, { selected, onPick }) {
     cell.dataset.date = day.date;
     cell.style.setProperty("--mix", `${mix}%`);
     cell.setAttribute("aria-label", `${shortDate(day.date)}, загрузка ${withPercent(pct)}` +
-      (day.sold_out ? ", упор в места" : "") + (day.holiday ? `, ${day.holiday}` : ""));
+      (day.sold_out ? ", мест нет" : "") + (day.holiday ? `, ${day.holiday}` : ""));
 
     const topRow = node("span", "cal__top");
     const label = date.getMonth() === month ? String(date.getDate()) : `${date.getDate()}.${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -54,7 +54,7 @@ export function drawCalendar(box, days, { selected, onPick }) {
     const load = node("span", "cal__load", fmt(pct, 0));
     load.append(node("small", "", "%"));
     bottomRow.append(load);
-    if (day.sold_out) bottomRow.append(node("span", "cal__cap", "Упор"));
+    if (day.sold_out) bottomRow.append(node("span", "cal__cap", "Мест нет"));
     cell.append(topRow, bottomRow);
     cell.addEventListener("click", () => onPick(day.date));
     cells.push(cell);

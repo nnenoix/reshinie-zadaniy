@@ -59,8 +59,8 @@ def test_check_scripts_come_as_one_archive():
 
     assert (checks.name, checks.tag, checks.env) == \
         ("Титаренко_Егор_Константинович_Проверка.zip", "ZIP", "LINK_CHECK_SCRIPTS")
-    assert checks.description == ("proverka_bia.py и proverka_forecast.py с нужными файлами: "
-                                  "пересчёт чисел аналитики и проверка файла прогноза")
+    assert checks.description == ("Скрипты проверки и данные к ним: proverka_bia.py пересчитывает числа аналитики, "
+                                  "а proverka_forecast.py проверяет файл прогноза")
 
 
 def test_files_keep_their_order_without_numbers():

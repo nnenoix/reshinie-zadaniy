@@ -75,14 +75,14 @@ def test_unknown_origin_lists_available_cities(catalog):
     error = error_for(catalog, payload(origin="Казань"))
 
     assert error.field == "origin"
-    assert error.message == "Из города «Казань» рейсов нет. Есть рейсы из: Москва."
+    assert error.message == "Из города «Казань» рейсов нет. Города вылета: Москва."
 
 
 def test_unknown_destination_lists_available_cities(catalog):
     error = error_for(catalog, payload(destination="Париж"))
 
     assert error.field == "destination"
-    assert error.message.startswith("Рейсов Москва — Париж нет. Из города Москва можно улететь в: Сочи,")
+    assert error.message.startswith("Рейсов Москва → Париж нет. Направления из города Москва: Сочи,")
 
 
 @pytest.mark.parametrize("field", ["origin", "destination", "date"])

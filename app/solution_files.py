@@ -29,13 +29,13 @@ FILES = (
     SolutionFile("notebook", "Титаренко_Егор_Константинович_ml_demand_forecast.ipynb",
                  "Ноутбук ML-части: обучение, выбор модели, проверка на мае, бэктест", "IPYNB", "LINK_ML_NOTEBOOK"),
     SolutionFile("forecast", "Титаренко_Егор_Константинович_my_forecast.csv",
-                 "Прогноз спроса и цен на июнь, его читает сервис", "CSV", "LINK_MY_FORECAST"),
+                 "Прогноз спроса и цен на июнь, по которому работает сервис", "CSV", "LINK_MY_FORECAST"),
     SolutionFile("code", "Код сервиса", "FastAPI, SQLite и Postgres, страница на JavaScript, тесты и README",
                  "GitHub", "LINK_CODE", GITHUB),
     SolutionFile("checks", "Титаренко_Егор_Константинович_Проверка.zip",
-                 "proverka_bia.py и proverka_forecast.py с нужными файлами: "
-                 "пересчёт чисел аналитики и проверка файла прогноза", "ZIP", "LINK_CHECK_SCRIPTS"),
-    SolutionFile("video", "Видео", "До 3 минут", "Видео", "LINK_VIDEO"),
+                 "Скрипты проверки и данные к ним: proverka_bia.py пересчитывает числа аналитики, "
+                 "а proverka_forecast.py проверяет файл прогноза", "ZIP", "LINK_CHECK_SCRIPTS"),
+    SolutionFile("video", "Видео", "Обзор решения и сервиса, до 3 минут", "Видео", "LINK_VIDEO"),
     SolutionFile("site", "Сайт", "Этот сервис", "Сайт", "LINK_SITE", "/"),
 )
 

@@ -28,7 +28,7 @@ function drawFridays(box, data) {
     return row;
   });
   const legend = node("p", "fri__legend",
-    `Спрос в среднем сценарии при базовой цене · пунктир — другие пятницы в среднем, ${whole(data.others_mean)}`);
+    `Медиана спроса при базовой цене. Пунктиром отмечено среднее по другим пятницам, ${whole(data.others_mean)}.`);
   box.replaceChildren(...rows, legend);
 }
 
@@ -44,15 +44,15 @@ async function loadStory() {
     return;
   }
   story = response.data;
-  setStory("source", story.source === "ml" ? "прогноз нашей модели" : "прогноз организаторов");
+  setStory("source", story.source === "ml" ? "прогноз моей модели" : "прогноз организаторов");
   setStory("drop", `−${percent(story.drop)}`);
   setStory("summary", `медиана ${whole(story.median)} против ${whole(story.others_mean)} в\u00A0другие пятницы`);
   setStory("chart-title", `${story.route.origin} → ${story.route.destination} · ${dayMonth(story.date)} · ${rub(story.price)}`);
-  // в середине фразы строчная только первая буква: «наша ML-модель», а не «наша ml-модель»
-  const source = story.source_name[0].toLowerCase() + story.source_name.slice(1);
-  setStory("chart-how", `Девять сценариев спроса при базовой цене ${rub(story.price)}, источник: ` +
-    `${source}. Коридор ${withPercent("10–90")}: от ${fmt(story.low)} до ${fmt(story.high)} желающих ` +
-    `при ${whole(story.seats)} местах. Лучшая цена по ожидаемой прибыли —\u00A0${rub(story.best.price)}.`);
+  // источник в дательном падеже после «по прогнозу»: «нашей ML-модели», а не «наша ml-модель»
+  const source = story.source === "ml" ? "нашей ML-модели" : "организаторов";
+  setStory("chart-how", `Девять сценариев спроса при базовой цене ${rub(story.price)} по прогнозу ${source}. ` +
+    `С\u00A0вероятностью ${withPercent(80)} желающих будет от ${fmt(story.low)} до ${fmt(story.high)}, ` +
+    `а\u00A0мест на всех рейсах дня ${whole(story.seats)}.`);
   drawFridays($("#story-fridays"), story);
   drawStoryChart();
 }

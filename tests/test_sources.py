@@ -81,7 +81,7 @@ def test_unknown_source_is_rejected(sources):
     error = source_error(sources, "excel")
 
     assert error.field == "source"
-    assert error.message == "Неизвестный источник прогноза «excel». Можно: organizers, ml."
+    assert error.message == "Неизвестный источник прогноза «excel». Есть только organizers, ml."
 
 
 def test_default_source_is_organizers_until_ml_file_appears(sources, tmp_path, real_forecast_csv):

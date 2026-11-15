@@ -93,7 +93,7 @@ def test_short_password_is_rejected_in_russian(client):
     response = client.post("/api/register", json={"login": "anna", "password": "123"})
 
     assert response.status_code == 422
-    assert response.json() == {"detail": "Пароль: от 8 до 128 символов.", "field": "password"}
+    assert response.json() == {"detail": "Пароль должен быть длиной от 8 до 128 символов.", "field": "password"}
 
 
 def test_login_with_wrong_password_fails(logged_in):

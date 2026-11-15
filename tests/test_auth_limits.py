@@ -211,7 +211,7 @@ def test_huge_json_body_is_rejected(opened):
                            headers={"Content-Type": "application/json"})
 
     assert response.status_code == 413
-    assert response.json() == {"detail": "Запрос слишком большой: не больше 16 КБ.", "field": None}
+    assert response.json() == {"detail": "Запрос слишком большой, допустимо до 16 КБ.", "field": None}
 
 
 def test_normal_body_still_passes_the_size_check(opened):

@@ -60,8 +60,8 @@ DESCRIPTION = """
     желают = 0.5_base_demand − price_sensitivity × (цена − base_price)
     купят  = min(seats, max(0, желают))
 
-**Как пробовать здесь.** Расчёты доступны после входа. Войдите на главной странице
-(кнопка «Войти как гость») — cookie сессии общая с этой страницей. Для POST-запросов нажмите
+**Как пробовать здесь.** Расчёты доступны после входа. Войдите на странице /login
+(вкладка «Вход для жюри»): cookie сессии общая с этой страницей. Для POST-запросов нажмите
 **Authorize** и вставьте в X-CSRF-Token значение из `GET /api/csrf`.
 
 **Ошибки** приходят как `{"detail": "текст по-русски", "field": "имя поля или null"}`.
@@ -83,7 +83,7 @@ def errors(*codes: int) -> dict:
 csrf_scheme = APIKeyHeader(name=CSRF_HEADER, auto_error=False,
                            description="Значение cookie csrf_token (его возвращает GET /api/csrf)")
 session_scheme = APIKeyCookie(name=SESSION_COOKIE, auto_error=False,
-                              description="Cookie сессии. Ставится при входе на главной странице")
+                              description="Cookie сессии. Ставится при входе на странице /login")
 
 
 class Unauthorized(Exception):
@@ -614,5 +614,5 @@ async def _framework_error(request: Request, error: StarletteHTTPException) -> J
 
 async def _server_error(request: Request, error: Exception) -> JSONResponse:
     log.exception("ошибка при обработке %s %s", request.method, request.url.path)
-    return JSONResponse({"detail": "Внутренняя ошибка сервера. Она записана в журнал.", "field": None},
+    return JSONResponse({"detail": "Внутренняя ошибка сервера, она уже записана в журнал.", "field": None},
                         status_code=500)

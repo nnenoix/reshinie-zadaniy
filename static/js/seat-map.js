@@ -39,17 +39,18 @@ export function salonText(cabin, scenarioLabel, wanted, sold, over, queue) {
   const icons = cabin.icons_total;
   const scale = `1 кресло = ${N} ${plural(N, ["место", "места", "мест"])}, ` +
     `1 человечек = ${N} ${plural(N, ["человек", "человека", "человек"])}.`;
-  let text = ` На рейсах дня ${whole(cabin.seats)} ${plural(cabin.seats, ["место", "места", "мест"])} — это ${icons} ` +
-    `${plural(icons, ["значок", "значка", "значков"])}` +
-    (cabin.last_icon_seats !== N ? `, последний вмещает ${cabin.last_icon_seats}` : "") + ".";
+  let text = ` На рейсах дня ${whole(cabin.seats)} ${plural(cabin.seats, ["место", "места", "мест"])}, на схеме это ${icons} ` +
+    `${plural(icons, ["кресло", "кресла", "кресел"])}` +
+    (cabin.last_icon_seats !== N ? `, последнее вмещает ${cabin.last_icon_seats}` : "") + ".";
   if (cabin.more_than_one_aircraft) {
-    text += " Это больше, чем в самом вместительном самолёте (A380, до 853 мест), значит, в данных сумма " +
-      "по нескольким рейсам дня. Схема показывает их одним салоном.";
+    text += " Это больше, чем в\u00A0самом большом самолёте A380 (до 853 мест): в\u00A0данных сумма " +
+      "по нескольким рейсам дня. На схеме они показаны одним салоном.";
   }
-  text += ` Сценарий ${scenarioLabel}: желают ${whole(Math.max(0, wanted))}. `;
+  text += ` В\u00A0сценарии ${scenarioLabel} желают ${whole(Math.max(0, wanted))}. `;
   text += over > 0
-    ? `Не хватило мест ${whole(over)} желающим — это ${queue.shown} ${plural(queue.shown, ["значок", "значка", "значков"])}` +
-      (queue.capped ? ` (показана часть очереди, всего нужно ${Math.ceil(over / N)})` : "") + "."
-    : `Мест хватило всем, свободно ${whole(cabin.seats - sold)}.`;
+    ? `Мест не хватило ${whole(over)} желающим, у\u00A0трапа это ${queue.shown} ` +
+      `${plural(queue.shown, ["человечек", "человечка", "человечков"])}` +
+      (queue.capped ? ` из\u00A0${Math.ceil(over / N)}, остальные не поместились на схеме` : "") + "."
+    : `Мест хватило всем, свободными остались ${whole(cabin.seats - sold)}.`;
   return { scale, text };
 }

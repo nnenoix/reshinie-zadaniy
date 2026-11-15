@@ -94,7 +94,7 @@ def test_story_calculation_shows_numbers_and_odds(page):
     assert page.inner_text("#result-route").startswith("Москва → Санкт-Петербург · 12.06.2026")
     assert page.inner_text('[data-out="seats"]') == "1 440"
     assert page.inner_text('[data-out="want"]') == "917"  # медиана нашей модели при 5 500 ₽
-    assert page.inner_text("#chart-odds").startswith("С вероятностью 80 % желающих от 782 до 1 039")
+    assert page.inner_text("#chart-odds").startswith("С вероятностью 80 % желающих будет от 782 до 1 039")
     assert page.locator("#chart svg rect.ch-bar").count() == 9
 
 
@@ -132,11 +132,11 @@ def test_landing_chart_note_spells_the_source_as_it_is(browser, base_url):
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
     open_landing(tab, base_url)
-    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
+    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('по прогнозу')")
     note = tab.inner_text('[data-story="chart-how"]')
     context.close()
 
-    assert "источник: наша ML-модель." in note  # не «наша ml-модель»
+    assert "по прогнозу нашей ML-модели." in note  # не «наша ml-модель»
 
 
 def test_salon_scale_note_reads_as_one_paragraph(page):
@@ -309,7 +309,7 @@ def test_percents_written_by_scripts_keep_a_non_breaking_space(browser, base_url
     tab.wait_for_function("() => document.querySelector(\"#cal-min\").textContent !== \"\"")
     in_tool = tab.evaluate(TEXT_PERCENTS)
     open_landing(tab, base_url)
-    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
+    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('по прогнозу')")
     on_landing = tab.evaluate(TEXT_PERCENTS)
     context.close()
 
@@ -317,8 +317,8 @@ def test_percents_written_by_scripts_keep_a_non_breaking_space(browser, base_url
 
 
 @pytest.mark.parametrize("sold_out, chance", [
-    (0, "меньше 10 %"), (1, "от 10 до 20 %"), (3, "от 30 до 40 %"),
-    (8, "от 80 до 90 %"), (9, "больше 90 %"),
+    (0, "меньше 10 %"), (1, "— от 10 до 20 %"), (3, "— от 30 до 40 %"),
+    (8, "— от 80 до 90 %"), (9, "больше 90 %"),
 ])
 def test_chance_to_run_out_of_seats_is_an_honest_range(page, sold_out, chance):
     # k сценариев из 9 упираются в места: места лежат между квантилями 0.(9−k) и 0.(10−k),
@@ -328,7 +328,7 @@ def test_chance_to_run_out_of_seats_is_an_honest_range(page, sold_out, chance):
         return oddsText({ low: 782, high: 1039, sold_out_scenarios: k });
     }""", sold_out)
 
-    assert text == f"С вероятностью 80 % желающих от 782 до 1 039; в места упрёмся с вероятностью {chance}."
+    assert text == f"С вероятностью 80 % желающих будет от 782 до 1 039. Шанс, что мест не хватит, {chance}."
 
 
 LINE_BREAKS = r"""(selector) => [...document.querySelectorAll(selector)].map((element) => {
@@ -636,7 +636,7 @@ def test_numbers_and_rubles_on_the_landing_do_not_break(browser, base_url):
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
     open_landing(tab, base_url)
-    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
+    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('по прогнозу')")
     bad = tab.evaluate(NUMBER_SPACES)
     context.close()
 
@@ -807,7 +807,7 @@ def test_seat_limit_has_one_colour_everywhere(full_flight):
 
 @pytest.mark.parametrize("width", [375, 1440])
 def test_landing_numbers_card_lines_up_under_its_heading_without_a_double_rule(browser, base_url, width):
-    # «Ключевые числа» — белая карточка вровень с заголовком; линия над первым кейсом одна и отстоит от карточки
+    # «Главные числа» — белая карточка вровень с заголовком; линия над первым кейсом одна и отстоит от карточки
     context = browser.new_context(viewport={"width": width, "height": 900})
     tab = context.new_page()
     open_landing(tab, base_url)
@@ -987,7 +987,7 @@ def test_texts_written_by_the_landing_script_keep_short_words_together(browser, 
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
     open_landing(tab, base_url)
-    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
+    tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('по прогнозу')")
     bad = tab.evaluate(LOOSE_WORDS)
     context.close()
 

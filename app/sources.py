@@ -37,7 +37,7 @@ class ForecastSources:
         if source_id not in self.paths:
             raise InputError(
                 "source",
-                f"Неизвестный источник прогноза «{source_id}». Можно: {', '.join(self.paths)}.",
+                f"Неизвестный источник прогноза «{source_id}». Есть только {', '.join(self.paths)}.",
             )
         path = self.paths[source_id]
         try:

@@ -64,7 +64,7 @@ def test_absurd_price_is_rejected_at_the_field(guest):
     response = guest.post("/api/forecast", json={**SOCHI, "price": 123456789012345, "save": True})
 
     assert response.status_code == 422
-    assert response.json() == {"detail": "Цена не больше 1 000 000 ₽.", "field": "price"}
+    assert response.json() == {"detail": "Цена должна быть не больше 1 000 000 ₽.", "field": "price"}
     assert guest.get("/api/history").json()["items"] == []
 
 

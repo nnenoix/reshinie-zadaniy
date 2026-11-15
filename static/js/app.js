@@ -10,7 +10,7 @@ import { drawQueue, drawSeats, salonText } from "./seat-map.js";
 
 const SLIDER_DELAY_MS = 250;
 const TABS = ["calc", "salon", "calendar", "ticket"];
-const DOWN = ["Сервер прогноза не отвечает", "Параметры рейса сохранены. Попробуйте ещё раз через минуту."];
+const DOWN = ["Сервер прогноза не отвечает", "Параметры рейса остались в\u00A0форме, попробуйте ещё раз через минуту."];
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -38,7 +38,7 @@ function clearErrors() {
 }
 
 function showFieldError(data) {
-  const detail = (data && data.detail) || "Что-то пошло не так. Попробуйте ещё раз.";
+  const detail = (data && data.detail) || "Что-то пошло не так, попробуйте ещё раз.";
   const slot = data && data.field && $(`[data-error-for="${data.field}"]`, form);
   if (slot) {
     slot.textContent = detail;
@@ -305,13 +305,13 @@ function render(d) {
   $("#chart-title").textContent = `Спрос при цене ${rub(d.price)} по 9\u00A0сценариям`;
   $("#legend-hatch").hidden = !over;
   $("#chart-how").textContent = d.sold <= 0
-    ? "При такой цене формула даёт отрицательный спрос. Отрицательных покупателей не бывает, поэтому столбики " +
-      "равны 0; над ними мелко — значение по формуле."
+    ? "При такой цене формула даёт отрицательный спрос, поэтому столбики стоят на нуле, " +
+      "а\u00A0значение по формуле написано над ними мелко."
     : over
-      ? `Заштрихованная часть — желающие, которым не хватит кресел: так выходит в ${over} ` +
-        `${plural(over, ["сценарии", "сценариях", "сценариях"])} из\u00A09. Слева пессимистичный сценарий 0,1, справа оптимистичный 0,9.`
-      : "Каждый столбик — сколько человек захотят купить билет в одном из 9\u00A0сценариев: слева пессимистичный (0,1), " +
-        "справа оптимистичный (0,9). Выделенный столбик — медиана, её мы показываем как «желают».";
+      ? `В\u00A0${over} ${plural(over, ["сценарии", "сценариях", "сценариях"])} из\u00A09 желающих больше, чем мест, ` +
+        "и\u00A0тех, кому мест не хватит, заштриховали. Слева пессимистичный сценарий 0,1, справа оптимистичный 0,9."
+      : "Столбик показывает, сколько человек захотят купить билет в\u00A0одном из 9\u00A0сценариев, " +
+        "от пессимистичного 0,1 слева до оптимистичного 0,9 справа. Выделенный столбик — медиана, это число в\u00A0карточке «Желают купить».";
   $("#chart-odds").textContent = oddsText(d.odds);
 
   setPanel("ready");
@@ -341,16 +341,16 @@ function renderNote(d, want) {
   const tag = $("#note-tag");
   tag.className = `tag${none ? " tag--err" : ""}`;
   if (capped) {
-    tag.textContent = "Упор в места";
-    $("#note-text").textContent = `Желают ${whole(want)}, а мест ${whole(d.seats)} — купят ${whole(d.sold)}. ` +
-      `Не хватит мест для ${whole(d.wanted - d.seats)} желающих.`;
+    tag.textContent = "Мест не хватит";
+    $("#note-text").textContent = `Желают ${whole(want)} при ${whole(d.seats)} местах, поэтому купят ${whole(d.sold)}, ` +
+      `а\u00A0${whole(d.wanted - d.seats)} желающим мест не хватит.`;
   } else if (none) {
     tag.textContent = "Нет спроса";
-    $("#note-text").textContent = `При цене ${rub(d.price)} желающих нет: формула даёт ${whole(d.wanted)}. ` +
+    $("#note-text").textContent = `При цене ${rub(d.price)} формула даёт ${whole(d.wanted)} желающих, поэтому спроса нет. ` +
       "Попробуйте снизить цену.";
   } else {
     tag.textContent = `Запас ${seatsText(d.seats - want)}`;
-    $("#note-text").textContent = "Продажи не упираются в число мест: желающих меньше, чем кресел.";
+    $("#note-text").textContent = "Желающих меньше, чем мест, и\u00A0билет купят все.";
   }
 }
 
@@ -373,14 +373,13 @@ function renderBest(d) {
   if (gain <= 0) {
     text.replaceChildren(`Ваша цена ${rub(d.price)} уже даёт максимум ожидаемой прибыли.`);
   } else {
-    text.replaceChildren(`Лучшая цена ${rub(best.price)} — это `, node("b", "", `+${rub(gain)}`),
-      " ожидаемой прибыли к вашей цене.");
+    text.replaceChildren(`Лучшая цена ${rub(best.price)} даст на\u00A0`, node("b", "", rub(gain)),
+      " больше ожидаемой прибыли, чем ваша.");
   }
-  let note = "Ожидаемая прибыль — среднее по 9\u00A0сценариям от (цена − расходы на пассажира) × купят. " +
-    "Кривую и максимум считает сервер.";
+  let note = "Ожидаемая прибыль — среднее по 9\u00A0сценариям значение (цена − расходы на пассажира) × купят.";
   if (best.file_price !== null) {
-    note += ` Цена медианного сценария из файла (0.5_price) — ${rub(best.file_price)}; ` +
-      "лучшая цена здесь подобрана под все девять сценариев.";
+    note += ` В\u00A0файле прогноза цена медианного сценария (0.5_price) равна ${rub(best.file_price)}, ` +
+      "а\u00A0здесь лучшая цена подобрана сразу под все 9\u00A0сценариев.";
   }
   $("#best-note").textContent = note;
 }
@@ -432,7 +431,7 @@ async function refreshCompare(d) {
     return row;
   }));
   $("#compare-table").hidden = false;
-  $("#compare-note").textContent = "Одна и та же цена, два прогноза спроса. Выделен прогноз, по которому посчитан расчёт выше.";
+  $("#compare-note").textContent = "Оба прогноза посчитаны при одной цене. Выделен тот, по которому сделан расчёт выше.";
 }
 
 // --- салон ---
@@ -486,15 +485,16 @@ async function loadCalendar(d) {
   }, signals.calendar());
   if (response.aborted) return;
   if (!response.ok) {
-    $("#cal").replaceChildren(node("p", "panel-empty", "Не удалось загрузить календарь. Попробуйте позже."));
+    $("#cal").replaceChildren(node("p", "panel-empty", "Не удалось загрузить календарь, попробуйте позже."));
     return;
   }
   S.calendarKey = key;
   const loads = drawCalendar($("#cal"), response.data.days, { selected: d.date, onPick: pickDay });
   $("#cal-min").textContent = withPercent(loads.min);
   $("#cal-max").textContent = withPercent(loads.max);
-  $("#cal-how").textContent = `Цвет — загрузка при цене ${rub(d.price)}: от самого слабого дня месяца (${withPercent(loads.min)}) ` +
-    `до самого сильного (${withPercent(loads.max)}). Нажмите на день — откроется расчёт на эту дату.`;
+  $("#cal-how").textContent = `Чем темнее день, тем выше загрузка при цене ${rub(d.price)}: от\u00A0${withPercent(loads.min)} ` +
+    `в\u00A0самый слабый день месяца до\u00A0${withPercent(loads.max)} в\u00A0самый сильный. ` +
+    "Нажмите на день, чтобы открыть расчёт на эту дату.";
 }
 
 function pickDay(day) {
@@ -547,7 +547,7 @@ function historyRow(entry) {
   route.append(node("span", "accent", "→"), ` ${entry.destination}`,
     node("span", "history__src", entry.source === "ml" ? "ML" : "орг."));
   const flag = node("td");
-  if (want > entry.seats) flag.append(node("span", "tag", "Упор в места"));
+  if (want > entry.seats) flag.append(node("span", "tag", "Мест не хватит"));
   else if (entry.sold <= 0) flag.append(node("span", "tag tag--err", "Нет спроса"));
   const again = node("button", "link-btn", "Повторить");
   again.type = "button";
@@ -599,7 +599,7 @@ function useDateFromAddress(wanted) {
   const shown = form.elements.date.value;
   const note = $("#date-note");
   note.hidden = !wanted || shown === wanted;
-  if (!note.hidden) note.textContent = `Даты ${wanted} из адреса страницы нет в прогнозе. Показано ${shortDate(shown)}.`;
+  if (!note.hidden) note.textContent = `Даты ${wanted} из адреса страницы нет в\u00A0прогнозе, поэтому показано ${shortDate(shown)}.`;
 }
 
 // /api/session без входа отвечает 200 и user: null, а не 401: после «Выйти» и «Назад» страница

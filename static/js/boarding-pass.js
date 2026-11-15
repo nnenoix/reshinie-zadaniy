@@ -3,8 +3,8 @@
 import { airportCodes, dow, percent, rub, seatsText, shortDate, whole } from "./format.js";
 import { pdfFromJpeg } from "./pdf.js";
 
-const NO_LIBRARY = "Не загрузилась библиотека для картинок (html2canvas с cdnjs). " +
-  "Проверьте интернет. PDF можно сохранить через печать: Ctrl+P → «Сохранить как PDF».";
+const NO_LIBRARY = "Не загрузилась библиотека html2canvas, которая делает картинку талона. " +
+  "Проверьте интернет или сохраните PDF через печать: Ctrl+P → «Сохранить как PDF».";
 
 export function ticketData(d) {
   const codes = airportCodes(d.route.code);
@@ -16,9 +16,9 @@ export function ticketData(d) {
     date: shortDate(d.date), day: dow(d.date) + (d.holiday ? " · праздник" : ""),
     price: rub(d.price), seats: whole(d.seats), want: whole(want), buy: whole(d.sold),
     load: percent(d.load), best: rub(d.best.price),
-    tag: capped ? "Упор в места" : none ? "Нет спроса" : `Запас ${seatsText(d.seats - want)}`,
+    tag: capped ? "Мест не хватит" : none ? "Нет спроса" : `Запас ${seatsText(d.seats - want)}`,
     status: capped ? `Не хватит мест для ${whole(d.wanted - d.seats)} желающих`
-      : none ? `Формула даёт ${whole(d.wanted)}` : "Мест хватает всем желающим",
+      : none ? `По формуле ${whole(d.wanted)} желающих` : "Мест хватает всем желающим",
     stubRoute: `${codes.from} → ${codes.to}`, buySeats: `${whole(d.sold)} / ${whole(d.seats)}`,
     id: `RA-${codes.to}-${compact}-${Math.round(d.price)}`,
     none,

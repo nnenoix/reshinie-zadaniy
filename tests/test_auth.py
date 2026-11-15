@@ -161,4 +161,4 @@ def test_login_rule_names_russian_and_latin_letters():
     with pytest.raises(InputError) as caught:
         parse_credentials({"login": "a!", "password": "password1"})
 
-    assert "русские и латинские буквы" in caught.value.message
+    assert "русских и латинских букв" in caught.value.message

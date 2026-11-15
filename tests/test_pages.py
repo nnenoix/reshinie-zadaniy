@@ -119,8 +119,9 @@ def test_best_price_on_landing_is_the_one_the_service_computes(client):
     text = plain(html)
 
     assert "5&nbsp;605<span class=\"metric__unit\">₽</span>" in html
-    assert "лучшая цена 12 июня по нашей модели" in text
-    assert "По нашей модели лучшая цена 5 605 ₽: +3 217 ₽ ожидаемой прибыли за день к базовой цене 5 500 ₽." in text
+    assert "лучшая цена 12 июня по моей модели" in text
+    assert ("По моей модели лучшая цена 5 605 ₽, почти как базовая 5 500 ₽, "
+            "а ожидаемая прибыль за день при ней выше на 3 217 ₽.") in text
     assert "5 610" not in text
     # 5 614 ₽ — только с пометкой, что это прогноз организаторов
     for found in re.finditer("5 614", text):
@@ -130,12 +131,12 @@ def test_best_price_on_landing_is_the_one_the_service_computes(client):
 def test_landing_texts_from_the_submission(client):
     html = plain(page(client, "/"))
 
-    assert "По средней ошибке ансамбль точнее лишь на 1,8 %." in html
-    assert "(WQL 0,068 против 0,076 у ансамбля), и не требует переобучения." in html
+    assert "По средней ошибке ансамбль точнее всего на 1,8 %." in html
+    assert "(WQL 0,068, у ансамбля 0,076). Обучать её заново не нужно." in html
     assert "её не надо переобучать" not in html
     assert "пересчитал 302 числа аналитики" in html
     assert "Вход защищён от подбора пароля, формы — от подделки запросов." in html
-    assert "Цену берём из прогноза. Правило «пятница — значит дороже» здесь не работает." in html
+    assert "Поднимать цену, как в пиковую пятницу, здесь не нужно, поэтому цену беру из прогноза." in html
     # оборот «X, а не Y» — только в заголовке
     body = html.split('<h1 class="lp-title">', 1)[1].split("</h1>", 1)[1]
     assert ", а не " not in body
@@ -154,14 +155,16 @@ def test_landing_says_things_plainly(client):
     html = page(client, "/")
     text = plain(html)
 
-    assert "Модель одного дня работы самолёта, прогноз спроса на июнь 2026 года и сервис, который на лету считает продажи и лучшую цену." in text
+    assert "модель одного дня работы самолёта, прогноз спроса на июнь 2026 года и сервис, который на лету считает продажи и лучшую цену." in text
     assert "если вместо Сочи дважды летать в Москву" in text
     assert "не лететь в Сочи" not in text
-    assert "Вероятно, праздничная пятница не деловой день: в прошлом году 12 июня спрос на этом рейсе тоже упал, 598 против 822–878 в будни до и после." in text
-    assert "+3 812 ₽ ожидаемой прибыли за день" in text
-    assert "столько приносит одно лишнее кресло П→М в пиковую пятницу" in text
-    assert "если бы в мае 2026 цены ставили по прогнозу" in text
-    assert "дней мая, когда реальный спрос попал в коридор прогноза (ожидалось 80 %)" in text
+    assert ("Вероятно, в праздник меньше деловых поездок. В прошлом году 12 июня спрос на этом рейсе тоже упал до 598, "
+            "хотя в будни до и после было 822–878.") in text
+    assert "она даёт на 3 812 ₽ больше ожидаемой прибыли за день, чем 5 500 ₽" in text
+    assert "столько принесло бы одно дополнительное кресло на рейсе Петербург → Москва в пиковую пятницу" in text
+    assert "на столько больше прибыли дали бы в мае 2026 года цены по прогнозу вместо базовой" in text
+    assert "случаев в мае, когда реальный спрос попал в коридор прогноза (ожидалось 80 %)" in text
+    assert "реальный спрос попал в коридор прогноза в 83 % случаев (ожидалось 80 %)" in text
     assert "с 42,3 до 40,9 пассажира в день на маршрут" in text
     assert re.findall(r'<dd class="lp-num__group">([^<]*)</dd>', html) == [
         "Аналитика", "Аналитика", "Аналитика", "Прогноз", "Прогноз", "Сервис"]
@@ -259,7 +262,7 @@ def test_login_page_opens_on_a_prefilled_jury_login(settings):
     assert re.search(r'<button(?=[^>]*data-tab="jury")(?=[^>]*aria-selected="true")', html)
     assert jury and 'action="/api/login"' in jury.group(0)
     assert 'value="jury"' in jury.group(1) and 'value="jury-pass-1"' in jury.group(1)
-    assert "Демо-аккаунт для проверки, данные уже введены." in jury.group(1)
+    assert "Данные демо-аккаунта уже введены." in jury.group(1)
     assert re.search(r'<form[^>]*data-form="login"[^>]*hidden', html)
 
 
@@ -478,8 +481,8 @@ def test_june_12_is_compared_with_the_other_fridays_of_june(client):
     # 12 июня сравнивается со всеми остальными пятницами июня (5, 19, 26), а не с «соседними».
     html = page(client, "/")
 
-    assert "спрос на 13 % ниже других пятниц июня: медиана 917 против 1 049" in plain(html)
-    assert "12 июня бледнее других пятниц июня" in plain(html)
+    assert "спрос на 13 % ниже, чем в другие пятницы июня: медиана 917 против 1 049" in plain(html)
+    assert "в календаре этот день бледнее других пятниц" in plain(html)
     assert "соседн" not in html
 
 
@@ -564,7 +567,7 @@ def test_no_overline_above_a_heading(client, path):
 
 
 @pytest.mark.parametrize("path, headings", [
-    ("/", ["12 июня ·", "Ключевые числа", "Пиковая пятница · П→М", "Как проверено", "Файлы решения", "Инструменты"]),
+    ("/", ["12 июня ·", "Главные числа", "Пиковая пятница · П→М", "Как проверено", "Файлы решения", "Инструменты"]),
     ("/app", ["Параметры рейса", "Лучшая цена", "История расчётов"]),
 ])
 def test_section_and_card_captions_are_headings(client, path, headings):

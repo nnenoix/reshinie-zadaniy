@@ -8,7 +8,7 @@ from app.main import create_app
 from app.security import client_address
 
 LOGIN = {"login": "anna", "password": "password1"}
-CSRF_ERROR = "Запрос отклонён: нет защитного токена. Обновите страницу и повторите."
+CSRF_ERROR = "В запросе нет защитного токена. Обновите страницу и повторите."
 
 
 class Clock:
