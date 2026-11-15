@@ -27,6 +27,12 @@ def become_guest(tab, base_url):
     tab.evaluate(BECOME_GUEST)
 
 
+def open_landing(tab, base_url):
+    """Витрина открыта только после входа: тест входит гостем и открывает /."""
+    become_guest(tab, base_url)
+    tab.goto(base_url + "/")
+
+
 def free_port() -> int:
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
@@ -125,7 +131,7 @@ def test_phone_header_of_a_guest_keeps_the_brand_on_one_line(browser, base_url):
 def test_landing_chart_note_spells_the_source_as_it_is(browser, base_url):
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
     note = tab.inner_text('[data-story="chart-how"]')
     context.close()
@@ -230,19 +236,20 @@ def test_ticket_png_contains_the_barcode(page, tmp_path):
     assert dark > total * 0.2  # полосы штрихкода есть на снимке талона
 
 
-def test_story_button_leads_the_jury_through_the_prefilled_login(browser, base_url):
-    # витрина → «Открыть расчёт 12 июня» → /login, где логин и пароль жюри уже введены → расчёт 12 июня
+def test_jury_goes_from_the_site_link_through_login_to_the_landing_and_the_tool(browser, base_url):
+    # / без входа → /login (вход жюри уже введён) → «Войти» → / → «Открыть расчёт 12 июня» → расчёт 12 июня
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
     errors = []
     tab.on("console", lambda message: errors.append(message.text) if message.type == "error" else None)
     tab.goto(base_url + "/")
-    tab.click(".lp-cta a >> nth=0")
     tab.wait_for_url("**/login")
     filled = [tab.input_value("#jury-login"), tab.input_value("#jury-password") == JURY_PASSWORD,
               tab.is_visible("#jury-form"), tab.is_visible("#login-form")]
     tab.click("#jury-form button[type=submit]")
-    tab.wait_for_url("**/app")
+    tab.wait_for_url(base_url + "/")
+    tab.click(".lp-cta a >> nth=0")
+    tab.wait_for_url("**/app**")
     wait_for_result(tab)
     shown = tab.inner_text("#result-route").replace("\xa0", " ")
     context.close()
@@ -301,7 +308,7 @@ def test_percents_written_by_scripts_keep_a_non_breaking_space(browser, base_url
         tab.click(f'.tabs--main [data-tab="{name}"]')
     tab.wait_for_function("() => document.querySelector(\"#cal-min\").textContent !== \"\"")
     in_tool = tab.evaluate(TEXT_PERCENTS)
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
     on_landing = tab.evaluate(TEXT_PERCENTS)
     context.close()
@@ -345,7 +352,7 @@ def test_file_names_on_a_phone_break_only_after_an_underscore(browser, base_url)
     # «Титаренко_Егор_Ко / нстантинович_БиА. / pdf» рвало посреди слова.
     context = browser.new_context(viewport={"width": 375, "height": 812})
     tab = context.new_page()
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     names = tab.evaluate(LINE_BREAKS, "#files .file__name")
     context.close()
 
@@ -575,7 +582,7 @@ def test_saved_calculation_reaches_history_when_the_slider_moves_right_after(pag
 def test_landing_hero_fits_between_tablet_and_desktop(browser, base_url, width):
     context = browser.new_context(viewport={"width": width, "height": 900})
     tab = context.new_page()
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     lines, tops = tab.evaluate("""async () => {
         await document.fonts.ready;
         const title = document.createRange();
@@ -592,7 +599,7 @@ def test_landing_hero_fits_between_tablet_and_desktop(browser, base_url, width):
 def test_story_chart_card_is_as_tall_as_its_content(browser, base_url):
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     tab.wait_for_function("() => document.querySelector('#story-chart svg')")
     empty = tab.evaluate("""() => {
         const card = document.querySelector('.story .case__card');
@@ -628,7 +635,7 @@ NUMBER_SPACES = r"""() => {
 def test_numbers_and_rubles_on_the_landing_do_not_break(browser, base_url):
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
     bad = tab.evaluate(NUMBER_SPACES)
     context.close()
@@ -748,7 +755,7 @@ def test_touch_targets_on_a_phone_are_at_least_44px(browser, base_url):
     tab.wait_for_selector("#history-body .link-btn")
     tab.click('.tabs--main [data-tab="salon"]')
     in_tool = tab.evaluate(SMALL_TARGETS, [".scen__btn", ".tabs--main .tabs__btn", ".topbar .btn", ".history .link-btn"])
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     on_landing = tab.evaluate(SMALL_TARGETS, [".topbar .btn"])
     context.close()
     context = browser.new_context(viewport={"width": 375, "height": 812})
@@ -803,7 +810,7 @@ def test_landing_numbers_card_lines_up_under_its_heading_without_a_double_rule(b
     # «Ключевые числа» — белая карточка вровень с заголовком; линия над первым кейсом одна и отстоит от карточки
     context = browser.new_context(viewport={"width": width, "height": 900})
     tab = context.new_page()
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     shift, gap = tab.evaluate("""() => {
         const card = document.querySelector('.lp-numbers').getBoundingClientRect();
         return [card.left - document.querySelector('#numbers .section-title').getBoundingClientRect().left,
@@ -928,7 +935,7 @@ LABEL_FRAMES = """() => {
 def test_labels_are_plain_text_without_frames_or_arrows(browser, base_url):
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     count, framed, before = tab.evaluate(LABEL_FRAMES)
     context.close()
 
@@ -953,7 +960,7 @@ SURFACES = """() => {
 def test_landing_has_grey_page_white_cards_and_dark_headings(browser, base_url):
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     found = tab.evaluate(SURFACES)
     context.close()
 
@@ -979,7 +986,7 @@ LOOSE_WORDS = r"""() => {
 def test_texts_written_by_the_landing_script_keep_short_words_together(browser, base_url):
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     tab.wait_for_function("() => document.querySelector('[data-story=\"chart-how\"]').textContent.includes('источник')")
     bad = tab.evaluate(LOOSE_WORDS)
     context.close()
@@ -991,7 +998,7 @@ def test_landing_header_stays_on_screen_and_does_not_cover_sections(browser, bas
     # шапка витрины не уезжает при прокрутке, а раздел по ссылке меню не прячется под неё
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     tab = context.new_page()
-    tab.goto(base_url + "/")
+    open_landing(tab, base_url)
     tab.evaluate("document.documentElement.style.scrollBehavior = 'auto'")
     tab.mouse.wheel(0, 2500)
     tab.wait_for_timeout(200)
@@ -1004,3 +1011,16 @@ def test_landing_header_stays_on_screen_and_does_not_cover_sections(browser, bas
 
     assert header_top == 0
     assert title_top >= header_bottom, (title_top, header_bottom)
+
+
+def test_logout_on_the_landing_closes_the_site(browser, base_url):
+    context = browser.new_context(viewport={"width": 1440, "height": 900})
+    tab = context.new_page()
+    open_landing(tab, base_url)
+    tab.click("#logout")
+    tab.wait_for_url("**/login")
+    tab.goto(base_url + "/")
+    after = tab.url
+    context.close()
+
+    assert after == base_url + "/login"

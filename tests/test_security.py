@@ -83,7 +83,7 @@ def test_same_host_behind_https_proxy_is_accepted(client):
 
 
 def test_page_sets_csrf_cookie_readable_by_script(raw_client):
-    response = raw_client.get("/")
+    response = raw_client.get("/login")  # первая страница, которую видит человек: / без входа ведёт сюда
 
     cookie = response.headers["set-cookie"].lower()
     assert "csrf_token=" in cookie and "samesite=strict" in cookie

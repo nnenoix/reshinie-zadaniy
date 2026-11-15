@@ -1,5 +1,5 @@
 // Страница /login: «Вход для жюри» (логин и пароль демо-аккаунта уже введены сервером), обычный вход
-// и регистрация серой строкой внизу. После входа — инструмент /app.
+// и регистрация серой строкой внизу. После входа — витрина /.
 // Гость тоже попадает сюда (ссылка «Зарегистрироваться» в /app): при регистрации его история переходит в аккаунт.
 import { get, post, whileBusy } from "./api.js";
 
@@ -79,7 +79,7 @@ $$("[data-form]").forEach((form) => {
     const body = Object.fromEntries(new FormData(form).entries());
     const submit = $('button[type="submit"]', form);
     const response = await whileBusy(submit, BUSY[form.dataset.form], () => post(form.getAttribute("action"), body));
-    if (response.ok) return location.assign("/app");
+    if (response.ok) return location.assign("/"); // после входа — витрина, с неё в инструмент
     showError(form, response.data);
   });
 });

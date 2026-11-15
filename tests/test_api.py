@@ -29,7 +29,10 @@ def forecast(client, **changes):
     return client.post("/api/forecast", json=body)
 
 
-def test_main_page_is_served(client):
+def test_main_page_is_served_after_login(client):
+    assert client.get("/", follow_redirects=False).status_code == 303
+    assert client.post("/api/guest").status_code == 201
+
     response = client.get("/")
 
     assert response.status_code == 200

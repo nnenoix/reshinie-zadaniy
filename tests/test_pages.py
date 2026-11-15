@@ -33,7 +33,16 @@ def guest(client):
     return client
 
 
+def sign_in(client):
+    """Витрина открыта только после входа: тесты витрины входят гостем, если входа ещё нет."""
+    if client.get("/api/session").json()["user"] is None:
+        client.headers.setdefault("X-CSRF-Token", client.get("/api/csrf").json()["token"])
+        assert client.post("/api/guest").status_code == 201
+
+
 def page(client, path) -> str:
+    if path == "/":
+        sign_in(client)
     response = client.get(path)
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
@@ -168,7 +177,8 @@ def test_landing_buttons_lead_into_the_tool(client):
 
     assert "data-guest" not in html and "data-open-story" not in html
     assert len(re.findall(r'<a[^>]*href="/app\?destination=[^"]*"[^>]*>Открыть расчёт 12 июня</a>', html)) == 2
-    assert "Москва → Санкт-Петербург, пятница, День России. Для жюри вход уже заполнен" in plain(html)
+    assert "Москва → Санкт-Петербург, пятница, День России</p>" in plain(html)
+    assert "Для жюри" not in html
     assert 'href="/login"' in html
 
 
@@ -296,18 +306,33 @@ def test_tool_opens_on_the_story_flight_before_its_script_runs(guest):
     assert "hidden" not in re.search(r'data-panel="loading"[^>]*>', html).group(0)
 
 
-def test_login_page_sends_signed_in_user_to_the_tool(client):
+def test_login_page_sends_signed_in_user_to_the_landing(client):
     assert client.post("/api/register", json={"login": "anna", "password": "password1"}).status_code == 201
     response = client.get("/login")
 
     assert response.status_code == 303
-    assert response.headers["location"] == "/app"
+    assert response.headers["location"] == "/"
+
+
+def test_landing_needs_a_session(client):
+    # без входа сайт никуда не пускает: витрина ведёт на /login
+    response = client.get("/")
+
+    assert (response.status_code, response.headers["location"]) == (303, "/login")
+
+
+def test_landing_header_offers_logout_instead_of_login(client):
+    html = page(client, "/")
+    header = html.split('<header class="topbar">', 1)[1].split("</header>", 1)[0]
+
+    assert '<a class="btn btn--ghost" href="/login" id="logout">Выйти</a>' in header
+    assert ">Войти<" not in header
 
 
 def open_page(client, path):
-    """/app открывается после входа, /login — до входа."""
-    if path == "/app":
-        client.post("/api/guest")
+    """/ и /app открываются после входа, /login — до входа."""
+    if path in ("/", "/app"):
+        sign_in(client)
     response = client.get(path)
     assert response.status_code == 200
     return response

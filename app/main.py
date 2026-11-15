@@ -279,8 +279,11 @@ def session_user(request: Request) -> User | None:
     return request.app.state.auth.user_for_session(request.cookies.get(SESSION_COOKIE))
 
 
-@router.get("/", include_in_schema=False)
-def landing_page(request: Request) -> HTMLResponse:
+@router.get("/", include_in_schema=False, response_model=None)
+def landing_page(request: Request) -> Response:
+    # без входа сайт никуда не пускает: сначала /login, после входа — сюда, отсюда — в /app
+    if session_user(request) is None:
+        return RedirectResponse("/login", status_code=303)
     return HTMLResponse(request.app.state.landing_html)
 
 
@@ -288,7 +291,7 @@ def landing_page(request: Request) -> HTMLResponse:
 def login_page(request: Request) -> Response:
     user = session_user(request)
     if user is not None and not is_guest(user.login):  # гость приходит сюда зарегистрироваться
-        return RedirectResponse("/app", status_code=303)
+        return RedirectResponse("/", status_code=303)
     # в странице пароль демо-аккаунта: не кэшировать
     return HTMLResponse(request.app.state.login_html, headers={"Cache-Control": "no-store"})
 

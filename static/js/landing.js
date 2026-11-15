@@ -1,6 +1,6 @@
 // Витрина /: пятницы июня и 9 сценариев 12 июня — с сервера (/api/story).
-// «Открыть расчёт 12 июня» — обычная ссылка на /app: без входа сервер ведёт на /login, где вход для жюри уже заполнен.
-import { get } from "./api.js";
+// Витрина открыта только после входа; «Открыть расчёт 12 июня» — ссылка на /app, «Выйти» — выход и /login.
+import { get, post } from "./api.js";
 import { drawQuantiles } from "./demand-chart.js";
 import { dayMonth, dow, fmt, node, percent, rub, whole, withPercent } from "./format.js";
 
@@ -69,3 +69,9 @@ function drawCapacityBars() {
 window.addEventListener("resize", drawStoryChart);
 drawCapacityBars();
 loadStory();
+
+$("#logout").addEventListener("click", async (event) => {
+  event.preventDefault();
+  await post("/api/logout");
+  location.assign("/login");
+});

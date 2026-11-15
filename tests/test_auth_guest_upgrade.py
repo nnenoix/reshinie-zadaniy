@@ -96,4 +96,4 @@ def test_registered_user_is_sent_from_login_to_the_tool(client):
 
     response = client.get("/login", follow_redirects=False)
 
-    assert (response.status_code, response.headers["location"]) == (303, "/app")
+    assert (response.status_code, response.headers["location"]) == (303, "/")
